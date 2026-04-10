@@ -1,0 +1,40 @@
+[
+  {
+    "id": "task-20260410222256.269506000",
+    "name": "123",
+    "localPath": "/Users/byz/Documents/test",
+    "remotePath": "bit",
+    "autoBackup": true,
+    "onDemandSync": true,
+    "status": "error",
+    "lastError": "read /Users/byz/Documents/test/a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Headers: is a directory",
+    "lastSyncAt": "2026-04-10T22:22:56.778933+08:00",
+    "syncReport": {
+      "state": "failed",
+      "mode": "on_demand",
+      "message": "同步失败",
+      "totalFiles": 452,
+      "uploadedFiles": 442,
+      "failedFiles": 10,
+      "totalBytes": 92762559,
+      "transferredBytes": 92762347,
+      "speedBytesPerSec": 182942882,
+      "failedFilePaths": [
+        "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Headers",
+        "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Modules",
+        "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/PrivateHeaders",
+        "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Resources",
+        "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/Current",
+        "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Headers",
+        "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Modules",
+        "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/PrivateHeaders",
+        "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Resources",
+        "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/Current"
+      ],
+      "startedAt": "2026-04-10T22:22:56.270224+08:00",
+      "finishedAt": "2026-04-10T22:22:56.778933+08:00"
+    },
+    "createdAt": "2026-04-10T22:22:56.269506+08:00",
+    "updatedAt": "2026-04-10T22:22:56.778933+08:00"
+  }
+]

@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
 
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
 const token = ref(localStorage.getItem('zcopy_token') || '')
 const currentUser = ref(null)
 const authMode = ref('login')

@@ -38,7 +38,7 @@ func LoadConfig() {
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
 
-	viper.SetDefault("server.port", "8080")
+	viper.SetDefault("server.port", "8890")
 	viper.SetDefault("server.mode", "debug")
 	viper.SetDefault("database.path", "./data/zcopy.db")
 	viper.SetDefault("auth.secret_key", "zcopy-secret-key-change-in-production")

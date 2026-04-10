@@ -1,0 +1,72 @@
+{
+  "name": "zcopy-client-front-mac",
+  "version": "0.0.1",
+  "private": true,
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "prepare:backend-dir": "node -e \"require('fs').mkdirSync('electron/bin',{recursive:true})\"",
+    "build:backend": "npm run prepare:backend-dir && go build -C ../backend -o ../front-mac/electron/bin/zcopy-client-backend .",
+    "start": "electron .",
+    "dist": "npm run build:backend && electron-builder --mac dmg",
+    "dist:dir": "npm run build:backend && electron-builder --mac dir"
+  },
+  "dependencies": {
+    "electron-macos-file-provider": "^1.0.12"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.zcopy.client.mac",
+    "productName": "ZCopyClient",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "node_modules/electron-macos-file-provider/**/*"
+    ],
+    "asarUnpack": [
+      "electron/bin/**/*",
+      "node_modules/electron-macos-file-provider/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/bin/zcopy-client-backend",
+        "to": "backend/zcopy-client-backend"
+      },
+      {
+        "from": "../backend/config/config.yaml",
+        "to": "backend/config/config.yaml"
+      },
+      {
+        "from": "../front/dist",
+        "to": "renderer"
+      }
+    ],
+    "mac": {
+      "artifactName": "ZCopyClient-mac-${version}.${ext}",
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "identity": null,
+      "target": [
+        "dmg",
+        "dir"
+      ],
+      "extraFiles": [
+        {
+          "from": "node_modules/electron-macos-file-provider/archive/EFPHelper.xcarchive/Products/Applications/EFPHelper.app/Contents/PlugIns/EleFileProvider.appex",
+          "to": "PlugIns/EleFileProvider.appex"
+        }
+      ]
+    },
+    "dmg": {
+      "artifactName": "ZCopyClient-mac-${version}.${ext}"
+    }
+  }
+}

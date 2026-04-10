@@ -1,0 +1,1812 @@
+{
+  "files": {
+    ".DS_Store": {
+      "size": 14340,
+      "modUnix": 1771946234
+    },
+    "a/.DS_Store": {
+      "size": 10244,
+      "modUnix": 1771946228
+    },
+    "a/bbb/.DS_Store": {
+      "size": 10244,
+      "modUnix": 1771822042
+    },
+    "a/bbb/395998.xls": {
+      "size": 98816,
+      "modUnix": 1600255732
+    },
+    "a/bbb/Flux.app/Contents/CodeResources": {
+      "size": 1801,
+      "modUnix": 1684288410
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Headers": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Modules": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/PrivateHeaders": {
+      "size": 31,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Resources": {
+      "size": 26,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Sparkle": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloadData.h": {
+      "size": 973,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloader.h": {
+      "size": 791,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderDelegate.h": {
+      "size": 1153,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderProtocol.h": {
+      "size": 797,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderSession.h": {
+      "size": 428,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUURLRequest.h": {
+      "size": 871,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUAppcast.h": {
+      "size": 700,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUAppcastItem.h": {
+      "size": 2082,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUCodeSigningVerifier.h": {
+      "size": 681,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUErrors.h": {
+      "size": 1335,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUExport.h": {
+      "size": 302,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUStandardVersionComparator.h": {
+      "size": 1227,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUUpdater.h": {
+      "size": 7745,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUUpdaterDelegate.h": {
+      "size": 12956,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUVersionComparisonProtocol.h": {
+      "size": 820,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUVersionDisplayProtocol.h": {
+      "size": 679,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/Sparkle.h": {
+      "size": 1084,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Modules/module.modulemap": {
+      "size": 95,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/PrivateHeaders/SUUnarchiver.h": {
+      "size": 483,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Info.plist": {
+      "size": 1670,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/Autoupdate": {
+      "size": 544336,
+      "modUnix": 1684288304
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/fileop": {
+      "size": 286688,
+      "modUnix": 1684288303
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/PkgInfo": {
+      "size": 8,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/AppIcon.icns": {
+      "size": 37132,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/Base.lproj/Sparkle.strings": {
+      "size": 10196,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/SUStatus.nib/keyedobjects-101300.nib": {
+      "size": 10683,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/SUStatus.nib/keyedobjects.nib": {
+      "size": 12937,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings": {
+      "size": 8468,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ca.lproj/Sparkle.strings": {
+      "size": 6792,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/cs.lproj/Sparkle.strings": {
+      "size": 10570,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/da.lproj/Sparkle.strings": {
+      "size": 8306,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/de.lproj/Sparkle.strings": {
+      "size": 10148,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/el.lproj/Sparkle.strings": {
+      "size": 7734,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/es.lproj/Sparkle.strings": {
+      "size": 10030,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/fi.lproj/Sparkle.strings": {
+      "size": 6184,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/fr.lproj/Sparkle.strings": {
+      "size": 10170,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/he.lproj/Sparkle.strings": {
+      "size": 5288,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/hr.lproj/Sparkle.strings": {
+      "size": 9778,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/hu.lproj/Sparkle.strings": {
+      "size": 10002,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/is.lproj/Sparkle.strings": {
+      "size": 5868,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/it.lproj/Sparkle.strings": {
+      "size": 8340,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ja.lproj/Sparkle.strings": {
+      "size": 8552,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ko.lproj/Sparkle.strings": {
+      "size": 6220,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/nb.lproj/Sparkle.strings": {
+      "size": 9352,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/nl.lproj/Sparkle.strings": {
+      "size": 8850,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pl.lproj/Sparkle.strings": {
+      "size": 7318,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pt_BR.lproj/Sparkle.strings": {
+      "size": 9728,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pt_PT.lproj/Sparkle.strings": {
+      "size": 7896,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ro.lproj/Sparkle.strings": {
+      "size": 9806,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ru.lproj/Sparkle.strings": {
+      "size": 7668,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sk.lproj/Sparkle.strings": {
+      "size": 7548,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sl.lproj/Sparkle.strings": {
+      "size": 7944,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sv.lproj/Sparkle.strings": {
+      "size": 7834,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/th.lproj/Sparkle.strings": {
+      "size": 8492,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/tr.lproj/Sparkle.strings": {
+      "size": 9716,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/uk.lproj/Sparkle.strings": {
+      "size": 7860,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/zh_CN.lproj/Sparkle.strings": {
+      "size": 6128,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/zh_TW.lproj/Sparkle.strings": {
+      "size": 5748,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/_CodeSignature/CodeResources": {
+      "size": 17537,
+      "modUnix": 1684288304
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUAutomaticUpdateAlert.nib/keyedobjects-101300.nib": {
+      "size": 13694,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUAutomaticUpdateAlert.nib/keyedobjects.nib": {
+      "size": 16812,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdateAlert.nib/keyedobjects-101300.nib": {
+      "size": 17534,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdateAlert.nib/keyedobjects.nib": {
+      "size": 21983,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101300.nib": {
+      "size": 17088,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib": {
+      "size": 17052,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects.nib": {
+      "size": 21550,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/Sparkle.strings": {
+      "size": 10196,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Info.plist": {
+      "size": 1349,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ReleaseNotesColorStyle.css": {
+      "size": 203,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUModelTranslation.plist": {
+      "size": 11859,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUStatus.nib/keyedobjects-101300.nib": {
+      "size": 10682,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUStatus.nib/keyedobjects.nib": {
+      "size": 12937,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1038,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUUpdateAlert.strings": {
+      "size": 1416,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2656,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/Sparkle.strings": {
+      "size": 8468,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 544,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/SUUpdateAlert.strings": {
+      "size": 792,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/Sparkle.strings": {
+      "size": 6792,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 526,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUUpdateAlert.strings": {
+      "size": 761,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1314,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/Sparkle.strings": {
+      "size": 10570,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1046,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUUpdateAlert.strings": {
+      "size": 1436,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2504,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/Sparkle.strings": {
+      "size": 8306,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUUpdateAlert.strings": {
+      "size": 1488,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2556,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/Sparkle.strings": {
+      "size": 10148,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUUpdateAlert.strings": {
+      "size": 1516,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2612,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/Sparkle.strings": {
+      "size": 7734,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 516,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUUpdateAlert.strings": {
+      "size": 731,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1277,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1050,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUUpdateAlert.strings": {
+      "size": 1560,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2808,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/Sparkle.strings": {
+      "size": 10030,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUUpdateAlert.strings": {
+      "size": 1500,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2648,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/Sparkle.strings": {
+      "size": 6184,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1042,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUUpdateAlert.strings": {
+      "size": 1496,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2764,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/Sparkle.strings": {
+      "size": 10170,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 538,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/SUUpdateAlert.strings": {
+      "size": 781,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/Sparkle.strings": {
+      "size": 5288,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1078,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUUpdateAlert.strings": {
+      "size": 1560,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2468,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/Sparkle.strings": {
+      "size": 9778,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUUpdateAlert.strings": {
+      "size": 1584,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2596,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/Sparkle.strings": {
+      "size": 10002,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1034,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUUpdateAlert.strings": {
+      "size": 1452,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2628,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/Sparkle.strings": {
+      "size": 5868,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1058,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUUpdateAlert.strings": {
+      "size": 1540,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2716,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/Sparkle.strings": {
+      "size": 8340,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 854,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUUpdateAlert.strings": {
+      "size": 1256,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1876,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/Sparkle.strings": {
+      "size": 8552,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 790,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUUpdateAlert.strings": {
+      "size": 1192,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1892,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/Sparkle.strings": {
+      "size": 6220,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1026,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUUpdateAlert.strings": {
+      "size": 1352,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2452,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/Sparkle.strings": {
+      "size": 9352,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1098,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUUpdateAlert.strings": {
+      "size": 1508,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2660,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/Sparkle.strings": {
+      "size": 8850,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1098,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUUpdateAlert.strings": {
+      "size": 1548,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2620,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/Sparkle.strings": {
+      "size": 7318,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1034,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUUpdateAlert.strings": {
+      "size": 1524,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2676,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/Sparkle.strings": {
+      "size": 9728,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1058,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2760,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/Sparkle.strings": {
+      "size": 7896,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1062,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUUpdateAlert.strings": {
+      "size": 1556,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2604,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/Sparkle.strings": {
+      "size": 9806,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUUpdateAlert.strings": {
+      "size": 1624,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2780,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/Sparkle.strings": {
+      "size": 7668,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1078,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUUpdateAlert.strings": {
+      "size": 1532,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2604,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/Sparkle.strings": {
+      "size": 7548,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1010,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUUpdateAlert.strings": {
+      "size": 1520,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2504,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/Sparkle.strings": {
+      "size": 7944,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUUpdateAlert.strings": {
+      "size": 1596,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2640,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/Sparkle.strings": {
+      "size": 7834,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 970,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUUpdateAlert.strings": {
+      "size": 1404,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2272,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/Sparkle.strings": {
+      "size": 8492,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1046,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUUpdateAlert.strings": {
+      "size": 1428,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2612,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/Sparkle.strings": {
+      "size": 9716,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/SUUpdateAlert.strings": {
+      "size": 1664,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2600,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/Sparkle.strings": {
+      "size": 7860,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 726,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUUpdateAlert.strings": {
+      "size": 1080,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1736,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/Sparkle.strings": {
+      "size": 6128,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 738,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUUpdateAlert.strings": {
+      "size": 1092,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1756,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/Sparkle.strings": {
+      "size": 5748,
+      "modUnix": 1684288299
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Sparkle": {
+      "size": 1430128,
+      "modUnix": 1684288304
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/_CodeSignature/CodeResources": {
+      "size": 86111,
+      "modUnix": 1684288304
+    },
+    "a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/Current": {
+      "size": 1,
+      "modUnix": 1684288302
+    },
+    "a/bbb/Flux.app/Contents/Info.plist": {
+      "size": 2066,
+      "modUnix": 1684288298
+    },
+    "a/bbb/Flux.app/Contents/MacOS/Flux": {
+      "size": 1640176,
+      "modUnix": 1684288305
+    },
+    "a/bbb/Flux.app/Contents/PkgInfo": {
+      "size": 8,
+      "modUnix": 1771218129
+    },
+    "a/bbb/Flux.app/Contents/Resources/Base.lproj/MainMenu.nib/keyedobjects-101300.nib": {
+      "size": 61104,
+      "modUnix": 1684288298
+    },
+    "a/bbb/Flux.app/Contents/Resources/Base.lproj/MainMenu.nib/keyedobjects.nib": {
+      "size": 79260,
+      "modUnix": 1684288298
+    },
+    "a/bbb/Flux.app/Contents/Resources/English.lproj/InfoPlist.strings": {
+      "size": 92,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/Localizable.strings": {
+      "size": 2356,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/darkmode.scpt": {
+      "size": 118,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/flux-grad.png": {
+      "size": 8470,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/fluxicon.tiff": {
+      "size": 8296,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/geoloc-arrow.tiff": {
+      "size": 7264,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/lightmode.scpt": {
+      "size": 119,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/Resources/macflux.icns": {
+      "size": 125174,
+      "modUnix": 1684288297
+    },
+    "a/bbb/Flux.app/Contents/_CodeSignature/CodeResources": {
+      "size": 5966,
+      "modUnix": 1684288304
+    },
+    "a/bbb/Flux.zip": {
+      "size": 2129307,
+      "modUnix": 1770122943
+    },
+    "a/bbb/pexels-gabby-k-6289043.jpg": {
+      "size": 362754,
+      "modUnix": 1770131074
+    },
+    "a/bbb_副本/395998.xls": {
+      "size": 98816,
+      "modUnix": 1600255732
+    },
+    "a/bbb_副本/Flux.zip": {
+      "size": 2129307,
+      "modUnix": 1770122943
+    },
+    "a/bbb_副本/pexels-gabby-k-6289043.jpg": {
+      "size": 362754,
+      "modUnix": 1770131074
+    },
+    "b/.DS_Store": {
+      "size": 8196,
+      "modUnix": 1770567389
+    },
+    "b/bbb_副本/.DS_Store": {
+      "size": 6148,
+      "modUnix": 1770568552
+    },
+    "b/bbb_副本/395998.xls": {
+      "size": 98816,
+      "modUnix": 1600255732
+    },
+    "b/bbb_副本/Flux.app/Contents/CodeResources": {
+      "size": 1801,
+      "modUnix": 1684288410
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Headers": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Modules": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/PrivateHeaders": {
+      "size": 31,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Resources": {
+      "size": 26,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Sparkle": {
+      "size": 24,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloadData.h": {
+      "size": 973,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloader.h": {
+      "size": 791,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderDelegate.h": {
+      "size": 1153,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderProtocol.h": {
+      "size": 797,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUDownloaderSession.h": {
+      "size": 428,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SPUURLRequest.h": {
+      "size": 871,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUAppcast.h": {
+      "size": 700,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUAppcastItem.h": {
+      "size": 2082,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUCodeSigningVerifier.h": {
+      "size": 681,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUErrors.h": {
+      "size": 1335,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUExport.h": {
+      "size": 302,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUStandardVersionComparator.h": {
+      "size": 1227,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUUpdater.h": {
+      "size": 7745,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUUpdaterDelegate.h": {
+      "size": 12956,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUVersionComparisonProtocol.h": {
+      "size": 820,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/SUVersionDisplayProtocol.h": {
+      "size": 679,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Headers/Sparkle.h": {
+      "size": 1084,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Modules/module.modulemap": {
+      "size": 95,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/PrivateHeaders/SUUnarchiver.h": {
+      "size": 483,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Info.plist": {
+      "size": 1670,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/Autoupdate": {
+      "size": 544336,
+      "modUnix": 1684288304
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/MacOS/fileop": {
+      "size": 286688,
+      "modUnix": 1684288303
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/PkgInfo": {
+      "size": 8,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/AppIcon.icns": {
+      "size": 37132,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/Base.lproj/Sparkle.strings": {
+      "size": 10196,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/SUStatus.nib/keyedobjects-101300.nib": {
+      "size": 10683,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/SUStatus.nib/keyedobjects.nib": {
+      "size": 12937,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ar.lproj/Sparkle.strings": {
+      "size": 8468,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ca.lproj/Sparkle.strings": {
+      "size": 6792,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/cs.lproj/Sparkle.strings": {
+      "size": 10570,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/da.lproj/Sparkle.strings": {
+      "size": 8306,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/de.lproj/Sparkle.strings": {
+      "size": 10148,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/el.lproj/Sparkle.strings": {
+      "size": 7734,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/es.lproj/Sparkle.strings": {
+      "size": 10030,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/fi.lproj/Sparkle.strings": {
+      "size": 6184,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/fr.lproj/Sparkle.strings": {
+      "size": 10170,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/he.lproj/Sparkle.strings": {
+      "size": 5288,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/hr.lproj/Sparkle.strings": {
+      "size": 9778,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/hu.lproj/Sparkle.strings": {
+      "size": 10002,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/is.lproj/Sparkle.strings": {
+      "size": 5868,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/it.lproj/Sparkle.strings": {
+      "size": 8340,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ja.lproj/Sparkle.strings": {
+      "size": 8552,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ko.lproj/Sparkle.strings": {
+      "size": 6220,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/nb.lproj/Sparkle.strings": {
+      "size": 9352,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/nl.lproj/Sparkle.strings": {
+      "size": 8850,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pl.lproj/Sparkle.strings": {
+      "size": 7318,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pt_BR.lproj/Sparkle.strings": {
+      "size": 9728,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/pt_PT.lproj/Sparkle.strings": {
+      "size": 7896,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ro.lproj/Sparkle.strings": {
+      "size": 9806,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/ru.lproj/Sparkle.strings": {
+      "size": 7668,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sk.lproj/Sparkle.strings": {
+      "size": 7548,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sl.lproj/Sparkle.strings": {
+      "size": 7944,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/sv.lproj/Sparkle.strings": {
+      "size": 7834,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/th.lproj/Sparkle.strings": {
+      "size": 8492,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/tr.lproj/Sparkle.strings": {
+      "size": 9716,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/uk.lproj/Sparkle.strings": {
+      "size": 7860,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/zh_CN.lproj/Sparkle.strings": {
+      "size": 6128,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/Resources/zh_TW.lproj/Sparkle.strings": {
+      "size": 5748,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Autoupdate.app/Contents/_CodeSignature/CodeResources": {
+      "size": 17537,
+      "modUnix": 1684288304
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUAutomaticUpdateAlert.nib/keyedobjects-101300.nib": {
+      "size": 13694,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUAutomaticUpdateAlert.nib/keyedobjects.nib": {
+      "size": 16812,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdateAlert.nib/keyedobjects-101300.nib": {
+      "size": 17534,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdateAlert.nib/keyedobjects.nib": {
+      "size": 21983,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-101300.nib": {
+      "size": 17088,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects-110000.nib": {
+      "size": 17052,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/SUUpdatePermissionPrompt.nib/keyedobjects.nib": {
+      "size": 21550,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Base.lproj/Sparkle.strings": {
+      "size": 10196,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/Info.plist": {
+      "size": 1349,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ReleaseNotesColorStyle.css": {
+      "size": 203,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUModelTranslation.plist": {
+      "size": 11859,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUStatus.nib/keyedobjects-101300.nib": {
+      "size": 10682,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/SUStatus.nib/keyedobjects.nib": {
+      "size": 12937,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1038,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUUpdateAlert.strings": {
+      "size": 1416,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2656,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ar.lproj/Sparkle.strings": {
+      "size": 8468,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 544,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/SUUpdateAlert.strings": {
+      "size": 792,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ca.lproj/Sparkle.strings": {
+      "size": 6792,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 526,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUUpdateAlert.strings": {
+      "size": 761,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1314,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/cs.lproj/Sparkle.strings": {
+      "size": 10570,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1046,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUUpdateAlert.strings": {
+      "size": 1436,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2504,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/da.lproj/Sparkle.strings": {
+      "size": 8306,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUUpdateAlert.strings": {
+      "size": 1488,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2556,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/de.lproj/Sparkle.strings": {
+      "size": 10148,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUUpdateAlert.strings": {
+      "size": 1516,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2612,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/el.lproj/Sparkle.strings": {
+      "size": 7734,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 516,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUUpdateAlert.strings": {
+      "size": 731,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/en.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1277,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1050,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUUpdateAlert.strings": {
+      "size": 1560,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2808,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/es.lproj/Sparkle.strings": {
+      "size": 10030,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUUpdateAlert.strings": {
+      "size": 1500,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2648,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fi.lproj/Sparkle.strings": {
+      "size": 6184,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1042,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUUpdateAlert.strings": {
+      "size": 1496,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2764,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/fr.lproj/Sparkle.strings": {
+      "size": 10170,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 538,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/SUUpdateAlert.strings": {
+      "size": 781,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/he.lproj/Sparkle.strings": {
+      "size": 5288,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1078,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUUpdateAlert.strings": {
+      "size": 1560,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2468,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hr.lproj/Sparkle.strings": {
+      "size": 9778,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUUpdateAlert.strings": {
+      "size": 1584,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2596,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/hu.lproj/Sparkle.strings": {
+      "size": 10002,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1034,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUUpdateAlert.strings": {
+      "size": 1452,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2628,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/is.lproj/Sparkle.strings": {
+      "size": 5868,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1058,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUUpdateAlert.strings": {
+      "size": 1540,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2716,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/it.lproj/Sparkle.strings": {
+      "size": 8340,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 854,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUUpdateAlert.strings": {
+      "size": 1256,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1876,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ja.lproj/Sparkle.strings": {
+      "size": 8552,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 790,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUUpdateAlert.strings": {
+      "size": 1192,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1892,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ko.lproj/Sparkle.strings": {
+      "size": 6220,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1026,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUUpdateAlert.strings": {
+      "size": 1352,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2452,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nb.lproj/Sparkle.strings": {
+      "size": 9352,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1098,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUUpdateAlert.strings": {
+      "size": 1508,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2660,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/nl.lproj/Sparkle.strings": {
+      "size": 8850,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1098,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUUpdateAlert.strings": {
+      "size": 1548,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2620,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pl.lproj/Sparkle.strings": {
+      "size": 7318,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1034,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUUpdateAlert.strings": {
+      "size": 1524,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2676,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_BR.lproj/Sparkle.strings": {
+      "size": 9728,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1058,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2760,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/pt_PT.lproj/Sparkle.strings": {
+      "size": 7896,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1062,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUUpdateAlert.strings": {
+      "size": 1556,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2604,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ro.lproj/Sparkle.strings": {
+      "size": 9806,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1118,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUUpdateAlert.strings": {
+      "size": 1624,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2780,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/ru.lproj/Sparkle.strings": {
+      "size": 7668,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1078,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUUpdateAlert.strings": {
+      "size": 1532,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2604,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sk.lproj/Sparkle.strings": {
+      "size": 7548,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1010,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUUpdateAlert.strings": {
+      "size": 1520,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2504,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sl.lproj/Sparkle.strings": {
+      "size": 7944,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1114,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUUpdateAlert.strings": {
+      "size": 1596,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2640,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/sv.lproj/Sparkle.strings": {
+      "size": 7834,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 970,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUUpdateAlert.strings": {
+      "size": 1404,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2272,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/th.lproj/Sparkle.strings": {
+      "size": 8492,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 1046,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUUpdateAlert.strings": {
+      "size": 1428,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2612,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/tr.lproj/Sparkle.strings": {
+      "size": 9716,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/SUUpdateAlert.strings": {
+      "size": 1664,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 2600,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/uk.lproj/Sparkle.strings": {
+      "size": 7860,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 726,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUUpdateAlert.strings": {
+      "size": 1080,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1736,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_CN.lproj/Sparkle.strings": {
+      "size": 6128,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUAutomaticUpdateAlert.strings": {
+      "size": 738,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUUpdateAlert.strings": {
+      "size": 1092,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/SUUpdatePermissionPrompt.strings": {
+      "size": 1756,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Resources/zh_TW.lproj/Sparkle.strings": {
+      "size": 5748,
+      "modUnix": 1684288299
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/Sparkle": {
+      "size": 1430128,
+      "modUnix": 1684288304
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/A/_CodeSignature/CodeResources": {
+      "size": 86111,
+      "modUnix": 1684288304
+    },
+    "b/bbb_副本/Flux.app/Contents/Frameworks/Sparkle.framework/Versions/Current": {
+      "size": 1,
+      "modUnix": 1684288302
+    },
+    "b/bbb_副本/Flux.app/Contents/Info.plist": {
+      "size": 2066,
+      "modUnix": 1684288298
+    },
+    "b/bbb_副本/Flux.app/Contents/MacOS/Flux": {
+      "size": 1640176,
+      "modUnix": 1684288305
+    },
+    "b/bbb_副本/Flux.app/Contents/PkgInfo": {
+      "size": 8,
+      "modUnix": 1684288298
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/Base.lproj/MainMenu.nib/keyedobjects-101300.nib": {
+      "size": 61104,
+      "modUnix": 1684288298
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/Base.lproj/MainMenu.nib/keyedobjects.nib": {
+      "size": 79260,
+      "modUnix": 1684288298
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/English.lproj/InfoPlist.strings": {
+      "size": 92,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/Localizable.strings": {
+      "size": 2356,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/darkmode.scpt": {
+      "size": 118,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/flux-grad.png": {
+      "size": 8470,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/fluxicon.tiff": {
+      "size": 8296,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/geoloc-arrow.tiff": {
+      "size": 7264,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/lightmode.scpt": {
+      "size": 119,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/Resources/macflux.icns": {
+      "size": 125174,
+      "modUnix": 1684288297
+    },
+    "b/bbb_副本/Flux.app/Contents/_CodeSignature/CodeResources": {
+      "size": 5966,
+      "modUnix": 1684288304
+    },
+    "b/bbb_副本/Flux.zip": {
+      "size": 2129307,
+      "modUnix": 1770122943
+    },
+    "sync-test-1775752362.txt": {
+      "size": 39,
+      "modUnix": 1775752362
+    },
+    "upload-test-1775752384.txt": {
+      "size": 39,
+      "modUnix": 1775752384
+    },
+    "yuanbao_10065_universal.dmg": {
+      "size": 74820478,
+      "modUnix": 1770129733
+    }
+  }
+}

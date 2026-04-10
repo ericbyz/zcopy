@@ -105,17 +105,22 @@ type WatchController struct {
 }
 
 type AppState struct {
-	cfg       AppConfig
-	httpc     *http.Client
-	tokenMu   sync.RWMutex
-	token     string
-	store     *TaskStore
-	watchMu   sync.Mutex
-	watchJobs map[string]*WatchController
-	syncMu    sync.Mutex
-	syncing   map[string]bool
-	logMu     sync.Mutex
-	logs      []TransferLog
+	cfg            AppConfig
+	httpc          *http.Client
+	tokenMu        sync.RWMutex
+	token          string
+	store          *TaskStore
+	watchMu        sync.Mutex
+	watchJobs      map[string]*WatchController
+	syncMu         sync.Mutex
+	syncing        map[string]bool
+	logMu          sync.Mutex
+	logs           []TransferLog
+	fpBridgeURL    string
+	fpBridgeToken  string
+	webdavBaseURL  string
+	webdavUsername string
+	webdavPassword string
 }
 
 type remoteFileListResponse struct {
@@ -141,11 +146,16 @@ func main() {
 
 	gin.SetMode(cfg.Server.Mode)
 	app := &AppState{
-		cfg:       cfg,
-		httpc:     &http.Client{Timeout: 60 * time.Second},
-		store:     store,
-		watchJobs: make(map[string]*WatchController),
-		syncing:   make(map[string]bool),
+		cfg:           cfg,
+		httpc:         &http.Client{Timeout: 60 * time.Second},
+		store:         store,
+		watchJobs:     make(map[string]*WatchController),
+		syncing:       make(map[string]bool),
+		fpBridgeURL:   strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_FP_BRIDGE_URL")),
+		fpBridgeToken: strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_FP_BRIDGE_TOKEN")),
+	}
+	if err := app.startWebDAVServer(); err != nil {
+		log.Fatalf("failed to start file provider webdav server: %v", err)
 	}
 
 	app.restoreAutoWatchers()
@@ -202,7 +212,7 @@ func loadConfig() AppConfig {
 		cfg.Server.Mode = "debug"
 	}
 	if cfg.FileServer.BaseURL == "" {
-		cfg.FileServer.BaseURL = "http://localhost:8080/api/v1"
+		cfg.FileServer.BaseURL = "http://localhost:8890/api/v1"
 	}
 	if cfg.Storage.DataDir == "" {
 		cfg.Storage.DataDir = "./data"
@@ -756,6 +766,26 @@ func (a *AppState) initTaskCFAPI(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
 		return
 	}
+	if runtime.GOOS == "darwin" {
+		if !a.fileProviderAvailable() {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "当前 mac 客户端未启用 File Provider 支持"})
+			return
+		}
+		status, err := a.initTaskFileProvider(task)
+		if err != nil {
+			a.pushLog("error", task, "", "注册 File Provider 失败: "+err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "注册 File Provider 失败: " + err.Error()})
+			return
+		}
+		a.pushLog("info", task, "", "File Provider 域注册成功")
+		c.JSON(http.StatusOK, gin.H{
+			"message":    "File Provider 域注册成功",
+			"mountPath":  status.MountPath,
+			"logPath":    status.LogPath,
+			"registered": status.Registered,
+		})
+		return
+	}
 	if runtime.GOOS != "windows" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "仅 Windows 支持 Cloud Files API"})
 		return
@@ -776,6 +806,37 @@ func (a *AppState) taskCFAPIStatus(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
 		return
 	}
+	if runtime.GOOS == "darwin" {
+		if !a.fileProviderAvailable() {
+			c.JSON(http.StatusOK, gin.H{
+				"supported":  false,
+				"registered": false,
+				"reason":     "mac File Provider bridge 未就绪",
+			})
+			return
+		}
+		status, err := a.getTaskFileProviderStatus(task)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"supported":  true,
+				"registered": false,
+				"reason":     err.Error(),
+				"rootId":     syncRootID(task.ID),
+				"mode":       "file_provider",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"supported":  true,
+			"registered": status.Registered,
+			"reason":     status.Reason,
+			"rootId":     syncRootID(task.ID),
+			"mountPath":  status.MountPath,
+			"logPath":    status.LogPath,
+			"mode":       "file_provider",
+		})
+		return
+	}
 	if runtime.GOOS != "windows" {
 		c.JSON(http.StatusOK, gin.H{"supported": false, "registered": false})
 		return
@@ -790,7 +851,23 @@ func (a *AppState) taskCFAPIStatus(c *gin.Context) {
 }
 
 func syncRootID(taskID string) string {
-	return "ZCopy." + taskID
+	var builder strings.Builder
+	builder.WriteString("ZCopy.")
+	for _, r := range taskID {
+		switch {
+		case r >= 'a' && r <= 'z':
+			builder.WriteRune(r)
+		case r >= 'A' && r <= 'Z':
+			builder.WriteRune(r)
+		case r >= '0' && r <= '9':
+			builder.WriteRune(r)
+		case r == '.' || r == '-' || r == '_':
+			builder.WriteRune(r)
+		default:
+			builder.WriteRune('-')
+		}
+	}
+	return builder.String()
 }
 
 func registerWindowsSyncRoot(taskID string, taskName string, localPath string) error {
@@ -870,10 +947,15 @@ func isSyncRootRegistered(taskID string) (bool, string) {
 }
 
 func (a *AppState) systemCapabilities(c *gin.Context) {
+	onDemandSupport := runtime.GOOS == "windows" || a.fileProviderAvailable()
+	onDemandMode := "incremental-upload"
+	if runtime.GOOS == "darwin" && onDemandSupport {
+		onDemandMode = "file_provider"
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"os":              runtime.GOOS,
-		"onDemandSupport": runtime.GOOS == "windows",
-		"onDemandMode":    "incremental-upload",
+		"onDemandSupport": onDemandSupport,
+		"onDemandMode":    onDemandMode,
 	})
 }
 
