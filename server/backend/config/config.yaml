@@ -1,0 +1,13 @@
+server:
+  port: "8080"
+  mode: "debug"
+
+database:
+  path: "./data/zcopy.db"
+
+auth:
+  secret_key: "zcopy-secret-key-change-in-production"
+  token_expire_hours: 72
+
+storage:
+  root_dir: "./storage"

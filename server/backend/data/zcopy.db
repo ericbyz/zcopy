@@ -1,0 +1,38 @@
+{
+  "nextId": 4,
+  "users": [
+    {
+      "ID": 1,
+      "Username": "demo",
+      "Email": "demo@example.com",
+      "Password": "$2a$10$utAVXrXRZ7i/wAKpAF74I.0XSqOG4KQbOEjYO.Sb/A6zAwKsp29nS",
+      "Nickname": "????",
+      "Avatar": "",
+      "CreatedAt": "2026-04-10T12:53:10.679563+08:00",
+      "UpdatedAt": "2026-04-10T12:53:10.679563+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 2,
+      "Username": "byz",
+      "Email": "123@qq.com",
+      "Password": "$2a$10$xgd6iCqz6s7X770paExL6O7FVhqft5HorWYBfaoMD9oo2HPxbUfSq",
+      "Nickname": "zhu",
+      "Avatar": "",
+      "CreatedAt": "2026-04-10T14:00:35.5850685+08:00",
+      "UpdatedAt": "2026-04-10T14:00:35.5850685+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 3,
+      "Username": "qiu",
+      "Email": "1234@aa.com",
+      "Password": "$2a$10$6N2dXQJZUoA9lRBOtX2wVOqIyXEkEsZLt4guL2rKpjlVRW/dwiS9y",
+      "Nickname": "yui",
+      "Avatar": "",
+      "CreatedAt": "2026-04-10T14:44:22.0440923+08:00",
+      "UpdatedAt": "2026-04-10T14:44:22.0440923+08:00",
+      "DeletedAt": null
+    }
+  ]
+}

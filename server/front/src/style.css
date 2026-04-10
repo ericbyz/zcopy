@@ -1,0 +1,264 @@
+:root {
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #e5eefb;
+  background: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.16), transparent 24%),
+    #0f172a;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  margin: 0 0 10px;
+  font-size: 36px;
+}
+
+.hero p {
+  margin: 0;
+  color: #a7b7d6;
+}
+
+.user-card,
+.auth-card,
+.workspace,
+.message {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.user-card {
+  min-width: 240px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.message {
+  padding: 14px 18px;
+  color: #dbeafe;
+  margin-bottom: 16px;
+}
+
+.auth-layout {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  padding: 24px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button,
+.primary-btn,
+.ghost-btn,
+.danger-btn,
+.link-btn {
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tabs button {
+  padding: 10px 16px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+.tabs button.active {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #fff;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  color: #e2e8f0;
+}
+
+.primary-btn {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #3b82f6, #4338ca);
+  color: #fff;
+}
+
+.ghost-btn {
+  padding: 10px 14px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.danger-btn {
+  padding: 10px 14px;
+  background: rgba(220, 38, 38, 0.18);
+  color: #fecaca;
+}
+
+.primary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover,
+.tabs button:hover,
+.link-btn:hover {
+  transform: translateY(-1px);
+}
+
+.workspace {
+  padding: 22px;
+}
+
+.toolbar,
+.upload-bar,
+.file-header,
+.file-row {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+}
+
+.toolbar {
+  grid-template-columns: 1fr auto;
+  margin-bottom: 16px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.link-btn {
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #bfdbfe;
+}
+
+.actions,
+.upload-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.small-input {
+  width: 220px;
+}
+
+.file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.file-header,
+.file-row {
+  grid-template-columns: minmax(220px, 2fr) minmax(80px, 100px) minmax(180px, 1fr) minmax(160px, auto);
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+.file-header {
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+}
+
+.file-row {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.file-name {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.row-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.empty {
+  padding: 28px;
+  text-align: center;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.06);
+  border-radius: 14px;
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .toolbar,
+  .upload-bar,
+  .actions {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-header {
+    display: none;
+  }
+
+  .file-row {
+    grid-template-columns: 1fr;
+  }
+
+  .row-actions {
+    justify-content: flex-start;
+  }
+
+  .small-input {
+    width: 100%;
+  }
+}
