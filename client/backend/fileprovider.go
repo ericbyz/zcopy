@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/net/webdav"
 )
 
@@ -49,6 +50,17 @@ type remoteWebDAVItem struct {
 type remoteWebDAVListResponse struct {
 	Path  string             `json:"path"`
 	Items []remoteWebDAVItem `json:"items"`
+}
+
+type fileProviderItemPayload struct {
+	Identifier       string    `json:"identifier"`
+	ParentIdentifier string    `json:"parentIdentifier"`
+	Name             string    `json:"name"`
+	Path             string    `json:"path"`
+	Size             int64     `json:"size"`
+	IsDirectory      bool      `json:"isDirectory"`
+	UpdatedAt        time.Time `json:"updatedAt"`
+	ChildCount       int       `json:"childCount"`
 }
 
 type remoteWebDAVFS struct {
@@ -597,4 +609,246 @@ func randomBridgeSecret(size int) string {
 		return time.Now().Format("20060102150405.000000000")
 	}
 	return base64.RawURLEncoding.EncodeToString(buf)
+}
+
+func (a *AppState) fileProviderItem(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	info, err := a.remoteInfoForPath(task, cleanPath, token)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.JSON(http.StatusNotFound, gin.H{"message": "远程项目不存在"})
+			return
+		}
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取远程项目失败: " + err.Error()})
+		return
+	}
+	payload, err := a.makeFileProviderItemPayload(task, cleanPath, info, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "转换远程项目失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"item": payload})
+}
+
+func (a *AppState) fileProviderChildren(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	items, err := a.listRemoteItems(joinRemotePath(task.RemotePath, cleanPath), token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取远程目录失败: " + err.Error()})
+		return
+	}
+	payload := make([]fileProviderItemPayload, 0, len(items))
+	for _, item := range items {
+		childPath := normalizeWebDAVPath(path.Join(cleanPath, item.Name))
+		mode := os.FileMode(0644)
+		if item.IsDirectory {
+			mode = os.ModeDir | 0755
+		}
+		entry, err := a.makeFileProviderItemPayload(task, childPath, remoteWebDAVInfo{
+			name:    item.Name,
+			size:    item.Size,
+			modTime: item.UpdatedAt,
+			mode:    mode,
+		}, token)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"message": "转换远程目录项失败: " + err.Error()})
+			return
+		}
+		payload = append(payload, entry)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"path":  cleanPath,
+		"items": payload,
+	})
+}
+
+func (a *AppState) fileProviderContent(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	if cleanPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "根目录没有可下载内容"})
+		return
+	}
+	info, err := a.remoteInfoForPath(task, cleanPath, token)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.JSON(http.StatusNotFound, gin.H{"message": "远程项目不存在"})
+			return
+		}
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取远程项目失败: " + err.Error()})
+		return
+	}
+	if info.IsDir() {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "目录不能直接下载"})
+		return
+	}
+	endpoint := strings.TrimRight(a.cfg.FileServer.BaseURL, "/") + "/files/download?path=" + url.QueryEscape(joinRemotePath(task.RemotePath, cleanPath))
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := a.httpc.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "下载远程文件失败: " + err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		data, _ := io.ReadAll(resp.Body)
+		msg := parseJSONMessage(data)
+		if msg == "" {
+			msg = "下载远程文件失败"
+		}
+		c.JSON(http.StatusBadGateway, gin.H{"message": msg})
+		return
+	}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", `attachment; filename="`+path.Base(cleanPath)+`"`)
+	c.Status(http.StatusOK)
+	if _, err := io.Copy(c.Writer, resp.Body); err != nil {
+		c.Error(err)
+	}
+}
+
+func (a *AppState) fileProviderPutContent(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	if cleanPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "根目录不能直接写入"})
+		return
+	}
+	remotePath := joinRemotePath(task.RemotePath, cleanPath)
+	remoteDir := path.Dir(remotePath)
+	if remoteDir == "." {
+		remoteDir = ""
+	}
+	if err := a.ensureRemotePath(remoteDir, token); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "确保远程目录失败: " + err.Error()})
+		return
+	}
+	_ = a.deleteRemotePath(remotePath, token)
+	if err := a.uploadFileReader(path.Base(cleanPath), remoteDir, c.Request.Body, token); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "上传远程文件失败: " + err.Error()})
+		return
+	}
+	info, err := a.remoteInfoForPath(task, cleanPath, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取上传结果失败: " + err.Error()})
+		return
+	}
+	payload, err := a.makeFileProviderItemPayload(task, cleanPath, info, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "转换上传结果失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"item": payload})
+}
+
+func (a *AppState) fileProviderCreateFolder(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	if err := a.ensureRemotePath(joinRemotePath(task.RemotePath, cleanPath), token); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "创建远程目录失败: " + err.Error()})
+		return
+	}
+	info, err := a.remoteInfoForPath(task, cleanPath, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取远程目录失败: " + err.Error()})
+		return
+	}
+	payload, err := a.makeFileProviderItemPayload(task, cleanPath, info, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "转换远程目录失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"item": payload})
+}
+
+func (a *AppState) fileProviderDeleteItem(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	if cleanPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "不能删除根目录"})
+		return
+	}
+	if err := a.deleteRemotePath(joinRemotePath(task.RemotePath, cleanPath), token); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "删除远程项目失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+func (a *AppState) fileProviderContext(c *gin.Context) (BackupTask, string, string, bool) {
+	taskID := normalizeFileProviderTaskID(c.Param("id"))
+	task, ok := a.store.get(taskID)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
+		return BackupTask{}, "", "", false
+	}
+	token := a.getToken()
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
+		return BackupTask{}, "", "", false
+	}
+	return task, normalizeWebDAVPath(c.Query("path")), token, true
+}
+
+func normalizeFileProviderTaskID(raw string) string {
+	taskID := strings.TrimSpace(raw)
+	taskID = strings.TrimPrefix(taskID, "ZCopy.")
+	if idx := strings.Index(taskID, "task-"); idx >= 0 {
+		return taskID[idx:]
+	}
+	return taskID
+}
+
+func (a *AppState) makeFileProviderItemPayload(task BackupTask, cleanPath string, info os.FileInfo, token string) (fileProviderItemPayload, error) {
+	payload := fileProviderItemPayload{
+		Identifier:       fileProviderIdentifier(cleanPath),
+		ParentIdentifier: fileProviderIdentifier(path.Dir(cleanPath)),
+		Name:             info.Name(),
+		Path:             cleanPath,
+		Size:             info.Size(),
+		IsDirectory:      info.IsDir(),
+		UpdatedAt:        info.ModTime(),
+	}
+	if cleanPath == "" {
+		payload.ParentIdentifier = "root"
+		payload.Name = task.Name
+	}
+	if payload.IsDirectory {
+		children, err := a.remoteDirEntries(task, cleanPath, token)
+		if err != nil {
+			return fileProviderItemPayload{}, err
+		}
+		payload.ChildCount = len(children)
+	}
+	return payload, nil
+}
+
+func fileProviderIdentifier(cleanPath string) string {
+	if normalizeWebDAVPath(cleanPath) == "" {
+		return "root"
+	}
+	return "path:" + normalizeWebDAVPath(cleanPath)
 }

@@ -181,6 +181,12 @@ func main() {
 	api.POST("/tasks/:id/on-demand/cfapi/init", app.initTaskCFAPI)
 	api.GET("/tasks/:id/on-demand/cfapi/status", app.taskCFAPIStatus)
 	api.GET("/remote/folders", app.listRemoteFolders)
+	api.GET("/file-provider/tasks/:id/item", app.fileProviderItem)
+	api.GET("/file-provider/tasks/:id/children", app.fileProviderChildren)
+	api.GET("/file-provider/tasks/:id/content", app.fileProviderContent)
+	api.PUT("/file-provider/tasks/:id/content", app.fileProviderPutContent)
+	api.POST("/file-provider/tasks/:id/folder", app.fileProviderCreateFolder)
+	api.DELETE("/file-provider/tasks/:id/item", app.fileProviderDeleteItem)
 	api.GET("/logs", app.listLogs)
 	api.GET("/system/capabilities", app.systemCapabilities)
 
@@ -487,7 +493,7 @@ func (a *AppState) createTask(c *gin.Context) {
 	req.CreatedAt = now
 	req.UpdatedAt = now
 	if err := a.store.upsert(req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "保存任务失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "保存任务失败: " + err.Error()})
 		return
 	}
 	if req.AutoBackup {

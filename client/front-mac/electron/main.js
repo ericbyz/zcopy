@@ -1,23 +1,21 @@
 import { randomUUID } from 'crypto'
 import { app, BrowserWindow, dialog, ipcMain, globalShortcut } from 'electron'
-import { spawn } from 'child_process'
-import { createServer } from 'http'
+import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
 
-const require = createRequire(import.meta.url)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const isDev = !app.isPackaged
 
 let backendProcess = null
-let bridgeServer = null
-let bridgeState = {
+let fileProviderHostProcess = null
+const bridgeState = {
   url: '',
   token: '',
-  fileProvider: null
+  stateDir: '',
+  hostBundlePath: ''
 }
 
 function resolveBackendExecutable() {
@@ -41,135 +39,98 @@ function resolveRendererEntry() {
   return path.join(process.resourcesPath, 'renderer', 'index.html')
 }
 
-function loadFileProviderModule() {
-  if (process.platform !== 'darwin') {
-    return null
+function resolveBundledFileProviderHostArchive() {
+  if (isDev) {
+    return path.resolve(__dirname, '../fileprovider-host/ZCopyFileProviderHost.zip')
   }
-  if (bridgeState.fileProvider) {
-    return bridgeState.fileProvider
-  }
-  try {
-    bridgeState.fileProvider = require('electron-macos-file-provider')
-  } catch (error) {
-    console.warn('[zcopy] failed to load electron-macos-file-provider', error)
-    bridgeState.fileProvider = null
-  }
-  return bridgeState.fileProvider
+  return path.join(process.resourcesPath, 'fileprovider-host', 'ZCopyFileProviderHost.zip')
 }
 
-function sendJSON(response, statusCode, payload) {
-  response.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' })
-  response.end(JSON.stringify(payload))
+function resolveInstalledFileProviderHost() {
+  return path.join(app.getPath('home'), 'Applications', 'ZCopyFileProviderHost.app')
 }
 
-function verifyBridgeRequest(request) {
-  const auth = request.headers.authorization || ''
-  return auth === `Bearer ${bridgeState.token}`
+function resolveFileProviderHostExecutable(bundlePath) {
+  return path.join(bundlePath, 'Contents', 'MacOS', 'ZCopyFileProviderHost')
 }
 
-async function readJSONBody(request) {
-  const chunks = []
-  for await (const chunk of request) {
-    chunks.push(chunk)
+function ensureFileProviderHostInstalled() {
+  const sourceArchive = resolveBundledFileProviderHostArchive()
+  const installedBundle = resolveInstalledFileProviderHost()
+  if (!fs.existsSync(sourceArchive)) {
+    throw new Error(`file provider host archive not found: ${sourceArchive}`)
   }
-  if (chunks.length === 0) {
-    return {}
+  fs.mkdirSync(path.dirname(installedBundle), { recursive: true })
+  fs.rmSync(installedBundle, { recursive: true, force: true })
+  const unzip = spawnSync('ditto', ['-x', '-k', sourceArchive, path.dirname(installedBundle)], {
+    stdio: 'ignore'
+  })
+  if (unzip.status !== 0 || !fs.existsSync(installedBundle)) {
+    throw new Error(`failed to install file provider host from archive: ${sourceArchive}`)
   }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+  bridgeState.hostBundlePath = installedBundle
+  return installedBundle
 }
 
-function registerDomain(fileProvider, payload) {
+function waitForBridgeInfo(bridgeInfoPath, expectedToken, timeoutMs = 15000) {
+  const startedAt = Date.now()
   return new Promise((resolve, reject) => {
-    fileProvider.addDomain(
-      payload.id,
-      payload.name,
-      {
-        url: payload.url,
-        user: payload.user,
-        password: payload.password
-      },
-      (error) => {
-        if (error) {
-          reject(new Error(String(error)))
-          return
-        }
-        resolve()
-      }
-    )
-  })
-}
-
-async function queryDomainStatus(fileProvider, id, name) {
-  try {
-    const mountPath = await fileProvider.getUserVisiblePath(id, name)
-    return {
-      registered: Boolean(mountPath),
-      mountPath: mountPath || '',
-      logPath: fileProvider.getFileProviderLogPath()
-    }
-  } catch (error) {
-    return {
-      registered: false,
-      reason: error instanceof Error ? error.message : String(error),
-      mountPath: '',
-      logPath: typeof fileProvider.getFileProviderLogPath === 'function' ? fileProvider.getFileProviderLogPath() : ''
-    }
-  }
-}
-
-function startFileProviderBridge() {
-  if (process.platform !== 'darwin') {
-    return Promise.resolve()
-  }
-
-  const fileProvider = loadFileProviderModule()
-  bridgeState.token = randomUUID()
-
-  return new Promise((resolve) => {
-    bridgeServer = createServer(async (request, response) => {
-      if (!verifyBridgeRequest(request)) {
-        sendJSON(response, 401, { message: 'unauthorized' })
+    const poll = () => {
+      if (Date.now() - startedAt > timeoutMs) {
+        reject(new Error(`timed out waiting for file provider host bridge: ${bridgeInfoPath}`))
         return
       }
-      if (!fileProvider) {
-        sendJSON(response, 501, { message: 'file provider module unavailable' })
+      if (!fs.existsSync(bridgeInfoPath)) {
+        setTimeout(poll, 250)
         return
       }
-
       try {
-        const url = new URL(request.url || '/', 'http://127.0.0.1')
-        if (request.method === 'POST' && url.pathname === '/register') {
-          const payload = await readJSONBody(request)
-          await registerDomain(fileProvider, payload)
-          const status = await queryDomainStatus(fileProvider, payload.id, payload.name)
-          sendJSON(response, 200, {
-            message: 'ok',
-            ...status
-          })
+        const parsed = JSON.parse(fs.readFileSync(bridgeInfoPath, 'utf8'))
+        if (parsed.token !== expectedToken || !parsed.url) {
+          setTimeout(poll, 250)
           return
         }
-        if (request.method === 'GET' && url.pathname === '/status') {
-          const id = url.searchParams.get('id') || ''
-          const name = url.searchParams.get('name') || ''
-          const status = await queryDomainStatus(fileProvider, id, name)
-          sendJSON(response, 200, status)
-          return
-        }
-        sendJSON(response, 404, { message: 'not found' })
-      } catch (error) {
-        sendJSON(response, 500, {
-          message: error instanceof Error ? error.message : String(error)
-        })
+        resolve(parsed)
+      } catch {
+        setTimeout(poll, 250)
       }
-    })
-
-    bridgeServer.listen(0, '127.0.0.1', () => {
-      const address = bridgeServer.address()
-      const port = typeof address === 'object' && address ? address.port : 0
-      bridgeState.url = `http://127.0.0.1:${port}`
-      resolve()
-    })
+    }
+    poll()
   })
+}
+
+async function startFileProviderBridge() {
+  if (process.platform !== 'darwin') {
+    return
+  }
+
+  const hostBundle = ensureFileProviderHostInstalled()
+  const executable = resolveFileProviderHostExecutable(hostBundle)
+  const stateDir = path.join(app.getPath('userData'), 'fileprovider-host')
+  const bridgeInfoPath = path.join(stateDir, 'bridge.json')
+  const token = randomUUID()
+
+  fs.rmSync(stateDir, { recursive: true, force: true })
+  fs.mkdirSync(stateDir, { recursive: true })
+
+  if (fileProviderHostProcess && !fileProviderHostProcess.killed) {
+    fileProviderHostProcess.kill()
+  }
+
+  fileProviderHostProcess = spawn(executable, [], {
+    env: {
+      ...process.env,
+      ZCOPY_FILE_PROVIDER_STATE_DIR: stateDir,
+      ZCOPY_FILE_PROVIDER_BRIDGE_TOKEN: token
+    },
+    stdio: 'ignore'
+  })
+
+  bridgeState.stateDir = stateDir
+  bridgeState.token = token
+
+  const bridgeInfo = await waitForBridgeInfo(bridgeInfoPath, token)
+  bridgeState.url = bridgeInfo.url
 }
 
 function startBackend() {
@@ -190,10 +151,14 @@ function startBackend() {
     env.ZCOPY_CLIENT_FP_BRIDGE_URL = bridgeState.url
     env.ZCOPY_CLIENT_FP_BRIDGE_TOKEN = bridgeState.token
   }
+  const logDir = path.join(app.getPath('userData'), 'logs')
+  fs.mkdirSync(logDir, { recursive: true })
+  const backendLogPath = path.join(logDir, 'backend.log')
+  const backendLogFd = fs.openSync(backendLogPath, 'a')
   backendProcess = spawn(backendExe, [], {
     cwd: path.dirname(backendExe),
     env,
-    stdio: 'ignore'
+    stdio: ['ignore', backendLogFd, backendLogFd]
   })
 }
 
@@ -226,7 +191,11 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  await startFileProviderBridge()
+  try {
+    await startFileProviderBridge()
+  } catch (error) {
+    console.warn('[zcopy] failed to start native file provider host', error)
+  }
   startBackend()
   createWindow()
   globalShortcut.register('F12', () => {
@@ -259,8 +228,8 @@ app.on('will-quit', () => {
   if (backendProcess && !backendProcess.killed) {
     backendProcess.kill()
   }
-  if (bridgeServer) {
-    bridgeServer.close()
+  if (fileProviderHostProcess && !fileProviderHostProcess.killed) {
+    fileProviderHostProcess.kill()
   }
   globalShortcut.unregisterAll()
 })

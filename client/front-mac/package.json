@@ -7,9 +7,13 @@
   "scripts": {
     "prepare:backend-dir": "node -e \"require('fs').mkdirSync('electron/bin',{recursive:true})\"",
     "build:backend": "npm run prepare:backend-dir && go build -C ../backend -o ../front-mac/electron/bin/zcopy-client-backend .",
+    "build:renderer": "node ./scripts/build-renderer.mjs",
+    "build:fileprovider": "node ./scripts/build-fileprovider.mjs",
+    "build:fileprovider-host": "node ./scripts/build-fileprovider-host.mjs",
+    "sign:app": "bash ./scripts/sign-mac-app.sh ./release/mac-arm64/ZCopyClient.app \"$CSC_NAME\"",
     "start": "electron .",
-    "dist": "npm run build:backend && electron-builder --mac dmg",
-    "dist:dir": "npm run build:backend && electron-builder --mac dir"
+    "dist": "npm run build:backend && npm run build:renderer && npm run build:fileprovider && npm run build:fileprovider-host && electron-builder --mac dmg",
+    "dist:dir": "npm run build:backend && npm run build:renderer && npm run build:fileprovider && npm run build:fileprovider-host && electron-builder --mac dir"
   },
   "dependencies": {
     "electron-macos-file-provider": "^1.0.12"
@@ -26,12 +30,10 @@
     },
     "files": [
       "electron/**/*",
-      "package.json",
-      "node_modules/electron-macos-file-provider/**/*"
+      "package.json"
     ],
     "asarUnpack": [
-      "electron/bin/**/*",
-      "node_modules/electron-macos-file-provider/**/*"
+      "electron/bin/**/*"
     ],
     "extraResources": [
       {
@@ -45,6 +47,10 @@
       {
         "from": "../front/dist",
         "to": "renderer"
+      },
+      {
+        "from": "electron/fileprovider-host/ZCopyFileProviderHost.zip",
+        "to": "fileprovider-host/ZCopyFileProviderHost.zip"
       }
     ],
     "mac": {
@@ -53,16 +59,9 @@
       "darkModeSupport": true,
       "gatekeeperAssess": false,
       "hardenedRuntime": false,
-      "identity": null,
       "target": [
         "dmg",
         "dir"
-      ],
-      "extraFiles": [
-        {
-          "from": "node_modules/electron-macos-file-provider/archive/EFPHelper.xcarchive/Products/Applications/EFPHelper.app/Contents/PlugIns/EleFileProvider.appex",
-          "to": "PlugIns/EleFileProvider.appex"
-        }
       ]
     },
     "dmg": {
