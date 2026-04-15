@@ -437,6 +437,17 @@ cd server/backend && go run main.go          # API 监听 :8890
 cd server/front && npm run dev               # Web UI 监听 :5173
 ```
 
+### 快捷启动脚本
+
+```bash
+node scripts/quick-start.mjs
+```
+
+- 会同时启动 `server/backend` 与 `server/front`
+- macOS 下沿用现有 `client/front-mac` 的 `npm run dist` 打包链路，并把 `.dmg` 与 `.app` 复制到 `release/quick-start/mac/<时间戳>/`
+- Windows 下沿用现有 `client/front` 的 `npm run dist:portable` 打包链路，并把 `.exe` 复制到 `release/quick-start/windows/<时间戳>/`
+- 脚本会保持服务端前后端继续运行，按 `Ctrl+C` 可一并停止
+
 ### 启动客户端（开发模式）
 
 ```bash
