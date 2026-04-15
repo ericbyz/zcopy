@@ -65,10 +65,17 @@ final class FileProviderItem: NSObject, NSFileProviderItem {
     }
 
     var isDownloaded: Bool {
-        remoteItem.isDirectory
+        remoteItem.isDirectory || service.isDownloaded(path: remoteItem.path)
     }
 
     var isMostRecentVersionDownloaded: Bool {
-        remoteItem.isDirectory
+        isDownloaded
+    }
+
+    var contentPolicy: NSFileProviderContentPolicy {
+        if remoteItem.isDirectory {
+            return .inherited
+        }
+        return .downloadLazily
     }
 }

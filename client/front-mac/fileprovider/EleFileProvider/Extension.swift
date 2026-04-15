@@ -3,9 +3,11 @@ import Foundation
 
 public final class Extension: NSObject, NSFileProviderReplicatedExtension {
     private let service: FileProviderService
+    private let manager: NSFileProviderManager?
 
     required public init(domain: NSFileProviderDomain) {
         self.service = FileProviderService(domain: domain)
+        self.manager = NSFileProviderManager(for: domain)
         super.init()
     }
 
@@ -34,6 +36,8 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             case .failure(let error):
                 completionHandler(nil, nil, error)
             case .success(let (url, item)):
+                self.service.markDownloaded(path: item.path)
+                self.signalStateRefresh()
                 completionHandler(url, FileProviderItem(remoteItem: item, service: self.service), nil)
             }
         }
@@ -51,6 +55,10 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             case .failure(let error):
                 completionHandler(nil, [], false, error)
             case .success(let item):
+                if !item.isDirectory {
+                    self.service.markDownloaded(path: item.path)
+                }
+                self.signalStateRefresh()
                 completionHandler(FileProviderItem(remoteItem: item, service: self.service), [], false, nil)
             }
         }
@@ -89,6 +97,8 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             case .failure(let error):
                 completionHandler(nil, [.contents], false, error)
             case .success(let remoteItem):
+                self.service.markDownloaded(path: remoteItem.path)
+                self.signalStateRefresh()
                 completionHandler(FileProviderItem(remoteItem: remoteItem, service: self.service), [], false, nil)
             }
         }
@@ -105,6 +115,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             case .failure(let error):
                 completionHandler(error)
             case .success:
+                self.signalStateRefresh()
                 completionHandler(nil)
             }
         }
@@ -116,5 +127,60 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func enumerator(for containerItemIdentifier: NSFileProviderItemIdentifier, request: NSFileProviderRequest) throws -> NSFileProviderEnumerator {
         FileProviderEnumerator(service: service, containerItemIdentifier: containerItemIdentifier)
+    }
+
+    public func materializedItemsDidChange(completionHandler: @escaping () -> Void) {
+        refreshMaterializedState {
+            completionHandler()
+        }
+    }
+
+    private func refreshMaterializedState(completion: @escaping () -> Void) {
+        guard let enumerator = manager?.enumeratorForMaterializedItems() else {
+            completion()
+            return
+        }
+        let observer = MaterializedSetObserver(service: service, completion: completion)
+        enumerator.enumerateItems(for: observer, startingAt: NSFileProviderPage.initialPageSortedByName as NSFileProviderPage)
+    }
+
+    private func signalStateRefresh() {
+        manager?.signalEnumerator(for: .workingSet) { _ in }
+        manager?.signalEnumerator(for: .rootContainer) { _ in }
+    }
+}
+
+private final class MaterializedSetObserver: NSObject, NSFileProviderEnumerationObserver {
+    private let service: FileProviderService
+    private let completion: () -> Void
+    private var paths = Set<String>()
+    private var finished = false
+
+    init(service: FileProviderService, completion: @escaping () -> Void) {
+        self.service = service
+        self.completion = completion
+        super.init()
+    }
+
+    func didEnumerate(_ updatedItems: [any NSFileProviderItem]) {
+        for item in updatedItems {
+            let raw = item.itemIdentifier.rawValue
+            if raw.hasPrefix("path:") {
+                paths.insert(String(raw.dropFirst(5)))
+            }
+        }
+    }
+
+    func finishEnumerating(upTo nextPage: NSFileProviderPage?) {
+        guard !finished else { return }
+        finished = true
+        service.replaceDownloadedPaths(paths)
+        completion()
+    }
+
+    func finishEnumeratingWithError(_ error: any Error) {
+        guard !finished else { return }
+        finished = true
+        completion()
     }
 }

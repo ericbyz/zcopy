@@ -1,5 +1,5 @@
 {
-  "nextId": 4,
+  "nextId": 24,
   "users": [
     {
       "ID": 1,
@@ -32,6 +32,226 @@
       "Avatar": "",
       "CreatedAt": "2026-04-10T14:44:22.0440923+08:00",
       "UpdatedAt": "2026-04-10T14:44:22.0440923+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 4,
+      "Username": "fpuser_1776093587",
+      "Email": "fpuser_1776093587@example.com",
+      "Password": "$2a$10$dZMsQhknLxOPlSyf59zJoex/0xej59GWwK6LAkN6iaCFVLm2CKO.6",
+      "Nickname": "FP Test",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:19:47.88045+08:00",
+      "UpdatedAt": "2026-04-13T23:19:47.88045+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 5,
+      "Username": "fpverify_1776093815",
+      "Email": "fpverify_1776093815@example.com",
+      "Password": "$2a$10$WQaBsFsZDav0IkyiSzzfW.bPdaUp8CxyPLfoC.E1OCQ/5zSmsO90e",
+      "Nickname": "FP Verify",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:23:35.1315+08:00",
+      "UpdatedAt": "2026-04-13T23:23:35.1315+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 6,
+      "Username": "realfp_1776094449",
+      "Email": "realfp_1776094449@example.com",
+      "Password": "$2a$10$dElQoU3DhbQ/AnYbYOeqY.wVP0erHbL7FhIsn4UFie99TpOZCqsZC",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:34:09.25236+08:00",
+      "UpdatedAt": "2026-04-13T23:34:09.25236+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 7,
+      "Username": "realfp_1776094467",
+      "Email": "realfp_1776094467@example.com",
+      "Password": "$2a$10$2PsbtVx/MXdseryZrGSGdeEJel9RxhCUKFqAElX3dOnLLLUGxGmD6",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:34:27.164742+08:00",
+      "UpdatedAt": "2026-04-13T23:34:27.164742+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 8,
+      "Username": "realfp_1776094629",
+      "Email": "realfp_1776094629@example.com",
+      "Password": "$2a$10$8zlaGEWcmv5jiH8u67K9U.X2HsnGrA3sKvm/hIqW5CcQBiGdNGXNG",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:37:09.507305+08:00",
+      "UpdatedAt": "2026-04-13T23:37:09.507305+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 9,
+      "Username": "realfp_1776094698",
+      "Email": "realfp_1776094698@example.com",
+      "Password": "$2a$10$UIp6bKQ/B9dJpdCLLqxC1e90GfGu/MFG7YOWFCb6m.SpQwUomzIIe",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:38:18.311996+08:00",
+      "UpdatedAt": "2026-04-13T23:38:18.311996+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 10,
+      "Username": "realfp_1776094944",
+      "Email": "realfp_1776094944@example.com",
+      "Password": "$2a$10$YofQtHXb..yb56pDMjwoHedwHhojDaIo9E4dwIPZoj7b6GgqFG0u2",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:42:24.10456+08:00",
+      "UpdatedAt": "2026-04-13T23:42:24.10456+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 11,
+      "Username": "realfp_1776095364",
+      "Email": "realfp_1776095364@example.com",
+      "Password": "$2a$10$z6VHvDdOM0UJ.ihpD9uRWulNpa6BHMh7v3j86GIB0r4/gYn4U2NZy",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:49:24.799339+08:00",
+      "UpdatedAt": "2026-04-13T23:49:24.799339+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 12,
+      "Username": "realfp_1776095537",
+      "Email": "realfp_1776095537@example.com",
+      "Password": "$2a$10$Yj1aFxVrKuEbMigoeK67v.pKrYh5LXZeJ8I.zi7mvbPO/aiqkw96C",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-13T23:52:17.348365+08:00",
+      "UpdatedAt": "2026-04-13T23:52:17.348365+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 13,
+      "Username": "realfp_1776096627",
+      "Email": "realfp_1776096627@example.com",
+      "Password": "$2a$10$MxE/OenfQmCqkKlwfIocBeM9bAnarjgPUz3U4SNNV9/OKRRZYkMom",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T00:10:27.968607+08:00",
+      "UpdatedAt": "2026-04-14T00:10:27.968607+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 14,
+      "Username": "realfp_1776096694",
+      "Email": "realfp_1776096694@example.com",
+      "Password": "$2a$10$rIX69NLr609R74uHC3wX5u7JvYI53UEhAecy64/ltVdZT8NBank5K",
+      "Nickname": "Real FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T00:11:34.472821+08:00",
+      "UpdatedAt": "2026-04-14T00:11:34.472821+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 15,
+      "Username": "macfp_1776169900662",
+      "Email": "macfp_1776169900662@example.com",
+      "Password": "$2a$10$Uxp.10og.MEmvIx.23UeTOTxFtus8kBU183DMD7JKjhic6zyLzygm",
+      "Nickname": "Mac FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T20:31:40.762857+08:00",
+      "UpdatedAt": "2026-04-14T20:31:40.762857+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 16,
+      "Username": "macfp_1776169918371",
+      "Email": "macfp_1776169918371@example.com",
+      "Password": "$2a$10$mgJhj.wXiqzQ2ybe36yqPOl0R65cS8BPa4rCARnt8t3EivbZ.MJLm",
+      "Nickname": "Mac FP",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T20:31:58.459181+08:00",
+      "UpdatedAt": "2026-04-14T20:31:58.459181+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 17,
+      "Username": "macfpv_1776169956753",
+      "Email": "macfpv_1776169956753@example.com",
+      "Password": "$2a$10$aYESqebb2QSgj51vUpyIGusUv6lLqyRSKR9OFD53WyXAhn9pH967O",
+      "Nickname": "Mac FP Verify",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T20:32:36.836815+08:00",
+      "UpdatedAt": "2026-04-14T20:32:36.836815+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 18,
+      "Username": "macfplog_1776171200260",
+      "Email": "macfplog_1776171200260@example.com",
+      "Password": "$2a$10$5mRXsHjgnQJiYVKeqyp5NOjlu4XTfXCoeYNcnjggEPXoOwR5/.0c2",
+      "Nickname": "Mac FP Log",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T20:53:20.346622+08:00",
+      "UpdatedAt": "2026-04-14T20:53:20.346622+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 19,
+      "Username": "macfpok_1776172639666",
+      "Email": "macfpok_1776172639666@example.com",
+      "Password": "$2a$10$Ot1gcA99QYPNJYxUR7m5wOW9TLF.IRy2I71FDASkm.WJJRfvtPMNC",
+      "Nickname": "Mac FP OK",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T21:17:19.760963+08:00",
+      "UpdatedAt": "2026-04-14T21:17:19.760963+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 20,
+      "Username": "macfinal_1776172826885",
+      "Email": "macfinal_1776172826885@example.com",
+      "Password": "$2a$10$Fl0TrHBFTxuM70yf55B1Z.QW5HxKfC5VfbxlpnW.8rFXDGXxFikXy",
+      "Nickname": "Mac Final",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T21:20:26.978233+08:00",
+      "UpdatedAt": "2026-04-14T21:20:26.978233+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 21,
+      "Username": "macok_1776173052396",
+      "Email": "macok_1776173052396@example.com",
+      "Password": "$2a$10$vy4XC1dQ.xUO7sS4YBuEMeVa.6XTC6wfDKw7PuD.wJ2T1gCD8udZy",
+      "Nickname": "Mac OK",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T21:24:12.482594+08:00",
+      "UpdatedAt": "2026-04-14T21:24:12.482594+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 22,
+      "Username": "autocfapi_1776177792372",
+      "Email": "autocfapi_1776177792372@example.com",
+      "Password": "$2a$10$TP.o0usFJag9PLMPElnpguRmAzLYAbin54xiNS.qCD.K8tQ6XFCme",
+      "Nickname": "Auto Init",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T22:43:12.464308+08:00",
+      "UpdatedAt": "2026-04-14T22:43:12.464308+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 23,
+      "Username": "uitest_1776181457099",
+      "Email": "uitest_1776181457099@example.com",
+      "Password": "$2a$10$xBHXm2fT8IvHPfk3THAFL.7Z4i.xT1S/yJDq.XxfQfmy1Op/TcUxy",
+      "Nickname": "UI Test",
+      "Avatar": "",
+      "CreatedAt": "2026-04-14T23:44:17.184531+08:00",
+      "UpdatedAt": "2026-04-14T23:44:17.184531+08:00",
       "DeletedAt": null
     }
   ]

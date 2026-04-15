@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { app, BrowserWindow, dialog, ipcMain, globalShortcut } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell } from 'electron'
 import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
@@ -242,4 +242,27 @@ ipcMain.handle('dialog:pick-folder', async () => {
     return ''
   }
   return result.filePaths[0]
+})
+
+ipcMain.handle('shell:open-path', async (_event, targetPath) => {
+  if (!targetPath || typeof targetPath !== 'string') {
+    return '路径无效'
+  }
+  try {
+    const failure = await shell.openPath(targetPath)
+    if (!failure) {
+      return ''
+    }
+    if (fs.existsSync(targetPath)) {
+      shell.showItemInFolder(targetPath)
+      return ''
+    }
+    const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+    if (fallback.status === 0) {
+      return ''
+    }
+    return failure
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
 })

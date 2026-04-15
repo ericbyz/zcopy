@@ -46,6 +46,9 @@ final class FileProviderService {
     private let baseURL: URL
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let downloadedStateURL: URL
+    private let downloadedStateQueue = DispatchQueue(label: "com.zcopy.fileprovider.downloaded-state")
+    private var downloadedPaths: Set<String>
 
     init(domain: NSFileProviderDomain) {
         let taskID = domain.identifier.rawValue.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain.identifier.rawValue
@@ -56,6 +59,13 @@ final class FileProviderService {
         self.session = URLSession(configuration: configuration)
         self.decoder = JSONDecoder()
         self.decoder.dateDecodingStrategy = .iso8601
+        let supportRoot = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let stateDirectory = supportRoot.appendingPathComponent("ZCopyFileProvider", isDirectory: true)
+        try? FileManager.default.createDirectory(at: stateDirectory, withIntermediateDirectories: true)
+        let safeDomainID = domain.identifier.rawValue.replacingOccurrences(of: "/", with: "_")
+        self.downloadedStateURL = stateDirectory.appendingPathComponent("\(safeDomainID)-downloaded.json")
+        self.downloadedPaths = Self.loadDownloadedPaths(from: downloadedStateURL)
     }
 
     func metadata(for identifier: NSFileProviderItemIdentifier, completion: @escaping (Result<RemoteFileProviderItem, Error>) -> Void) {
@@ -145,9 +155,48 @@ final class FileProviderService {
                 completion(.failure(self.errorFromResponseData(data, statusCode: http.statusCode)))
                 return
             }
+            self.markEvicted(path: itemPath)
             completion(.success(()))
         }
         task.resume()
+    }
+
+    func isDownloaded(path: String) -> Bool {
+        let clean = normalizedPath(path)
+        if clean.isEmpty {
+            return true
+        }
+        return downloadedStateQueue.sync {
+            downloadedPaths.contains(clean)
+        }
+    }
+
+    func markDownloaded(path: String) {
+        let clean = normalizedPath(path)
+        guard !clean.isEmpty else { return }
+        downloadedStateQueue.sync {
+            downloadedPaths.insert(clean)
+            persistDownloadedPaths()
+        }
+    }
+
+    func markEvicted(path: String) {
+        let clean = normalizedPath(path)
+        downloadedStateQueue.sync {
+            if clean.isEmpty {
+                downloadedPaths.removeAll()
+            } else {
+                downloadedPaths = downloadedPaths.filter { $0 != clean && !$0.hasPrefix(clean + "/") }
+            }
+            persistDownloadedPaths()
+        }
+    }
+
+    func replaceDownloadedPaths(_ paths: Set<String>) {
+        downloadedStateQueue.sync {
+            downloadedPaths = Set(paths.map(normalizedPath).filter { !$0.isEmpty })
+            persistDownloadedPaths()
+        }
     }
 
     func relativePath(for identifier: NSFileProviderItemIdentifier) -> String {
@@ -246,5 +295,21 @@ final class FileProviderService {
             stack.append(part)
         }
         return stack.map(String.init).joined(separator: "/")
+    }
+
+    private func persistDownloadedPaths() {
+        let payload = Array(downloadedPaths).sorted()
+        guard let data = try? JSONEncoder().encode(payload) else {
+            return
+        }
+        try? data.write(to: downloadedStateURL, options: [.atomic])
+    }
+
+    private static func loadDownloadedPaths(from url: URL) -> Set<String> {
+        guard let data = try? Data(contentsOf: url),
+              let payload = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return Set(payload)
     }
 }

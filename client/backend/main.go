@@ -502,6 +502,10 @@ func (a *AppState) createTask(c *gin.Context) {
 			return
 		}
 	}
+	if err := a.maybeInitTaskFileProvider(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "任务已创建，但按需同步初始化失败: " + err.Error(), "task": req})
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{"message": "创建成功", "task": req})
 }
 
@@ -548,7 +552,19 @@ func (a *AppState) updateTask(c *gin.Context) {
 	} else {
 		a.stopWatcher(req.ID)
 	}
+	if err := a.maybeInitTaskFileProvider(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "任务已更新，但按需同步初始化失败: " + err.Error(), "task": req})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "更新成功", "task": req})
+}
+
+func (a *AppState) maybeInitTaskFileProvider(task BackupTask) error {
+	if !task.OnDemandSync || runtime.GOOS != "darwin" || !a.fileProviderAvailable() {
+		return nil
+	}
+	_, err := a.initTaskFileProvider(task)
+	return err
 }
 
 func (a *AppState) deleteTask(c *gin.Context) {

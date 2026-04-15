@@ -20,6 +20,8 @@
     <string>1</string>
     <key>NSExtension</key>
     <dict>
+        <key>NSExtensionFileProviderAllowsUserControlledEviction</key>
+        <true/>
         <key>NSExtensionFileProviderSupportsEnumeration</key>
         <true/>
         <key>NSExtensionFileProviderWantsFlattenedPackages</key>
