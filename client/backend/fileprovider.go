@@ -284,10 +284,13 @@ func (a *AppState) deleteRemotePath(remotePath string, token string) error {
 }
 
 func (a *AppState) renameRemotePath(oldPath string, newPath string, token string) error {
-	body, _ := json.Marshal(gin.H{
+	body, err := json.Marshal(gin.H{
 		"from": normalizeRemote(oldPath),
 		"to":   normalizeRemote(newPath),
 	})
+	if err != nil {
+		return err
+	}
 	data, status, err := a.proxyRaw(http.MethodPut, "/files/rename", bytes.NewReader(body), "application/json", token)
 	if err != nil {
 		return err
