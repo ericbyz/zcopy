@@ -76,11 +76,40 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func modifyItem(_ item: NSFileProviderItem, baseVersion version: NSFileProviderItemVersion, changedFields: NSFileProviderItemFields, contents newContents: URL?, options: NSFileProviderModifyItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
-        let unsupportedFields: NSFileProviderItemFields = [.filename, .parentItemIdentifier]
-        if !changedFields.intersection(unsupportedFields).isEmpty {
-            completionHandler(nil, changedFields, false, FileProviderServiceError.unsupported("暂不支持重命名或移动"))
+        let currentPath = service.relativePath(for: item.itemIdentifier)
+        let targetPath = service.joined(parent: item.parentItemIdentifier, name: item.filename)
+        let renameFields: NSFileProviderItemFields = [.filename, .parentItemIdentifier]
+
+        let handleContentUpdate: (RemoteFileProviderItem) -> Void = { renamedItem in
+            guard changedFields.contains(.contents), let newContents else {
+                self.signalStateRefresh()
+                completionHandler(FileProviderItem(remoteItem: renamedItem, service: self.service), [], false, nil)
+                return
+            }
+            self.service.upload(contents: newContents, to: renamedItem.path) { result in
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, [.contents], false, error)
+                case .success(let remoteItem):
+                    self.service.markDownloaded(path: remoteItem.path)
+                    self.signalStateRefresh()
+                    completionHandler(FileProviderItem(remoteItem: remoteItem, service: self.service), [], false, nil)
+                }
+            }
+        }
+
+        if !changedFields.intersection(renameFields).isEmpty, currentPath != targetPath {
+            service.rename(itemPath: currentPath, to: targetPath) { result in
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, changedFields, false, error)
+                case .success(let renamedItem):
+                    handleContentUpdate(renamedItem)
+                }
+            }
             return progress
         }
+
         guard changedFields.contains(.contents), let newContents else {
             service.metadata(for: item.itemIdentifier) { result in
                 switch result {

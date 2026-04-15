@@ -185,6 +185,7 @@ func main() {
 	api.GET("/file-provider/tasks/:id/children", app.fileProviderChildren)
 	api.GET("/file-provider/tasks/:id/content", app.fileProviderContent)
 	api.PUT("/file-provider/tasks/:id/content", app.fileProviderPutContent)
+	api.PUT("/file-provider/tasks/:id/rename", app.fileProviderRenameItem)
 	api.POST("/file-provider/tasks/:id/folder", app.fileProviderCreateFolder)
 	api.DELETE("/file-provider/tasks/:id/item", app.fileProviderDeleteItem)
 	api.GET("/logs", app.listLogs)

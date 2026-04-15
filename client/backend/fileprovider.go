@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net"
@@ -282,6 +283,25 @@ func (a *AppState) deleteRemotePath(remotePath string, token string) error {
 	return nil
 }
 
+func (a *AppState) renameRemotePath(oldPath string, newPath string, token string) error {
+	body, _ := json.Marshal(gin.H{
+		"from": normalizeRemote(oldPath),
+		"to":   normalizeRemote(newPath),
+	})
+	data, status, err := a.proxyRaw(http.MethodPut, "/files/rename", bytes.NewReader(body), "application/json", token)
+	if err != nil {
+		return err
+	}
+	if status < 200 || status >= 300 {
+		message := strings.TrimSpace(string(data))
+		if message == "" {
+			message = fmt.Sprintf("rename failed with status %d", status)
+		}
+		return errors.New(message)
+	}
+	return nil
+}
+
 func (a *AppState) uploadFileReader(filename string, remoteDir string, src io.Reader, token string) error {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
@@ -371,12 +391,63 @@ func (a *AppState) remoteDirEntries(task BackupTask, relPath string, token strin
 	return result, nil
 }
 
+func taskLocalPath(task BackupTask, relPath string) string {
+	clean := normalizeWebDAVPath(relPath)
+	if clean == "" {
+		return task.LocalPath
+	}
+	return filepath.Join(task.LocalPath, filepath.FromSlash(clean))
+}
+
+func localInfoForPath(task BackupTask, relPath string) (os.FileInfo, error) {
+	return os.Stat(taskLocalPath(task, relPath))
+}
+
+func ensureLocalParent(task BackupTask, relPath string) error {
+	return os.MkdirAll(filepath.Dir(taskLocalPath(task, relPath)), 0755)
+}
+
+func writeLocalMirrorFile(task BackupTask, relPath string, src io.Reader) error {
+	localPath := taskLocalPath(task, relPath)
+	if err := os.MkdirAll(filepath.Dir(localPath), 0755); err != nil {
+		return err
+	}
+	dst, err := os.Create(localPath)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+	_, err = io.Copy(dst, src)
+	return err
+}
+
+func renameLocalMirrorPath(task BackupTask, oldRelPath string, newRelPath string) error {
+	oldPath := taskLocalPath(task, oldRelPath)
+	newPath := taskLocalPath(task, newRelPath)
+	if oldPath == newPath {
+		return nil
+	}
+	if _, err := os.Stat(oldPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(newPath), 0755); err != nil {
+		return err
+	}
+	return os.Rename(oldPath, newPath)
+}
+
 func (fs *remoteWebDAVFS) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
 	token := fs.app.getToken()
 	if token == "" {
 		return os.ErrPermission
 	}
-	return fs.app.ensureRemotePath(joinRemotePath(fs.task.RemotePath, name), token)
+	if err := fs.app.ensureRemotePath(joinRemotePath(fs.task.RemotePath, name), token); err != nil {
+		return err
+	}
+	return os.MkdirAll(taskLocalPath(fs.task, name), 0755)
 }
 
 func (fs *remoteWebDAVFS) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
@@ -388,6 +459,26 @@ func (fs *remoteWebDAVFS) OpenFile(ctx context.Context, name string, flag int, p
 
 	writeMode := flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE|os.O_TRUNC) != 0
 	if !writeMode {
+		if info, err := localInfoForPath(fs.task, cleanRel); err == nil {
+			if info.IsDir() {
+				entries, readErr := os.ReadDir(taskLocalPath(fs.task, cleanRel))
+				if readErr != nil {
+					return nil, readErr
+				}
+				dirEntries := make([]os.FileInfo, 0, len(entries))
+				for _, entry := range entries {
+					info, infoErr := entry.Info()
+					if infoErr == nil {
+						dirEntries = append(dirEntries, info)
+					}
+				}
+				return &remoteWebDAVDirFile{info: info, entries: dirEntries}, nil
+			}
+			file, openErr := os.Open(taskLocalPath(fs.task, cleanRel))
+			if openErr == nil {
+				return &remoteWebDAVReadFile{File: file}, nil
+			}
+		}
 		info, err := fs.app.remoteInfoForPath(fs.task, cleanRel, token)
 		if err != nil {
 			return nil, err
@@ -421,9 +512,28 @@ func (fs *remoteWebDAVFS) OpenFile(ctx context.Context, name string, flag int, p
 		return nil, err
 	}
 	if flag&os.O_TRUNC == 0 {
-		err := fs.app.downloadRemoteFile(joinRemotePath(fs.task.RemotePath, cleanRel), localPath, token)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, err
+		sourceLocalPath := taskLocalPath(fs.task, cleanRel)
+		if _, err := os.Stat(sourceLocalPath); err == nil {
+			src, openErr := os.Open(sourceLocalPath)
+			if openErr != nil {
+				return nil, openErr
+			}
+			dst, createErr := os.Create(localPath)
+			if createErr != nil {
+				_ = src.Close()
+				return nil, createErr
+			}
+			_, copyErr := io.Copy(dst, src)
+			_ = dst.Close()
+			_ = src.Close()
+			if copyErr != nil {
+				return nil, copyErr
+			}
+		} else {
+			err := fs.app.downloadRemoteFile(joinRemotePath(fs.task.RemotePath, cleanRel), localPath, token)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, err
+			}
 		}
 	}
 	openFlags := os.O_CREATE | os.O_RDWR
@@ -458,17 +568,31 @@ func (fs *remoteWebDAVFS) RemoveAll(ctx context.Context, name string) error {
 	if token == "" {
 		return os.ErrPermission
 	}
-	return fs.app.deleteRemotePath(joinRemotePath(fs.task.RemotePath, name), token)
+	if err := fs.app.deleteRemotePath(joinRemotePath(fs.task.RemotePath, name), token); err != nil {
+		return err
+	}
+	_ = os.RemoveAll(taskLocalPath(fs.task, name))
+	return nil
 }
 
 func (fs *remoteWebDAVFS) Rename(ctx context.Context, oldName string, newName string) error {
-	return errors.New("rename not supported")
+	token := fs.app.getToken()
+	if token == "" {
+		return os.ErrPermission
+	}
+	if err := fs.app.renameRemotePath(joinRemotePath(fs.task.RemotePath, oldName), joinRemotePath(fs.task.RemotePath, newName), token); err != nil {
+		return err
+	}
+	return renameLocalMirrorPath(fs.task, oldName, newName)
 }
 
 func (fs *remoteWebDAVFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 	token := fs.app.getToken()
 	if token == "" {
 		return nil, os.ErrPermission
+	}
+	if info, err := localInfoForPath(fs.task, name); err == nil {
+		return info, nil
 	}
 	return fs.app.remoteInfoForPath(fs.task, name, token)
 }
@@ -537,7 +661,9 @@ func (f *remoteWebDAVDirFile) Write(p []byte) (int, error) {
 
 func (f *remoteWebDAVReadFile) Close() error {
 	err := f.File.Close()
-	_ = os.Remove(f.cleanupPath)
+	if f.cleanupPath != "" {
+		_ = os.Remove(f.cleanupPath)
+	}
 	return err
 }
 
@@ -560,6 +686,13 @@ func (f *remoteWebDAVWriteFile) Close() error {
 				} else {
 					_ = f.app.deleteRemotePath(remotePath, token)
 					f.closeErr = f.app.uploadFileReader(path.Base(remotePath), remoteDir, f.File, token)
+					if f.closeErr == nil {
+						if _, err := f.File.Seek(0, io.SeekStart); err != nil {
+							f.closeErr = err
+						} else {
+							f.closeErr = writeLocalMirrorFile(f.task, f.relPath, f.File)
+						}
+					}
 				}
 			}
 		}
@@ -567,7 +700,9 @@ func (f *remoteWebDAVWriteFile) Close() error {
 		if f.closeErr == nil {
 			f.closeErr = closeErr
 		}
-		_ = os.Remove(f.cleanupPath)
+		if f.cleanupPath != "" {
+			_ = os.Remove(f.cleanupPath)
+		}
 	})
 	return f.closeErr
 }
@@ -677,6 +812,10 @@ func (a *AppState) fileProviderContent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "根目录没有可下载内容"})
 		return
 	}
+	if info, err := localInfoForPath(task, cleanPath); err == nil && !info.IsDir() {
+		c.File(taskLocalPath(task, cleanPath))
+		return
+	}
 	info, err := a.remoteInfoForPath(task, cleanPath, token)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -742,9 +881,34 @@ func (a *AppState) fileProviderPutContent(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"message": "确保远程目录失败: " + err.Error()})
 		return
 	}
+	tempFile, err := os.CreateTemp("", "zcopy-fileprovider-put-*")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "创建临时文件失败: " + err.Error()})
+		return
+	}
+	defer func() {
+		_ = tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+	if _, err := io.Copy(tempFile, c.Request.Body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "读取上传内容失败: " + err.Error()})
+		return
+	}
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "重置临时文件失败: " + err.Error()})
+		return
+	}
 	_ = a.deleteRemotePath(remotePath, token)
-	if err := a.uploadFileReader(path.Base(cleanPath), remoteDir, c.Request.Body, token); err != nil {
+	if err := a.uploadFileReader(path.Base(cleanPath), remoteDir, tempFile, token); err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"message": "上传远程文件失败: " + err.Error()})
+		return
+	}
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "重置本地镜像文件失败: " + err.Error()})
+		return
+	}
+	if err := writeLocalMirrorFile(task, cleanPath, tempFile); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "更新本地文件失败: " + err.Error()})
 		return
 	}
 	info, err := a.remoteInfoForPath(task, cleanPath, token)
@@ -760,6 +924,48 @@ func (a *AppState) fileProviderPutContent(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"item": payload})
 }
 
+func (a *AppState) fileProviderRenameItem(c *gin.Context) {
+	task, cleanPath, token, ok := a.fileProviderContext(c)
+	if !ok {
+		return
+	}
+	if cleanPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "不能重命名根目录"})
+		return
+	}
+	var req struct {
+		NewPath string `json:"newPath"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "请求参数格式错误"})
+		return
+	}
+	newPath := normalizeWebDAVPath(req.NewPath)
+	if newPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "目标路径不合法"})
+		return
+	}
+	if err := a.renameRemotePath(joinRemotePath(task.RemotePath, cleanPath), joinRemotePath(task.RemotePath, newPath), token); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "重命名远程项目失败: " + err.Error()})
+		return
+	}
+	if err := renameLocalMirrorPath(task, cleanPath, newPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "重命名本地项目失败: " + err.Error()})
+		return
+	}
+	info, err := a.remoteInfoForPath(task, newPath, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "读取重命名结果失败: " + err.Error()})
+		return
+	}
+	payload, err := a.makeFileProviderItemPayload(task, newPath, info, token)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"message": "转换重命名结果失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"item": payload})
+}
+
 func (a *AppState) fileProviderCreateFolder(c *gin.Context) {
 	task, cleanPath, token, ok := a.fileProviderContext(c)
 	if !ok {
@@ -767,6 +973,10 @@ func (a *AppState) fileProviderCreateFolder(c *gin.Context) {
 	}
 	if err := a.ensureRemotePath(joinRemotePath(task.RemotePath, cleanPath), token); err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"message": "创建远程目录失败: " + err.Error()})
+		return
+	}
+	if err := os.MkdirAll(taskLocalPath(task, cleanPath), 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "创建本地目录失败: " + err.Error()})
 		return
 	}
 	info, err := a.remoteInfoForPath(task, cleanPath, token)
@@ -795,6 +1005,7 @@ func (a *AppState) fileProviderDeleteItem(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"message": "删除远程项目失败: " + err.Error()})
 		return
 	}
+	_ = os.RemoveAll(taskLocalPath(task, cleanPath))
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 

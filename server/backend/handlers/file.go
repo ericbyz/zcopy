@@ -22,6 +22,11 @@ type createFolderRequest struct {
 	Name string `json:"name"`
 }
 
+type renameFileRequest struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
 type fileItem struct {
 	Name        string    `json:"name"`
 	Path        string    `json:"path"`
@@ -233,6 +238,61 @@ func DeleteFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+}
+
+func RenameFile(c *gin.Context) {
+	user, ok := middleware.CurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
+		return
+	}
+
+	var req renameFileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "请求参数格式错误"})
+		return
+	}
+
+	fromRelative, fromPath, err := resolveUserPath(user.ID, req.From)
+	if err != nil || fromRelative == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "原路径不合法"})
+		return
+	}
+	toRelative, toPath, err := resolveUserPath(user.ID, req.To)
+	if err != nil || toRelative == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "目标路径不合法"})
+		return
+	}
+	if fromPath == userStorageRoot(user.ID) || toPath == userStorageRoot(user.ID) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "不能重命名根目录"})
+		return
+	}
+	if fromPath == toPath {
+		c.JSON(http.StatusOK, gin.H{"message": "重命名成功"})
+		return
+	}
+	if _, err := os.Stat(fromPath); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "原文件不存在"})
+		return
+	}
+	if _, err := os.Stat(toPath); err == nil {
+		c.JSON(http.StatusConflict, gin.H{"message": "目标名称已存在"})
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(toPath), 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "创建目标目录失败"})
+		return
+	}
+	if err := os.Rename(fromPath, toPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "重命名失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "重命名成功",
+		"from":    fromRelative,
+		"to":      toRelative,
+	})
 }
 
 func ClientCapabilities(c *gin.Context) {

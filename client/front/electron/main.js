@@ -130,6 +130,15 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
     return '路径无效'
   }
   try {
+    if (fs.existsSync(targetPath)) {
+      const stat = fs.statSync(targetPath)
+      if (stat.isDirectory()) {
+        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+        if (fallback.status === 0) {
+          return ''
+        }
+      }
+    }
     const failure = await shell.openPath(targetPath)
     if (!failure) {
       return ''

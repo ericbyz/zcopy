@@ -46,6 +46,7 @@ func main() {
 			fileGroup.POST("/folder", handlers.CreateFolder)
 			fileGroup.POST("/upload", handlers.UploadFile)
 			fileGroup.GET("/download", handlers.DownloadFile)
+			fileGroup.PUT("/rename", handlers.RenameFile)
 			fileGroup.DELETE("", handlers.DeleteFile)
 		}
 

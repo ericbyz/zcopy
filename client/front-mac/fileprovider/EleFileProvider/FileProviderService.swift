@@ -16,6 +16,10 @@ private struct RemoteItemEnvelope: Codable {
     let item: RemoteFileProviderItem
 }
 
+private struct RemoteRenameEnvelope: Codable {
+    let item: RemoteFileProviderItem
+}
+
 private struct RemoteChildrenEnvelope: Codable {
     let path: String
     let items: [RemoteFileProviderItem]
@@ -159,6 +163,17 @@ final class FileProviderService {
             completion(.success(()))
         }
         task.resume()
+    }
+
+    func rename(itemPath: String, to newPath: String, completion: @escaping (Result<RemoteFileProviderItem, Error>) -> Void) {
+        let payload = ["newPath": normalizedPath(newPath)]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else {
+            completion(.failure(FileProviderServiceError.invalidResponse))
+            return
+        }
+        requestJSON(path: "rename", itemPath: itemPath, method: "PUT", body: body) { (result: Result<RemoteRenameEnvelope, Error>) in
+            completion(result.map(\.item))
+        }
     }
 
     func isDownloaded(path: String) -> Bool {
