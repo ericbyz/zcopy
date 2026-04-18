@@ -1,11 +1,13 @@
 <script setup>
 import axios from 'axios'
 import { computed, onMounted, ref } from 'vue'
+import LogViewer from './components/LogViewer.vue'
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
 const token = ref(localStorage.getItem('zcopy_token') || '')
 const currentUser = ref(null)
 const authMode = ref('login')
+const activeTab = ref('files')
 const loading = ref(false)
 const message = ref('')
 const currentPath = ref('')
@@ -305,53 +307,64 @@ onMounted(async () => {
       </div>
 
       <div v-else class="workspace">
-        <div class="toolbar">
-          <div class="breadcrumb">
-            <button
-              v-for="item in breadcrumbList"
-              :key="item.path || 'root'"
-              class="link-btn"
-              @click="fetchFiles(item.path)"
-            >
-              {{ item.label }}
-            </button>
-          </div>
-
-          <div class="actions">
-            <input v-model="folderName" class="small-input" placeholder="新建文件夹名称" />
-            <button class="primary-btn" :disabled="loading" @click="createFolder">新建文件夹</button>
-          </div>
+        <div class="tabs">
+          <button :class="{ active: activeTab === 'files' }" @click="activeTab = 'files'">文件浏览</button>
+          <button :class="{ active: activeTab === 'logs' }" @click="activeTab = 'logs'">日志查看</button>
         </div>
 
-        <div class="upload-bar">
-          <input id="file-input" type="file" @change="handleFileChange" />
-          <button class="primary-btn" :disabled="loading" @click="submitUpload">上传文件</button>
-          <button class="ghost-btn" :disabled="loading" @click="fetchFiles(currentPath)">刷新</button>
-        </div>
-
-        <div class="file-list">
-          <div class="file-header">
-            <span>名称</span>
-            <span>大小</span>
-            <span>更新时间</span>
-            <span>操作</span>
-          </div>
-
-          <div v-if="fileItems.length === 0" class="empty">当前目录暂无文件</div>
-
-          <div v-for="item in fileItems" :key="item.path" class="file-row">
-            <span class="file-name" @click="openItem(item)">
-              {{ item.isDirectory ? '📁' : '📄' }} {{ item.name }}
-            </span>
-            <span>{{ item.isDirectory ? '-' : `${item.size} B` }}</span>
-            <span>{{ new Date(item.updatedAt).toLocaleString() }}</span>
-            <span class="row-actions">
-              <button class="ghost-btn" @click="openItem(item)">
-                {{ item.isDirectory ? '进入' : '下载' }}
+        <div v-if="activeTab === 'files'">
+          <div class="toolbar">
+            <div class="breadcrumb">
+              <button
+                v-for="item in breadcrumbList"
+                :key="item.path || 'root'"
+                class="link-btn"
+                @click="fetchFiles(item.path)"
+              >
+                {{ item.label }}
               </button>
-              <button class="danger-btn" @click="removeItem(item)">删除</button>
-            </span>
+            </div>
+
+            <div class="actions">
+              <input v-model="folderName" class="small-input" placeholder="新建文件夹名称" />
+              <button class="primary-btn" :disabled="loading" @click="createFolder">新建文件夹</button>
+            </div>
           </div>
+
+          <div class="upload-bar">
+            <input id="file-input" type="file" @change="handleFileChange" />
+            <button class="primary-btn" :disabled="loading" @click="submitUpload">上传文件</button>
+            <button class="ghost-btn" :disabled="loading" @click="fetchFiles(currentPath)">刷新</button>
+          </div>
+
+          <div class="file-list">
+            <div class="file-header">
+              <span>名称</span>
+              <span>大小</span>
+              <span>更新时间</span>
+              <span>操作</span>
+            </div>
+
+            <div v-if="fileItems.length === 0" class="empty">当前目录暂无文件</div>
+
+            <div v-for="item in fileItems" :key="item.path" class="file-row">
+              <span class="file-name" @click="openItem(item)">
+                {{ item.isDirectory ? '📁' : '📄' }} {{ item.name }}
+              </span>
+              <span>{{ item.isDirectory ? '-' : `${item.size} B` }}</span>
+              <span>{{ new Date(item.updatedAt).toLocaleString() }}</span>
+              <span class="row-actions">
+                <button class="ghost-btn" @click="openItem(item)">
+                  {{ item.isDirectory ? '进入' : '下载' }}
+                </button>
+                <button class="danger-btn" @click="removeItem(item)">删除</button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'logs'">
+          <LogViewer />
         </div>
       </div>
     </div>

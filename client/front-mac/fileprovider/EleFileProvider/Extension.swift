@@ -49,12 +49,17 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func createItem(basedOn itemTemplate: NSFileProviderItem, fields: NSFileProviderItemFields, contents url: URL?, options: NSFileProviderCreateItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
+        if service.shouldIgnoreSystemItem(named: itemTemplate.filename) {
+            completionHandler(nil, [], false, nil)
+            return progress
+        }
         let itemPath = service.joined(parent: itemTemplate.parentItemIdentifier, name: itemTemplate.filename)
         let finish: (Result<RemoteFileProviderItem, Error>) -> Void = { result in
             switch result {
             case .failure(let error):
                 completionHandler(nil, [], false, error)
             case .success(let item):
+                self.service.remember(identifier: itemTemplate.itemIdentifier, path: item.path)
                 if !item.isDirectory {
                     self.service.markDownloaded(path: item.path)
                 }
@@ -76,12 +81,23 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func modifyItem(_ item: NSFileProviderItem, baseVersion version: NSFileProviderItemVersion, changedFields: NSFileProviderItemFields, contents newContents: URL?, options: NSFileProviderModifyItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
+        if service.shouldIgnoreSystemItem(named: item.filename) {
+            completionHandler(nil, [], false, nil)
+            return progress
+        }
         let currentPath = service.relativePath(for: item.itemIdentifier)
         let targetPath = service.joined(parent: item.parentItemIdentifier, name: item.filename)
         let renameFields: NSFileProviderItemFields = [.filename, .parentItemIdentifier]
 
         let handleContentUpdate: (RemoteFileProviderItem) -> Void = { renamedItem in
+            self.service.remember(identifier: item.itemIdentifier, path: renamedItem.path)
             guard changedFields.contains(.contents), let newContents else {
+                self.signalStateRefresh()
+                completionHandler(FileProviderItem(remoteItem: renamedItem, service: self.service), [], false, nil)
+                return
+            }
+            if self.service.isRecentDuplicateUpload(fileURL: newContents, path: renamedItem.path) {
+                self.service.markDownloaded(path: renamedItem.path)
                 self.signalStateRefresh()
                 completionHandler(FileProviderItem(remoteItem: renamedItem, service: self.service), [], false, nil)
                 return
@@ -116,6 +132,19 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
                 case .failure(let error):
                     completionHandler(nil, changedFields, false, error)
                 case .success(let remoteItem):
+                    completionHandler(FileProviderItem(remoteItem: remoteItem, service: self.service), [], false, nil)
+                }
+            }
+            return progress
+        }
+        if service.isRecentDuplicateUpload(fileURL: newContents, path: currentPath) {
+            service.metadata(for: item.itemIdentifier) { result in
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, [.contents], false, error)
+                case .success(let remoteItem):
+                    self.service.markDownloaded(path: remoteItem.path)
+                    self.signalStateRefresh()
                     completionHandler(FileProviderItem(remoteItem: remoteItem, service: self.service), [], false, nil)
                 }
             }

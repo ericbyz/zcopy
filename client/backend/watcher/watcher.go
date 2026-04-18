@@ -1,7 +1,7 @@
 package watcher
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -39,6 +39,7 @@ func (w *FSNotifyWatchManager) StartWatcher(taskID string, task models.BackupTas
 		DoneCh: make(chan struct{}),
 	}
 	w.watchers[taskID] = ctrl
+	slog.Info("文件监听已启动", "task_id", taskID, "local_path", task.LocalPath)
 	go w.runWatcher(task, ctrl)
 	go func() {
 		_ = w.onSync(taskID)
@@ -50,17 +51,22 @@ func (w *FSNotifyWatchManager) StopWatcher(taskID string) {
 	if ctrl, ok := w.watchers[taskID]; ok {
 		close(ctrl.StopCh)
 		delete(w.watchers, taskID)
+		slog.Info("文件监听已停止", "task_id", taskID)
 	}
 }
 
 func (w *FSNotifyWatchManager) RestoreAutoWatchers() {
+	count := 0
 	for _, task := range w.store.List() {
 		if task.AutoBackup {
 			if err := w.StartWatcher(task.ID, task); err != nil {
-				log.Printf("failed to restore watcher for %s: %v", task.ID, err)
+				slog.Error("恢复自动监听失败", "task_id", task.ID, "error", err)
+			} else {
+				count++
 			}
 		}
 	}
+	slog.Info("恢复自动监听", "count", count)
 }
 
 func (w *FSNotifyWatchManager) runWatcher(task models.BackupTask, ctrl *models.WatchController) {
@@ -91,6 +97,7 @@ func (w *FSNotifyWatchManager) runWatcher(task models.BackupTask, ctrl *models.W
 		case evt := <-watcher.Events:
 			if evt.Op&(fsnotify.Create) != 0 {
 				if info, statErr := os.Stat(evt.Name); statErr == nil && info.IsDir() {
+					slog.Debug("添加新子目录监听", "task_id", task.ID, "path", evt.Name)
 					_ = watcher.Add(evt.Name)
 				}
 			}
@@ -100,8 +107,10 @@ func (w *FSNotifyWatchManager) runWatcher(task models.BackupTask, ctrl *models.W
 			}
 		case <-timer.C:
 			pending = false
+			slog.Info("防抖触发同步", "task_id", task.ID)
 			_ = w.onSync(task.ID)
-		case <-watcher.Errors:
+		case err := <-watcher.Errors:
+			slog.Warn("文件监听错误", "task_id", task.ID, "error", err)
 		}
 	}
 }

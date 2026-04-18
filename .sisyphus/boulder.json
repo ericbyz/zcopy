@@ -1,0 +1,58 @@
+{
+  "active_plan": "/Users/byz/Documents/project/my/zcopy/.sisyphus/plans/logging-enhancement.md",
+  "started_at": "2026-04-18T03:19:20Z",
+  "session_ids": [
+    "ses_26184f1aaffeSjbzD9sE4WGgFY",
+    "ses_261110b05ffe2S8n87gg2J1Sa7",
+    "ses_261110b02ffe0VbAc42E1fopzV",
+    "ses_261110afeffecgVMrZuBu54Neu",
+    "ses_261110afbffelGxKMhatRWrEwk"
+  ],
+  "plan_name": "logging-enhancement",
+  "worktree_path": null,
+  "session_origins": {
+    "ses_26184f1aaffeSjbzD9sE4WGgFY": "direct",
+    "ses_261110b05ffe2S8n87gg2J1Sa7": "appended",
+    "ses_261110b02ffe0VbAc42E1fopzV": "appended",
+    "ses_261110afeffecgVMrZuBu54Neu": "appended",
+    "ses_261110afbffelGxKMhatRWrEwk": "appended"
+  },
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "服务端后端 `logger/` 包 (TDD)",
+      "session_id": "ses_261637959ffeggR1X2vFTZ4giH",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-18T03:29:18.523Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "客户端后端 GET /logs API 增强",
+      "session_id": "ses_261592700ffeaHXms9ZFt9Q7l3",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-18T03:36:46.243Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "服务端后端请求日志中间件",
+      "session_id": "ses_2613031f7ffesyIiXaF1RFhiKZ",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-04-18T04:48:42.338Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "服务端后端 auth handler 审计日志",
+      "session_id": "ses_261110b05ffe2S8n87gg2J1Sa7",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-18T04:52:33.779Z"
+    }
+  }
+}

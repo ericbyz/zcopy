@@ -3,6 +3,7 @@ package fileprovider
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +15,7 @@ import (
 )
 
 func (s *Service) Item(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -36,6 +38,7 @@ func (s *Service) Item(c *gin.Context) {
 }
 
 func (s *Service) Children(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -68,6 +71,7 @@ func (s *Service) Children(c *gin.Context) {
 }
 
 func (s *Service) Content(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -128,6 +132,7 @@ func (s *Service) Content(c *gin.Context) {
 }
 
 func (s *Service) PutContent(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -189,6 +194,7 @@ func (s *Service) PutContent(c *gin.Context) {
 }
 
 func (s *Service) RenameItem(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -231,6 +237,7 @@ func (s *Service) RenameItem(c *gin.Context) {
 }
 
 func (s *Service) CreateFolder(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return
@@ -257,6 +264,7 @@ func (s *Service) CreateFolder(c *gin.Context) {
 }
 
 func (s *Service) DeleteItem(c *gin.Context) {
+	slog.Debug("fileprovider handler", "method", c.Request.Method, "path", c.Request.URL.Path)
 	task, cleanPath, token, ok := s.fileProviderContext(c)
 	if !ok {
 		return

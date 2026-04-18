@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -122,6 +123,7 @@ func (fs *remoteWebDAVFS) OpenFile(ctx context.Context, name string, flag int, p
 				return &remoteWebDAVReadFile{File: file}, nil
 			}
 		}
+		slog.Info("缓存未命中，从远程下载", "file_path", name)
 		info, err := fs.service.remoteInfoForPath(fs.task, cleanRel, token)
 		if err != nil {
 			return nil, err
@@ -144,6 +146,7 @@ func (fs *remoteWebDAVFS) OpenFile(ctx context.Context, name string, flag int, p
 		return &remoteWebDAVReadFile{File: file, cleanupPath: localPath}, nil
 	}
 
+	slog.Info("文件写入操作", "file_path", name)
 	localPath := fs.service.webdavTempPath(fs.task.ID, cleanRel)
 	if err := os.MkdirAll(filepath.Dir(localPath), 0755); err != nil {
 		return nil, err
@@ -292,8 +295,12 @@ func (f *remoteWebDAVWriteFile) Close() error {
 					f.closeErr = err
 				} else {
 					_ = f.service.deleteRemotePath(remotePath, token)
-					f.closeErr = f.service.uploadFileReader(path.Base(remotePath), remoteDir, f.File, token)
-					if f.closeErr == nil {
+					filename := path.Base(remotePath)
+					f.closeErr = f.service.uploadFileReader(filename, remoteDir, f.File, token)
+					if f.closeErr != nil {
+						slog.Error("文件上传失败", "filename", filename, "error", f.closeErr)
+					} else {
+						slog.Info("文件上传完成", "filename", filename)
 						if _, err := f.File.Seek(0, io.SeekStart); err != nil {
 							f.closeErr = err
 						} else {

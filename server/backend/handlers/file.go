@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"zcopy-server-backend/config"
+	"zcopy-server-backend/logger"
 	"zcopy-server-backend/middleware"
 	"zcopy-server-backend/utils"
 
@@ -36,6 +37,7 @@ type fileItem struct {
 }
 
 func ListFiles(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
@@ -86,6 +88,8 @@ func ListFiles(c *gin.Context) {
 		return strings.ToLower(items[i].Name) < strings.ToLower(items[j].Name)
 	})
 
+	logger.Debug("list files", "request_id", requestID, "user_id", user.ID, "path", relativePath, "count", len(items))
+
 	c.JSON(http.StatusOK, gin.H{
 		"path":  relativePath,
 		"items": items,
@@ -93,6 +97,7 @@ func ListFiles(c *gin.Context) {
 }
 
 func CreateFolder(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
@@ -118,10 +123,13 @@ func CreateFolder(c *gin.Context) {
 	}
 
 	targetPath := filepath.Join(parentPath, req.Name)
+	fullPath := filepath.ToSlash(filepath.Join(req.Path, req.Name))
 	if err := os.MkdirAll(targetPath, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "创建文件夹失败"})
 		return
 	}
+
+	logger.Info("create folder", "request_id", requestID, "user_id", user.ID, "path", fullPath)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "创建成功",
@@ -129,13 +137,14 @@ func CreateFolder(c *gin.Context) {
 }
 
 func UploadFile(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
 		return
 	}
 
-	_, targetDir, err := resolveUserPath(user.ID, c.PostForm("path"))
+	relativePath, targetDir, err := resolveUserPath(user.ID, c.PostForm("path"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "路径不合法"})
 		return
@@ -159,17 +168,21 @@ func UploadFile(c *gin.Context) {
 	}
 	defer src.Close()
 
-	safeName := filepath.Base(fileHeader.Filename)
+	originalName := filepath.Base(fileHeader.Filename)
+	safeName := originalName
 	targetPath := filepath.Join(targetDir, safeName)
+	renamed := false
 	if _, err := os.Stat(targetPath); err == nil {
 		ext := filepath.Ext(safeName)
 		baseName := strings.TrimSuffix(safeName, ext)
 		targetPath = filepath.Join(targetDir, baseName+"-"+uuid.NewString()+ext)
 		safeName = filepath.Base(targetPath)
+		renamed = true
 	}
 
 	dst, err := os.Create(targetPath)
 	if err != nil {
+		logger.Error("upload file failed", "request_id", requestID, "user_id", user.ID, "filename", originalName, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "创建目标文件失败"})
 		return
 	}
@@ -177,9 +190,16 @@ func UploadFile(c *gin.Context) {
 
 	written, err := io.Copy(dst, src)
 	if err != nil {
+		logger.Error("upload file failed", "request_id", requestID, "user_id", user.ID, "filename", originalName, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "保存文件失败"})
 		return
 	}
+
+	fullFilePath := filepath.ToSlash(filepath.Join(relativePath, safeName))
+	if renamed {
+		logger.Warn("upload file renamed due to conflict", "request_id", requestID, "user_id", user.ID, "original_name", originalName, "new_name", safeName, "path", fullFilePath)
+	}
+	logger.Info("upload file", "request_id", requestID, "user_id", user.ID, "filename", safeName, "path", fullFilePath, "size", written)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "上传成功",
@@ -191,6 +211,7 @@ func UploadFile(c *gin.Context) {
 }
 
 func DownloadFile(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
@@ -209,19 +230,22 @@ func DownloadFile(c *gin.Context) {
 		return
 	}
 
+	logger.Info("download file", "request_id", requestID, "user_id", user.ID, "filename", filepath.Base(relativePath), "path", relativePath)
+
 	c.Header("Content-Type", utils.GetFileContentType(info.Name()))
 	c.Header("Content-Disposition", "attachment; filename=\""+filepath.Base(relativePath)+"\"")
 	c.File(absolutePath)
 }
 
 func DeleteFile(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
 		return
 	}
 
-	_, absolutePath, err := resolveUserPath(user.ID, c.Query("path"))
+	relativePath, absolutePath, err := resolveUserPath(user.ID, c.Query("path"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "路径不合法"})
 		return
@@ -232,6 +256,8 @@ func DeleteFile(c *gin.Context) {
 		return
 	}
 
+	logger.Warn("delete file/folder", "request_id", requestID, "user_id", user.ID, "path", relativePath)
+
 	if err := os.RemoveAll(absolutePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "删除失败"})
 		return
@@ -241,6 +267,7 @@ func DeleteFile(c *gin.Context) {
 }
 
 func RenameFile(c *gin.Context) {
+	requestID, _ := c.Get("request_id")
 	user, ok := middleware.CurrentUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
@@ -287,6 +314,8 @@ func RenameFile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "重命名失败"})
 		return
 	}
+
+	logger.Info("rename file", "request_id", requestID, "user_id", user.ID, "old_path", fromRelative, "new_path", toRelative)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "重命名成功",

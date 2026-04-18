@@ -14,6 +14,7 @@ import (
 )
 
 func (a *AppState) listTasks(c *gin.Context) {
+	a.pushLog("debug", models.BackupTask{Name: "system"}, "", "任务列表查询")
 	c.JSON(200, gin.H{"items": a.store.List()})
 }
 
@@ -54,6 +55,7 @@ func (a *AppState) createTask(c *gin.Context) {
 		c.JSON(500, gin.H{"message": "任务已创建，但按需同步初始化失败: " + err.Error(), "task": req})
 		return
 	}
+	a.pushLog("info", req, req.LocalPath, "任务已创建: "+req.Name+", 本地路径: "+req.LocalPath+", 远程路径: "+req.RemotePath)
 	c.JSON(201, gin.H{"message": "创建成功", "task": req})
 }
 
@@ -104,16 +106,19 @@ func (a *AppState) updateTask(c *gin.Context) {
 		c.JSON(500, gin.H{"message": "任务已更新，但按需同步初始化失败: " + err.Error(), "task": req})
 		return
 	}
+	a.pushLog("info", req, req.LocalPath, "任务已更新: "+id)
 	c.JSON(200, gin.H{"message": "更新成功", "task": req})
 }
 
 func (a *AppState) deleteTask(c *gin.Context) {
 	id := c.Param("id")
+	task, _ := a.store.Get(id)
 	a.watcher.StopWatcher(id)
 	if err := a.store.Remove(id); err != nil {
 		c.JSON(404, gin.H{"message": "任务不存在"})
 		return
 	}
+	a.pushLog("warn", task, "", "任务已删除: "+task.Name)
 	c.JSON(200, gin.H{"message": "删除成功"})
 }
 

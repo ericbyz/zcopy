@@ -2,6 +2,7 @@ package sync
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	stdsync "sync"
 	"time"
@@ -64,16 +65,18 @@ func (e *Engine) SyncTask(taskID string) error {
 	if token == "" {
 		return ErrUnauthorized
 	}
-	if !e.acquire(taskID) {
+	if !e.acquire(taskID, task) {
 		return nil
 	}
-	defer e.release(taskID)
+	defer e.release(taskID, task)
 
+	e.logs.Push("info", task, "", "同步开始：task_id="+taskID+", task_name="+task.Name+", local_path="+task.LocalPath+", remote_path="+task.RemotePath)
+	
 	mode := syncMode(task)
 	report := e.startSync(&task, mode, "准备同步")
 	files, pendingFiles, snapshot, err := e.collectPendingFiles(task, report)
 	if err != nil {
-		return e.failSync(&task, report, "扫描本地目录失败", err)
+		return e.failSync(&task, report, "扫描本地目录失败", err, 0)
 	}
 	if task.OnDemandSync && len(pendingFiles) == 0 {
 		return e.finishNoopSync(&task, mode)
@@ -82,12 +85,12 @@ func (e *Engine) SyncTask(taskID string) error {
 	_ = e.store.Upsert(task)
 
 	if err := e.remote.EnsureRemotePath(task.RemotePath, token); err != nil {
-		return e.failSync(&task, report, "创建远程目录失败", err)
+		return e.failSync(&task, report, "创建远程目录失败", err, 0)
 	}
 	if err := e.uploadPendingFiles(&task, token, files, pendingFiles, snapshot, report); err != nil {
 		return err
 	}
-	return e.finishSuccessfulSync(&task, mode)
+	return e.finishSuccessfulSync(&task, mode, report)
 }
 
 func (e *Engine) loadTask(taskID string) (models.BackupTask, error) {
@@ -98,19 +101,21 @@ func (e *Engine) loadTask(taskID string) (models.BackupTask, error) {
 	return task, nil
 }
 
-func (e *Engine) acquire(taskID string) bool {
+func (e *Engine) acquire(taskID string, task models.BackupTask) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if e.syncing[taskID] {
+		e.logs.Push("warn", task, "", "同步已在进行中，跳过：task_id="+taskID)
 		return false
 	}
 	e.syncing[taskID] = true
 	return true
 }
 
-func (e *Engine) release(taskID string) {
+func (e *Engine) release(taskID string, task models.BackupTask) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	e.logs.Push("debug", task, "", "同步锁释放：task_id="+taskID)
 	delete(e.syncing, taskID)
 }
 
@@ -142,10 +147,11 @@ func (e *Engine) collectPendingFiles(task models.BackupTask, report *models.Sync
 	}
 	snapshot := models.TaskSnapshot{Files: map[string]models.FileFingerprint{}}
 	if task.OnDemandSync {
-		snapshot = LoadSnapshot(e.snapshotDir, task.ID)
+		snapshot = LoadSnapshot(e.snapshotDir, task.ID, e.logs, task)
 	}
 
 	pendingFiles := make([]models.LocalFileItem, 0, len(files))
+	skippedCount := 0
 	for _, item := range files {
 		shouldUpload := true
 		if task.OnDemandSync {
@@ -154,19 +160,26 @@ func (e *Engine) collectPendingFiles(task models.BackupTask, report *models.Sync
 			}
 		}
 		if !shouldUpload {
+			skippedCount++
 			continue
 		}
 		pendingFiles = append(pendingFiles, item)
 		report.TotalFiles++
 		report.TotalBytes += item.Size
 	}
+	
+	totalFiles := len(files)
+	pendingCount := len(pendingFiles)
+	e.logs.Push("info", task, "", fmt.Sprintf("文件扫描完成：total_files=%d, pending_count=%d, skipped_count=%d", totalFiles, pendingCount, skippedCount))
+	
 	return files, pendingFiles, snapshot, nil
 }
 
 func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files []models.LocalFileItem, pendingFiles []models.LocalFileItem, snapshot models.TaskSnapshot, report *models.SyncReport) error {
 	var firstErr error
 	failedFilePaths := make([]string, 0)
-	for _, item := range pendingFiles {
+	totalCount := len(pendingFiles)
+	for i, item := range pendingFiles {
 		remoteDir := utils.NormalizeRemote(filepath.ToSlash(filepath.Join(task.RemotePath, filepath.Dir(item.RelPath))))
 		if remoteDir == "." {
 			remoteDir = ""
@@ -190,6 +203,15 @@ func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files
 		report.Message = "同步进行中"
 		task.UpdatedAt = time.Now()
 		_ = e.store.Upsert(*task)
+		
+		// 每50个文件记录一次进度
+		if (i+1)%50 == 0 {
+			percentage := 0
+			if totalCount > 0 {
+				percentage = (i + 1) * 100 / totalCount
+			}
+			e.logs.Push("info", *task, "", fmt.Sprintf("同步进度：count=%d/%d, percentage=%d%%", i+1, totalCount, percentage))
+		}
 	}
 	for _, item := range files {
 		if _, exists := snapshot.Files[item.RelPath]; exists {
@@ -201,12 +223,13 @@ func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files
 		}
 	}
 	if task.OnDemandSync {
-		_ = SaveSnapshot(e.snapshotDir, task.ID, snapshot)
+		if err := SaveSnapshot(e.snapshotDir, task.ID, snapshot, e.logs, *task); err != nil {
+			e.logs.Push("error", *task, "", "快照保存失败："+err.Error())
+		}
 	}
 	if firstErr != nil {
 		report.FailedFilePaths = failedFilePaths
-		e.logs.Push("error", *task, "", "任务同步失败")
-		return e.failSync(task, report, "同步失败", firstErr)
+		return e.failSync(task, report, "同步失败", firstErr, report.UploadedFiles)
 	}
 	return nil
 }
@@ -227,24 +250,29 @@ func (e *Engine) finishNoopSync(task *models.BackupTask, mode string) error {
 	return e.store.Upsert(*task)
 }
 
-func (e *Engine) finishSuccessfulSync(task *models.BackupTask, mode string) error {
+func (e *Engine) finishSuccessfulSync(task *models.BackupTask, mode string, report *models.SyncReport) error {
 	now := time.Now()
+	duration := now.Sub(report.StartedAt).Seconds()
 	task.Status = "idle"
 	task.LastError = ""
 	task.LastSyncAt = &now
 	task.SyncReport = &models.SyncReport{
-		State:      "idle",
-		Mode:       mode,
-		Message:    "同步完成",
-		StartedAt:  now,
-		FinishedAt: &now,
+		State:            "idle",
+		Mode:             mode,
+		Message:          "同步完成",
+		StartedAt:        report.StartedAt,
+		FinishedAt:       &now,
+		UploadedFiles:    report.UploadedFiles,
+		TransferredBytes: report.TransferredBytes,
+		TotalFiles:       report.TotalFiles,
+		TotalBytes:       report.TotalBytes,
 	}
 	task.UpdatedAt = now
-	e.logs.Push("info", *task, "", "任务同步完成")
+	e.logs.Push("info", *task, "", fmt.Sprintf("任务同步完成：uploaded_count=%d, total_bytes=%d, duration_seconds=%.2f", report.UploadedFiles, report.TransferredBytes, duration))
 	return e.store.Upsert(*task)
 }
 
-func (e *Engine) failSync(task *models.BackupTask, report *models.SyncReport, message string, cause error) error {
+func (e *Engine) failSync(task *models.BackupTask, report *models.SyncReport, message string, cause error, uploadedCount int) error {
 	now := time.Now()
 	task.Status = "error"
 	task.LastError = cause.Error()
@@ -254,5 +282,6 @@ func (e *Engine) failSync(task *models.BackupTask, report *models.SyncReport, me
 	report.Message = message
 	report.FinishedAt = &now
 	_ = e.store.Upsert(*task)
+	e.logs.Push("error", *task, "", fmt.Sprintf("同步失败：task_id=%s, error_message=%s, uploaded_count_before_failure=%d", task.ID, cause.Error(), uploadedCount))
 	return cause
 }

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"zcopy-client-backend/models"
 )
 
 // ---------------------------------------------------------------------------
@@ -12,12 +16,20 @@ import (
 // ---------------------------------------------------------------------------
 
 func (a *AppState) proxyRegister(c *gin.Context) {
+	a.pushLog("info", models.BackupTask{Name: "system"}, "", "注册请求")
 	a.proxyAuthEndpoint(c, "/auth/register", false)
 }
 
 func (a *AppState) proxyLogin(c *gin.Context) {
-	data, status, err := a.proxyRaw(c.Request.Method, "/auth/login", c.Request.Body, "application/json", "")
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
+	c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	var reqBody map[string]string
+	_ = c.ShouldBindJSON(&reqBody)
+
+	data, status, err := a.proxyRaw(c.Request.Method, "/auth/login", bytes.NewReader(bodyBytes), "application/json", "")
 	if err != nil {
+		a.pushLog("error", models.BackupTask{Name: "system"}, "", "登录失败: "+err.Error())
 		c.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
@@ -28,15 +40,33 @@ func (a *AppState) proxyLogin(c *gin.Context) {
 				a.setToken(token)
 			}
 		}
+		username := ""
+		if reqBody != nil {
+			if u, ok := reqBody["username"]; ok {
+				username = u
+			} else if u, ok := reqBody["email"]; ok {
+				username = u
+			}
+		}
+		a.pushLog("info", models.BackupTask{Name: "system"}, "", "登录成功"+func() string {
+			if username != "" {
+				return " (" + username + ")"
+			}
+			return ""
+		}())
+	} else {
+		a.pushLog("warn", models.BackupTask{Name: "system"}, "", "登录失败")
 	}
 	c.Data(status, "application/json", data)
 }
 
 func (a *AppState) proxyMe(c *gin.Context) {
+	a.pushLog("debug", models.BackupTask{Name: "system"}, "", "查询当前用户信息")
 	a.proxyAuthEndpoint(c, "/auth/me", true)
 }
 
 func (a *AppState) logout(c *gin.Context) {
+	a.pushLog("info", models.BackupTask{Name: "system"}, "", "用户登出")
 	a.setToken("")
 	c.JSON(http.StatusOK, gin.H{"message": "已退出登录"})
 }

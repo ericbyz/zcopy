@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"zcopy-client-backend/models"
 	"zcopy-client-backend/utils"
 )
 
@@ -22,6 +23,7 @@ type remoteFileListResponse struct {
 }
 
 func (a *AppState) listRemoteFolders(c *gin.Context) {
+	a.pushLog("debug", models.BackupTask{Name: "system"}, "", "远程目录浏览")
 	token := a.getToken()
 	if token == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})

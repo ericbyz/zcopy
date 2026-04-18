@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,7 +16,7 @@ func (e *Engine) ReleaseLocalSpace(taskID string) (ReleaseResult, error) {
 	if err != nil {
 		return ReleaseResult{}, err
 	}
-	snapshot := LoadSnapshot(e.snapshotDir, task.ID)
+	snapshot := LoadSnapshot(e.snapshotDir, task.ID, e.logs, task)
 	if len(snapshot.Files) == 0 {
 		return ReleaseResult{}, ErrSnapshotMissing
 	}
@@ -29,6 +30,7 @@ func (e *Engine) ReleaseLocalSpace(taskID string) (ReleaseResult, error) {
 	}
 
 	result := ReleaseResult{Task: task}
+	scannedFiles := len(snapshot.Files)
 	for rel, fp := range snapshot.Files {
 		item, exists := currentMap[rel]
 		if !exists {
@@ -58,7 +60,7 @@ func (e *Engine) ReleaseLocalSpace(taskID string) (ReleaseResult, error) {
 	}
 	task.UpdatedAt = now
 	_ = e.store.Upsert(task)
-	e.logs.Push("info", task, "", "本地空间释放完成")
+	e.logs.Push("info", task, "", fmt.Sprintf("本地空间释放完成：scanned_files=%d, released_files=%d, skipped_files=%d", scannedFiles, result.ReleasedFiles, result.SkippedFiles))
 	result.Task = task
 	return result, nil
 }
@@ -72,7 +74,7 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 	if token == "" {
 		return task, ErrUnauthorized
 	}
-	snapshot := LoadSnapshot(e.snapshotDir, task.ID)
+	snapshot := LoadSnapshot(e.snapshotDir, task.ID, e.logs, task)
 	if len(snapshot.Files) == 0 {
 		return task, ErrSnapshotMissing
 	}
@@ -102,12 +104,16 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 
 	var firstErr error
 	failed := make([]string, 0)
+	downloadedFiles := 0
+	skippedFiles := 0
+	totalBytes := int64(0)
 	for _, rel := range keys {
 		fp := snapshot.Files[rel]
 		localPath := filepath.Join(task.LocalPath, filepath.FromSlash(rel))
 		if item, exists := currentMap[rel]; exists && item.Size == fp.Size && item.ModUnix == fp.ModUnix {
 			report.UploadedFiles++
 			report.TransferredBytes += item.Size
+			skippedFiles++
 			continue
 		}
 		remoteFile := utils.NormalizeRemote(filepath.ToSlash(filepath.Join(task.RemotePath, rel)))
@@ -121,6 +127,8 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 		} else {
 			report.UploadedFiles++
 			report.TransferredBytes += fp.Size
+			downloadedFiles++
+			totalBytes += fp.Size
 		}
 		report.SpeedBytesPerSec = utils.CalcSpeed(report.TransferredBytes, report.StartedAt)
 		task.UpdatedAt = time.Now()
@@ -153,7 +161,7 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 	}
 	task.UpdatedAt = now
 	_ = e.store.Upsert(task)
-	e.logs.Push("info", task, "", "云端文件下载完成")
+	e.logs.Push("info", task, "", fmt.Sprintf("云端文件下载完成：downloaded_files=%d, skipped_files=%d, total_bytes=%d", downloadedFiles, skippedFiles, totalBytes))
 	return task, nil
 }
 

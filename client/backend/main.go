@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -29,7 +30,7 @@ type AppState struct {
 	store   *store.TaskStore
 	tokens  *auth.InMemoryTokenManager
 	remote  *proxy.HTTPRemoteClient
-	logs    *logpkg.RingBufferLogStore
+	logs    logpkg.LogStore
 	watcher *watcher.FSNotifyWatchManager
 	syncer  syncpkg.SyncEngine
 	fp      *fileproviderpkg.Service
@@ -51,6 +52,9 @@ func (a *AppState) downloadRemoteFile(remotePath, localPath, token string) error
 }
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		AddSource: true,
+	})))
 	cfg := config.LoadConfig()
 	if err := os.MkdirAll(cfg.Storage.DataDir, 0755); err != nil {
 		log.Fatalf("failed to create data dir: %v", err)
@@ -64,7 +68,8 @@ func main() {
 	httpc := &http.Client{Timeout: 60 * time.Second}
 	tokens := auth.NewInMemoryTokenManager()
 	remote := proxy.NewHTTPRemoteClient(httpc, cfg.FileServer.BaseURL)
-	logs := logpkg.NewRingBufferLogStore()
+	logDir := filepath.Join(cfg.Storage.DataDir, "logs")
+	logs := logpkg.NewFileLogStore(logDir)
 	snapshotDir := filepath.Join(cfg.Storage.DataDir, "snapshots")
 	syncer := syncpkg.NewEngine(taskStore, tokens, remote, logs, snapshotDir)
 	fp := fileproviderpkg.New(

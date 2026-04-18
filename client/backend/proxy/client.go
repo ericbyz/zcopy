@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"zcopy-client-backend/utils"
 )
@@ -33,13 +35,16 @@ func NewHTTPRemoteClient(httpc *http.Client, baseURL string) *HTTPRemoteClient {
 }
 
 func (c *HTTPRemoteClient) RawRequest(method, path string, body io.Reader, contentType, token string) ([]byte, int, error) {
+	start := time.Now()
 	var copiedBody []byte
 	if body != nil {
 		buf, _ := io.ReadAll(body)
 		copiedBody = buf
 	}
-	req, err := http.NewRequest(method, strings.TrimRight(c.BaseURL, "/")+path, bytes.NewReader(copiedBody))
+	url := strings.TrimRight(c.BaseURL, "/") + path
+	req, err := http.NewRequest(method, url, bytes.NewReader(copiedBody))
 	if err != nil {
+		slog.Error("RawRequest 请求创建失败", "method", method, "url", url, "error", err)
 		return nil, 0, err
 	}
 	if contentType != "" {
@@ -50,9 +55,12 @@ func (c *HTTPRemoteClient) RawRequest(method, path string, body io.Reader, conte
 	}
 	resp, err := c.HTTPc.Do(req)
 	if err != nil {
+		slog.Error("RawRequest 请求失败", "method", method, "url", url, "error", err)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
+	duration := time.Since(start)
+	slog.Debug("RawRequest 请求完成", "method", method, "url", url, "status_code", resp.StatusCode, "duration_ms", duration.Milliseconds())
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, 0, err
@@ -61,11 +69,17 @@ func (c *HTTPRemoteClient) RawRequest(method, path string, body io.Reader, conte
 }
 
 func (c *HTTPRemoteClient) UploadFile(localFile, remoteDir, token string) error {
+	start := time.Now()
 	f, err := os.Open(localFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return err
+	}
 
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
@@ -90,10 +104,13 @@ func (c *HTTPRemoteClient) UploadFile(localFile, remoteDir, token string) error 
 	if status < 200 || status >= 300 {
 		return errors.New("上传文件失败")
 	}
+	duration := time.Since(start)
+	slog.Info("文件上传完成", "filename", filepath.Base(localFile), "size", fi.Size(), "duration", duration)
 	return nil
 }
 
 func (c *HTTPRemoteClient) DownloadRemoteFile(remotePath, localPath, token string) error {
+	start := time.Now()
 	endpoint := strings.TrimRight(c.BaseURL, "/") + "/files/download?path=" + url.QueryEscape(utils.NormalizeRemote(remotePath))
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -123,7 +140,11 @@ func (c *HTTPRemoteClient) DownloadRemoteFile(remotePath, localPath, token strin
 		return err
 	}
 	defer dst.Close()
-	_, err = io.Copy(dst, resp.Body)
+	n, err := io.Copy(dst, resp.Body)
+	if err == nil {
+		duration := time.Since(start)
+		slog.Info("文件下载完成", "filename", filepath.Base(localPath), "size", n, "duration", duration)
+	}
 	return err
 }
 
@@ -132,6 +153,7 @@ func (c *HTTPRemoteClient) EnsureRemotePath(path, token string) error {
 	if clean == "" {
 		return nil
 	}
+	slog.Debug("确保远程目录存在", "path", clean)
 	parts := strings.Split(clean, "/")
 	parent := ""
 	for _, p := range parts {

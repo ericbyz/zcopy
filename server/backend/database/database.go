@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"zcopy-server-backend/config"
+	"zcopy-server-backend/logger"
 	"zcopy-server-backend/models"
 )
 
@@ -99,10 +100,15 @@ func (s *Store) flushLocked() error {
 
 	content, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
+		logger.Error("database flush failed", "error", err.Error())
 		return err
 	}
 
-	return os.WriteFile(s.path, content, 0644)
+	err = os.WriteFile(s.path, content, 0644)
+	if err != nil {
+		logger.Error("database flush failed", "error", err.Error())
+	}
+	return err
 }
 
 func (s *Store) UserExists(username, email string) bool {
@@ -135,7 +141,11 @@ func (s *Store) CreateUser(user *models.User) error {
 	s.nextID++
 	s.users = append(s.users, *user)
 
-	return s.flushLocked()
+	err := s.flushLocked()
+	if err == nil {
+		logger.Info("user created", "user_id", user.ID, "username", user.Username, "email", user.Email)
+	}
+	return err
 }
 
 func (s *Store) FindUserByAccount(account string) (models.User, error) {

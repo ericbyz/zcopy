@@ -8,6 +8,7 @@ import (
 	"zcopy-server-backend/config"
 	"zcopy-server-backend/database"
 	"zcopy-server-backend/handlers"
+	"zcopy-server-backend/logger"
 	"zcopy-server-backend/middleware"
 	"zcopy-server-backend/utils"
 
@@ -16,6 +17,7 @@ import (
 
 func main() {
 	config.LoadConfig()
+	logger.Init(config.AppConfig.Log.Level, config.AppConfig.Log.Dir)
 
 	if err := utils.EnsureDirectoryExists(config.AppConfig.Storage.RootDir); err != nil {
 		log.Fatalf("failed to create storage root: %v", err)
@@ -29,6 +31,7 @@ func main() {
 	router := gin.Default()
 	router.MaxMultipartMemory = 64 << 20
 	router.Use(corsMiddleware())
+	router.Use(middleware.RequestLogger())
 
 	api := router.Group("/api/v1")
 	{
@@ -54,6 +57,13 @@ func main() {
 		clientGroup.Use(middleware.AuthRequired())
 		{
 			clientGroup.GET("/capabilities", handlers.ClientCapabilities)
+		}
+
+		logsGroup := api.Group("/logs")
+		logsGroup.Use(middleware.AuthRequired())
+		{
+			logsGroup.GET("", handlers.ListLogs)
+			logsGroup.GET("/export", handlers.ExportLogs)
 		}
 	}
 

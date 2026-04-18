@@ -11,3 +11,10 @@ auth:
 
 storage:
   root_dir: "./storage"
+
+log:
+  level: "info"
+  dir: "./data/logs"
+  max_age_days: 30
+  max_size_mb: 500
+  max_file_size_mb: 100

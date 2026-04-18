@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell } from 'electron'
-import { spawn } from 'child_process'
+import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -38,12 +38,35 @@ function startBackend() {
     ZCOPY_CLIENT_CONFIG: backendConfig,
     ZCOPY_CLIENT_DATA_DIR: path.join(app.getPath('userData'), 'backend-data')
   }
+  const logDir = path.join(app.getPath('userData'), 'logs')
+  fs.mkdirSync(logDir, { recursive: true })
+  const backendLogPath = path.join(logDir, 'backend.log')
+  const backendLogFd = fs.openSync(backendLogPath, 'a')
   backendProcess = spawn(backendExe, [], {
     cwd: path.dirname(backendExe),
     env,
     windowsHide: true,
-    stdio: 'ignore'
+    stdio: ['ignore', backendLogFd, backendLogFd]
   })
+}
+
+async function waitForBackendHealth() {
+  const startedAt = Date.now()
+  const timeoutMs = 10000
+  const pollIntervalMs = 100
+
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch('http://localhost:8090/health')
+      if (response.ok) {
+        return
+      }
+    } catch {
+    }
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+  }
+
+  throw new Error('backend health check timed out after 10 seconds')
 }
 
 function createWindow() {
@@ -79,8 +102,15 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   startBackend()
+  try {
+    await waitForBackendHealth()
+  } catch (error) {
+    console.error('[zcopy] backend health check failed:', error)
+    app.quit()
+    return
+  }
   createWindow()
   globalShortcut.register('F12', () => {
     const windows = BrowserWindow.getAllWindows()
@@ -91,7 +121,7 @@ app.whenReady().then(() => {
     if (win.webContents.isDevToolsOpened()) {
       win.webContents.closeDevTools()
     } else {
-      win.webContents.openDevTools({ mode: 'detach' })
+      win.webContents.openDevTools({ mode: 'detached' })
     }
   })
 })

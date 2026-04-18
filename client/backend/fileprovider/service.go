@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -111,6 +112,7 @@ func (s *Service) StartWebDAVServer() error {
 	s.webdavBaseURL = "http://" + listener.Addr().String()
 	s.webdavUsername = username
 	s.webdavPassword = password
+	slog.Info("WebDAV 服务已启动", "url", s.webdavBaseURL)
 
 	server := &http.Server{Handler: http.HandlerFunc(s.serveWebDAV)}
 	go func() {
@@ -124,6 +126,7 @@ func (s *Service) Available() bool {
 }
 
 func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
+	slog.Info("File Provider 域注册", "task_id", task.ID)
 	payload := fileProviderRegisterRequest{
 		ID:       platform.SyncRootID(task.ID),
 		Name:     "ZCopy " + task.Name,
@@ -165,8 +168,10 @@ func (s *Service) callFileProviderBridge(method string, endpoint string, payload
 		}
 		body = bytes.NewReader(buf)
 	}
-	req, err := http.NewRequest(method, strings.TrimRight(s.fpBridgeURL, "/")+endpoint, body)
+	url := strings.TrimRight(s.fpBridgeURL, "/") + endpoint
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
+		slog.Error("File Provider bridge 请求创建失败", "url", url, "error", err)
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+s.fpBridgeToken)
@@ -175,9 +180,12 @@ func (s *Service) callFileProviderBridge(method string, endpoint string, payload
 	}
 	resp, err := s.httpc.Do(req)
 	if err != nil {
+		slog.Error("File Provider bridge 请求失败", "url", url, "error", err)
 		return err
 	}
 	defer resp.Body.Close()
+
+	slog.Debug("File Provider bridge 调用", "url", url, "status_code", resp.StatusCode)
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -204,6 +212,7 @@ func (s *Service) callFileProviderBridge(method string, endpoint string, payload
 }
 
 func (s *Service) listRemoteItems(remotePath string, token string) ([]remoteWebDAVItem, error) {
+	slog.Debug("listRemoteItems 操作", "remote_path", remotePath)
 	endpoint := "/files"
 	clean := utils.NormalizeRemote(remotePath)
 	if clean != "" {
@@ -228,6 +237,7 @@ func (s *Service) listRemoteItems(remotePath string, token string) ([]remoteWebD
 }
 
 func (s *Service) deleteRemotePath(remotePath string, token string) error {
+	slog.Debug("deleteRemotePath 操作", "remote_path", remotePath)
 	endpoint := "/files?path=" + url.QueryEscape(utils.NormalizeRemote(remotePath))
 	data, status, err := s.remote.RawRequest(http.MethodDelete, endpoint, nil, "", token)
 	if err != nil {
@@ -244,6 +254,7 @@ func (s *Service) deleteRemotePath(remotePath string, token string) error {
 }
 
 func (s *Service) renameRemotePath(oldPath string, newPath string, token string) error {
+	slog.Debug("renameRemotePath 操作", "old_path", oldPath, "new_path", newPath)
 	body, err := json.Marshal(map[string]string{
 		"from": utils.NormalizeRemote(oldPath),
 		"to":   utils.NormalizeRemote(newPath),
@@ -266,6 +277,7 @@ func (s *Service) renameRemotePath(oldPath string, newPath string, token string)
 }
 
 func (s *Service) uploadFileReader(filename string, remoteDir string, src io.Reader, token string) error {
+	slog.Debug("uploadFileReader 操作", "filename", filename, "remote_dir", remoteDir)
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	if err := writer.WriteField("path", utils.NormalizeRemote(remoteDir)); err != nil {

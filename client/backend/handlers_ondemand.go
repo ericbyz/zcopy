@@ -11,6 +11,8 @@ import (
 
 func (a *AppState) releaseLocalSpace(c *gin.Context) {
 	id := c.Param("id")
+	task, _ := a.store.Get(id)
+	a.pushLog("info", task, "", "空间释放请求: "+id)
 	result, err := a.syncer.ReleaseLocalSpace(id)
 	if errors.Is(err, syncpkg.ErrTaskNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
@@ -35,6 +37,8 @@ func (a *AppState) releaseLocalSpace(c *gin.Context) {
 
 func (a *AppState) hydrateFromCloud(c *gin.Context) {
 	id := c.Param("id")
+	task, _ := a.store.Get(id)
+	a.pushLog("info", task, "", "云文件下载请求: "+id)
 	task, err := a.syncer.HydrateFromCloud(id)
 	if errors.Is(err, syncpkg.ErrTaskNotFound) {
 		c.JSON(404, gin.H{"message": "任务不存在"})
