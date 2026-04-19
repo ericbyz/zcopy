@@ -57,7 +57,7 @@ provide('createTaskTrigger', createTaskTrigger)
 provide('themeMode', themeMode)
 
 const navItems = [
-  { icon: HardDrive, label: '同步任务', path: '/' },
+  { icon: HardDrive, label: '备份任务', path: '/' },
   { icon: FileText, label: '日志', path: '/logs' },
   { icon: Settings, label: '设置', path: '/settings' }
 ]

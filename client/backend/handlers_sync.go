@@ -10,13 +10,17 @@ import (
 func (a *AppState) syncTaskNow(c *gin.Context) {
 	id := c.Param("id")
 	task, _ := a.store.Get(id)
-	a.pushLog("info", task, "", "手动同步触发: "+id)
+	a.pushLog("info", task, "", "手动备份触发: "+id)
+	if task.CloudOnly {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "全新模式任务不支持手动备份"})
+		return
+	}
 	if err := a.syncTask(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "同步失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "备份失败: " + err.Error()})
 		return
 	}
 	task, _ = a.store.Get(id)
-	c.JSON(http.StatusOK, gin.H{"message": "同步成功", "task": task})
+	c.JSON(http.StatusOK, gin.H{"message": "备份成功", "task": task})
 }
 
 func (a *AppState) startAutoTask(c *gin.Context) {
@@ -26,6 +30,10 @@ func (a *AppState) startAutoTask(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
 		return
 	}
+	if task.CloudOnly {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "全新模式任务不支持自动备份"})
+		return
+	}
 	task.AutoBackup = true
 	task.UpdatedAt = time.Now()
 	if err := a.store.Upsert(task); err != nil {
@@ -33,11 +41,11 @@ func (a *AppState) startAutoTask(c *gin.Context) {
 		return
 	}
 	if err := a.watcher.StartWatcher(id, task); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "启动自动同步失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "启动自动备份失败: " + err.Error()})
 		return
 	}
 	a.pushLog("info", task, "", "自动备份已启动: "+id)
-	c.JSON(http.StatusOK, gin.H{"message": "自动同步已启动"})
+	c.JSON(http.StatusOK, gin.H{"message": "自动备份已启动"})
 }
 
 func (a *AppState) stopAutoTask(c *gin.Context) {
@@ -55,5 +63,5 @@ func (a *AppState) stopAutoTask(c *gin.Context) {
 	}
 	a.watcher.StopWatcher(id)
 	a.pushLog("info", task, "", "自动备份已停止: "+id)
-	c.JSON(http.StatusOK, gin.H{"message": "自动同步已停止"})
+	c.JSON(http.StatusOK, gin.H{"message": "自动备份已停止"})
 }

@@ -22,7 +22,7 @@ const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-locatio
 <template>
   <div>
     <div v-if="tasks.length === 0" class="empty-state">
-      <p>暂无同步任务</p>
+      <p>暂无备份任务</p>
       <p class="empty-hint">点击左侧「创建新任务」开始</p>
     </div>
 

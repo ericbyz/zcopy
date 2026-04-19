@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -44,7 +45,25 @@ func (a *AppState) initTaskCFAPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "仅 Windows 支持 Cloud Files API"})
 		return
 	}
-	if err := registerWindowsSyncRoot(task.ID, task.Name, task.LocalPath); err != nil {
+	localPath := task.LocalPath
+	if task.CloudOnly && localPath == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "获取用户目录失败: " + err.Error()})
+			return
+		}
+		localPath = filepath.Join(homeDir, "ZCopy", platform.SafeName(task.Name))
+		if err := os.MkdirAll(localPath, 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "创建本地目录失败: " + err.Error()})
+			return
+		}
+		task.LocalPath = localPath
+		if err := a.store.Upsert(task); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "保存任务失败"})
+			return
+		}
+	}
+	if err := registerWindowsSyncRoot(task.ID, task.Name, localPath); err != nil {
 		a.pushLog("error", task, "", "注册 Cloud Files 同步根失败: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "注册 Cloud Files 同步根失败: " + err.Error()})
 		return

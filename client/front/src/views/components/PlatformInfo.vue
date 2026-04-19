@@ -23,7 +23,7 @@ const props = defineProps({
         {{ capabilities.onDemandMode }}
       </el-descriptions-item>
       <el-descriptions-item label="说明">
-        启用按需同步后会自动初始化，同步目录请直接从 location 中按需打开文件。
+        启用按需同步后会自动初始化，同步目录请直接从 location 中按需打开文件。此功能为单向备份，不会删除远程文件。
       </el-descriptions-item>
     </el-descriptions>
   </el-card>

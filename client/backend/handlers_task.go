@@ -25,16 +25,38 @@ func (a *AppState) createTask(c *gin.Context) {
 		return
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
 	req.RemotePath = utils.NormalizeRemote(req.RemotePath)
-	if req.Name == "" || req.LocalPath == "" {
-		c.JSON(400, gin.H{"message": "任务名称和本地目录不能为空"})
+	if req.Name == "" {
+		c.JSON(400, gin.H{"message": "任务名称不能为空"})
 		return
 	}
-	info, err := os.Stat(req.LocalPath)
-	if err != nil || !info.IsDir() {
-		c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
+	if req.CloudOnly {
+		if !req.OnDemandSync {
+			c.JSON(400, gin.H{"message": "全新模式需要开启按需同步"})
+			return
+		}
+	} else {
+		req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
+		if req.LocalPath == "" {
+			c.JSON(400, gin.H{"message": "本地目录不能为空"})
+			return
+		}
+		info, err := os.Stat(req.LocalPath)
+		if err != nil || !info.IsDir() {
+			c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
+			return
+		}
+	}
+	token := a.getToken()
+	if token == "" {
+		c.JSON(401, gin.H{"message": "请先登录客户端"})
 		return
+	}
+	if req.CloudOnly && req.RemotePath != "" {
+		if err := a.ensureRemotePath(req.RemotePath, token); err != nil {
+			c.JSON(500, gin.H{"message": "创建远程目录失败: " + err.Error()})
+			return
+		}
 	}
 	now := time.Now()
 	req.ID = "task-" + now.Format("20060102150405.000000000")
@@ -45,7 +67,7 @@ func (a *AppState) createTask(c *gin.Context) {
 		c.JSON(500, gin.H{"message": "保存任务失败: " + err.Error()})
 		return
 	}
-	if req.AutoBackup {
+	if !req.CloudOnly && req.AutoBackup {
 		if err := a.watcher.StartWatcher(req.ID, req); err != nil {
 			c.JSON(500, gin.H{"message": "任务已创建，但自动同步启动失败: " + err.Error()})
 			return
@@ -72,16 +94,27 @@ func (a *AppState) updateTask(c *gin.Context) {
 		return
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
 	req.RemotePath = utils.NormalizeRemote(req.RemotePath)
-	if req.Name == "" || req.LocalPath == "" {
-		c.JSON(400, gin.H{"message": "任务名称和本地目录不能为空"})
+	if req.Name == "" {
+		c.JSON(400, gin.H{"message": "任务名称不能为空"})
 		return
 	}
-	info, err := os.Stat(req.LocalPath)
-	if err != nil || !info.IsDir() {
-		c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
-		return
+	if req.CloudOnly {
+		if !req.OnDemandSync {
+			c.JSON(400, gin.H{"message": "全新模式需要开启按需同步"})
+			return
+		}
+	} else {
+		req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
+		if req.LocalPath == "" {
+			c.JSON(400, gin.H{"message": "本地目录不能为空"})
+			return
+		}
+		info, err := os.Stat(req.LocalPath)
+		if err != nil || !info.IsDir() {
+			c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
+			return
+		}
 	}
 	req.ID = oldTask.ID
 	req.CreatedAt = oldTask.CreatedAt
@@ -94,7 +127,7 @@ func (a *AppState) updateTask(c *gin.Context) {
 		c.JSON(500, gin.H{"message": "更新任务失败"})
 		return
 	}
-	if req.AutoBackup {
+	if !req.CloudOnly && req.AutoBackup {
 		if err := a.watcher.StartWatcher(req.ID, req); err != nil {
 			c.JSON(500, gin.H{"message": "任务已更新，但自动同步启动失败: " + err.Error()})
 			return

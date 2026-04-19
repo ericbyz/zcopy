@@ -45,8 +45,10 @@ function handlePrev() {
 
 const steps = [
   { title: '基本设置' },
-  { title: '同步路径' }
+  { title: '备份路径' }
 ]
+
+const showLocalPath = computed(() => !props.taskForm.cloudOnly)
 </script>
 
 <template>
@@ -80,11 +82,14 @@ const steps = [
         <el-form-item>
           <el-checkbox v-model="taskForm.onDemandSync">按需同步</el-checkbox>
         </el-form-item>
+        <el-form-item v-if="taskForm.onDemandSync">
+          <el-checkbox v-model="taskForm.cloudOnly">全新模式（无本地目录，直接创建云端文件）</el-checkbox>
+        </el-form-item>
       </template>
 
       <!-- Step 2 (only for new tasks) -->
       <template v-if="step === 1 && !isEdit">
-        <el-form-item label="本地目录">
+        <el-form-item v-if="showLocalPath" label="本地目录">
           <div class="input-row">
             <el-input :model-value="taskForm.localPath" placeholder="选择本地目录" readonly />
             <el-button @click="emit('pick-local')">选择目录</el-button>
@@ -100,7 +105,7 @@ const steps = [
 
       <!-- Edit mode: show paths too -->
       <template v-if="isEdit">
-        <el-form-item label="本地目录">
+        <el-form-item v-if="showLocalPath" label="本地目录">
           <div class="input-row">
             <el-input v-model="taskForm.localPath" placeholder="选择本地目录" readonly />
             <el-button @click="emit('pick-local')">选择目录</el-button>

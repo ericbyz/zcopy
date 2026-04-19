@@ -67,7 +67,8 @@ function emptyTask() {
     localPath: '',
     remotePath: '',
     autoBackup: false,
-    onDemandSync: false
+    onDemandSync: false,
+    cloudOnly: false
   }
 }
 
@@ -233,7 +234,8 @@ function editTask(task) {
     localPath: task.localPath,
     remotePath: task.remotePath,
     autoBackup: task.autoBackup,
-    onDemandSync: task.onDemandSync
+    onDemandSync: task.onDemandSync,
+    cloudOnly: task.cloudOnly || false
   }
   wizardOpen.value = true
 }
@@ -472,7 +474,7 @@ onUnmounted(() => {
     <div v-if="!currentUser" class="auth-page">
       <div class="auth-hero">
         <h1>ZCopy Desktop</h1>
-        <p>云文件同步工具 — 登录后配置同步任务，支持自动备份与按需同步。</p>
+        <p>云文件同步工具 — 登录后配置备份任务，支持自动备份与按需同步。</p>
       </div>
       <AuthCard
         :loading="loading"

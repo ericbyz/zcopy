@@ -70,8 +70,13 @@ func (e *Engine) SyncTask(taskID string) error {
 	}
 	defer e.release(taskID, task)
 
+	if task.CloudOnly {
+		e.logs.Push("info", task, "", "全新模式任务跳过本地备份：task_id="+taskID)
+		return nil
+	}
+
 	e.logs.Push("info", task, "", "同步开始：task_id="+taskID+", task_name="+task.Name+", local_path="+task.LocalPath+", remote_path="+task.RemotePath)
-	
+
 	mode := syncMode(task)
 	report := e.startSync(&task, mode, "准备同步")
 	files, pendingFiles, snapshot, err := e.collectPendingFiles(task, report)
@@ -120,6 +125,9 @@ func (e *Engine) release(taskID string, task models.BackupTask) {
 }
 
 func syncMode(task models.BackupTask) string {
+	if task.CloudOnly {
+		return "cloud_only"
+	}
 	if task.OnDemandSync {
 		return "on_demand"
 	}
@@ -167,11 +175,11 @@ func (e *Engine) collectPendingFiles(task models.BackupTask, report *models.Sync
 		report.TotalFiles++
 		report.TotalBytes += item.Size
 	}
-	
+
 	totalFiles := len(files)
 	pendingCount := len(pendingFiles)
 	e.logs.Push("info", task, "", fmt.Sprintf("文件扫描完成：total_files=%d, pending_count=%d, skipped_count=%d", totalFiles, pendingCount, skippedCount))
-	
+
 	return files, pendingFiles, snapshot, nil
 }
 
@@ -203,7 +211,7 @@ func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files
 		report.Message = "同步进行中"
 		task.UpdatedAt = time.Now()
 		_ = e.store.Upsert(*task)
-		
+
 		// 每50个文件记录一次进度
 		if (i+1)%50 == 0 {
 			percentage := 0

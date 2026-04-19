@@ -3,7 +3,7 @@ import { getTaskStatusText, calcSyncProgress } from '../utils/task.js'
 
 describe('getTaskStatusText', () => {
   const statusTests = [
-    { name: 'syncing state', input: { syncReport: { state: 'syncing' } }, want: '同步中' },
+    { name: 'syncing state', input: { syncReport: { state: 'syncing' } }, want: '备份中' },
     { name: 'completed state', input: { syncReport: { state: 'completed' } }, want: '空闲' },
     { name: 'idle syncReport state', input: { syncReport: { state: 'idle' } }, want: '空闲' },
     { name: 'no syncReport but status idle', input: { status: 'idle' }, want: '空闲' },

@@ -52,17 +52,17 @@ const progressLabel = computed(() => {
       <div class="task-title">
         <h3>{{ task.name }}</h3>
         <el-tag :type="statusType" size="small" round>
-          {{ isSyncing ? `正在同步 ${syncProgress}%` : taskStatusText }}
+          {{ isSyncing ? `正在备份 ${syncProgress}%` : taskStatusText }}
         </el-tag>
       </div>
       <div class="task-header-actions">
         <el-button
-          v-if="!isSyncing"
+          v-if="!isSyncing && !task.cloudOnly"
           circle
           size="small"
           :disabled="loading"
           @click="emit('sync', task.id)"
-          aria-label="开始同步"
+          aria-label="开始备份"
         >
           <component :is="Play" style="width:16px;height:16px" />
         </el-button>
@@ -80,7 +80,7 @@ const progressLabel = computed(() => {
                 <component :is="Edit" style="width:14px;height:14px;margin-right:6px" />
                 编辑
               </el-dropdown-item>
-              <el-dropdown-item command="toggle">
+              <el-dropdown-item v-if="!task.cloudOnly" command="toggle">
                 <component :is="RefreshCw" style="width:14px;height:14px;margin-right:6px" />
                 {{ task.autoBackup ? '停止自动' : '开启自动' }}
               </el-dropdown-item>
@@ -102,7 +102,7 @@ const progressLabel = computed(() => {
 
     <!-- Paths -->
     <div class="task-paths">
-      <div class="path-row">
+      <div v-if="task.localPath" class="path-row">
         <component :is="Folder" style="width:14px;height:14px;flex-shrink:0" />
         <span class="path-label">本地路径</span>
         <span class="path-value">{{ task.localPath }}</span>
@@ -112,12 +112,16 @@ const progressLabel = computed(() => {
         <span class="path-label">远程路径</span>
         <span class="path-value">{{ task.remotePath || '根目录' }}</span>
       </div>
+      <div v-if="task.cloudOnly" class="path-row">
+        <el-tag type="warning" size="small">全新模式</el-tag>
+        <span class="path-label">云文件在 location 中管理</span>
+      </div>
     </div>
 
     <!-- Meta -->
     <div class="task-meta">
       <span>自动：{{ task.autoBackup ? '开启' : '关闭' }}</span>
-      <span>上次同步：{{ task.lastSyncAt ? new Date(task.lastSyncAt).toLocaleString() : '无' }}</span>
+      <span>上次备份：{{ task.lastSyncAt ? new Date(task.lastSyncAt).toLocaleString() : '无' }}</span>
     </div>
 
     <!-- Error Alert -->

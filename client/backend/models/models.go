@@ -25,6 +25,7 @@ type BackupTask struct {
 	RemotePath   string      `json:"remotePath"`
 	AutoBackup   bool        `json:"autoBackup"`
 	OnDemandSync bool        `json:"onDemandSync"`
+	CloudOnly    bool        `json:"cloudOnly"`
 	Status       string      `json:"status"`
 	LastError    string      `json:"lastError"`
 	LastSyncAt   *time.Time  `json:"lastSyncAt"`
