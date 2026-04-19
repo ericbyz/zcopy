@@ -1,58 +1,94 @@
 {
-  "active_plan": "/Users/byz/Documents/project/my/zcopy/.sisyphus/plans/logging-enhancement.md",
-  "started_at": "2026-04-18T03:19:20Z",
+  "active_plan": "/Users/byz/Documents/project/my/zcopy/.sisyphus/plans/frontend-redesign.md",
+  "started_at": "2026-04-18T13:13:29Z",
   "session_ids": [
-    "ses_26184f1aaffeSjbzD9sE4WGgFY",
-    "ses_261110b05ffe2S8n87gg2J1Sa7",
-    "ses_261110b02ffe0VbAc42E1fopzV",
-    "ses_261110afeffecgVMrZuBu54Neu",
-    "ses_261110afbffelGxKMhatRWrEwk"
+    "ses_25f93ab66ffe7RAV7zSYJNnwzX"
   ],
-  "plan_name": "logging-enhancement",
+  "plan_name": "frontend-redesign",
   "worktree_path": null,
   "session_origins": {
-    "ses_26184f1aaffeSjbzD9sE4WGgFY": "direct",
-    "ses_261110b05ffe2S8n87gg2J1Sa7": "appended",
-    "ses_261110b02ffe0VbAc42E1fopzV": "appended",
-    "ses_261110afeffecgVMrZuBu54Neu": "appended",
-    "ses_261110afbffelGxKMhatRWrEwk": "appended"
+    "ses_25f93ab66ffe7RAV7zSYJNnwzX": "direct"
   },
   "task_sessions": {
     "todo:1": {
       "task_key": "todo:1",
       "task_label": "1",
-      "task_title": "服务端后端 `logger/` 包 (TDD)",
-      "session_id": "ses_261637959ffeggR1X2vFTZ4giH",
+      "task_title": "安装依赖 + 配置 Vite 插件（两个前端）",
+      "session_id": "ses_25f44baa5ffeBRR01z0RjVzA7C",
       "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-18T03:29:18.523Z"
+      "category": "quick",
+      "updated_at": "2026-04-18T13:17:56.726Z"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "配置 Element Plus zh-CN locale + 全局注册",
+      "session_id": "ses_25f417586ffeIUfR1HXglsdoEz",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-18T13:19:57.750Z"
     },
     "todo:3": {
       "task_key": "todo:3",
       "task_label": "3",
-      "task_title": "客户端后端 GET /logs API 增强",
-      "session_id": "ses_261592700ffeaHXms9ZFt9Q7l3",
+      "task_title": "创建 CSS 设计 Token + 主题系统",
+      "session_id": "ses_25f3f02b2ffeWD4G2JMLxzZ94R",
       "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-18T03:36:46.243Z"
+      "category": "visual-engineering",
+      "updated_at": "2026-04-18T13:25:02.842Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "服务端前端 — 认证页面重构",
+      "session_id": "ses_25f379fe9ffe2jQFB2HcjWIqdo",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-04-18T13:51:01.513Z"
     },
     "todo:7": {
       "task_key": "todo:7",
       "task_label": "7",
-      "task_title": "服务端后端请求日志中间件",
-      "session_id": "ses_2613031f7ffesyIiXaF1RFhiKZ",
+      "task_title": "客户端前端 — 认证页面 + Hero 区域重构",
+      "session_id": "ses_25f208bf8ffejyEVMGNcFDo0Ds",
       "agent": "Sisyphus-Junior",
       "category": "visual-engineering",
-      "updated_at": "2026-04-18T04:48:42.338Z"
+      "updated_at": "2026-04-18T13:58:54.559Z"
     },
-    "todo:8": {
-      "task_key": "todo:8",
-      "task_label": "8",
-      "task_title": "服务端后端 auth handler 审计日志",
-      "session_id": "ses_261110b05ffe2S8n87gg2J1Sa7",
+    "todo:11": {
+      "task_key": "todo:11",
+      "task_label": "11",
+      "task_title": "客户端 — DashboardView.vue 拆分为子组件",
+      "session_id": "ses_25f187b86ffejOfiYYTAxVYwPv",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-18T14:08:52.446Z"
+    },
+    "todo:12": {
+      "task_key": "todo:12",
+      "task_label": "12",
+      "task_title": "服务端 — App.vue 拆分为子组件",
+      "session_id": "ses_25f12ef82ffeAZqBTniz24RLNR",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-18T14:13:01.477Z"
+    },
+    "todo:13": {
+      "task_key": "todo:13",
+      "task_label": "13",
+      "task_title": "搭建 Vitest + 核心单元测试",
+      "session_id": "ses_25f0ac84affe8B3ZRooG44Whlk",
       "agent": "Sisyphus-Junior",
       "category": "unspecified-high",
-      "updated_at": "2026-04-18T04:52:33.779Z"
+      "updated_at": "2026-04-18T14:25:56.773Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_25f00babaffedsblewQFAfUDpQ",
+      "agent": "oracle",
+      "updated_at": "2026-04-18T14:36:28.881Z"
     }
   }
 }

@@ -1,7 +1,14 @@
 <script setup>
 import axios from 'axios'
-import { computed, onMounted, ref } from 'vue'
+import { ref, inject, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import LogViewer from './components/LogViewer.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
+import AuthCard from './components/AuthCard.vue'
+import FileBrowser from './components/FileBrowser.vue'
+import { parseDownloadFilename } from './utils/format.js'
+
+const zhCn = inject('element-locale')
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
 const token = ref(localStorage.getItem('zcopy_token') || '')
@@ -12,8 +19,6 @@ const loading = ref(false)
 const message = ref('')
 const currentPath = ref('')
 const fileItems = ref([])
-const uploadFile = ref(null)
-const folderName = ref('')
 
 const authForm = ref({
   username: '',
@@ -34,22 +39,15 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-const breadcrumbList = computed(() => {
-  if (!currentPath.value) {
-    return [{ label: '根目录', path: '' }]
-  }
-
-  const parts = currentPath.value.split('/').filter(Boolean)
-  return [{ label: '根目录', path: '' }].concat(
-    parts.map((part, index) => ({
-      label: part,
-      path: parts.slice(0, index + 1).join('/')
-    }))
-  )
-})
-
 function setMessage(text) {
   message.value = text
+  if (text) {
+    if (text.includes('成功') || text.includes('已退出')) {
+      ElMessage.success(text)
+    } else {
+      ElMessage.error(text)
+    }
+  }
 }
 
 function saveToken(value) {
@@ -126,8 +124,8 @@ async function fetchFiles(path = currentPath.value) {
   }
 }
 
-async function createFolder() {
-  if (!folderName.value.trim()) {
+async function createFolder(name) {
+  if (!name.trim()) {
     setMessage('请输入文件夹名称')
     return
   }
@@ -136,9 +134,8 @@ async function createFolder() {
   try {
     const { data } = await api.post('/files/folder', {
       path: currentPath.value,
-      name: folderName.value
+      name
     })
-    folderName.value = ''
     setMessage(data.message || '创建成功')
     await fetchFiles(currentPath.value)
   } catch (error) {
@@ -148,47 +145,22 @@ async function createFolder() {
   }
 }
 
-function handleFileChange(event) {
-  uploadFile.value = event.target.files?.[0] || null
-}
 
-function parseDownloadFilename(contentDisposition, fallbackName) {
-  if (!contentDisposition) {
-    return fallbackName
-  }
 
-  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
-  if (utf8Match?.[1]) {
-    return decodeURIComponent(utf8Match[1])
-  }
-
-  const basicMatch = contentDisposition.match(/filename="?([^";]+)"?/i)
-  if (basicMatch?.[1]) {
-    return basicMatch[1]
-  }
-
-  return fallbackName
-}
-
-async function submitUpload() {
-  if (!uploadFile.value) {
+async function submitUpload(file) {
+  if (!file) {
     setMessage('请选择文件')
     return
   }
 
   const formData = new FormData()
-  formData.append('file', uploadFile.value)
+  formData.append('file', file)
   formData.append('path', currentPath.value)
 
   loading.value = true
   try {
     const { data } = await api.post('/files/upload', formData)
     setMessage(data.message || '上传成功')
-    uploadFile.value = null
-    const input = document.getElementById('file-input')
-    if (input) {
-      input.value = ''
-    }
     await fetchFiles(currentPath.value)
   } catch (error) {
     setMessage(error?.response?.data?.message || '上传失败')
@@ -224,7 +196,7 @@ async function downloadItem(item) {
   }
 }
 
-function openItem(item) {
+function handleNavigate(item) {
   if (item.isDirectory) {
     fetchFiles(item.path)
   } else {
@@ -233,15 +205,18 @@ function openItem(item) {
 }
 
 async function removeItem(item) {
-  loading.value = true
   try {
+    await ElMessageBox.confirm('确定要删除吗？', '确认', { type: 'warning' })
+    loading.value = true
     const { data } = await api.delete('/files', {
       params: { path: item.path }
     })
     setMessage(data.message || '删除成功')
     await fetchFiles(currentPath.value)
   } catch (error) {
-    setMessage(error?.response?.data?.message || '删除失败')
+    if (error !== 'cancel') {
+      setMessage(error?.response?.data?.message || '删除失败')
+    }
   } finally {
     loading.value = false
   }
@@ -265,108 +240,78 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page">
-    <div class="shell">
-      <div class="hero">
-        <div>
-          <h1>ZCopy 文件服务器</h1>
-          <p>支持用户注册登录、独立文件空间、上传下载与基础文件管理。</p>
-        </div>
-        <div v-if="currentUser" class="user-card">
-          <div>{{ currentUser.nickname || currentUser.username }}</div>
-          <div>{{ currentUser.email }}</div>
-          <button class="ghost-btn" @click="logout">退出登录</button>
-        </div>
-      </div>
-
-      <div v-if="message" class="message">{{ message }}</div>
-
-      <div v-if="!token || !currentUser" class="auth-layout">
-        <div class="auth-card">
-          <div class="tabs">
-            <button :class="{ active: authMode === 'login' }" @click="authMode = 'login'">登录</button>
-            <button :class="{ active: authMode === 'register' }" @click="authMode = 'register'">注册</button>
+  <el-config-provider :locale="zhCn">
+    <div class="page">
+      <div class="shell">
+        <div class="hero">
+          <div>
+            <h1>ZCopy 文件服务器</h1>
+            <p>支持用户注册登录、独立文件空间、上传下载与基础文件管理。</p>
           </div>
-
-          <div v-if="authMode === 'register'" class="form-grid">
-            <input v-model="authForm.username" placeholder="用户名" />
-            <input v-model="authForm.email" placeholder="邮箱" />
-            <input v-model="authForm.nickname" placeholder="昵称" />
-            <input v-model="authForm.password" type="password" placeholder="密码（至少 6 位）" />
-          </div>
-
-          <div v-else class="form-grid">
-            <input v-model="authForm.account" placeholder="用户名或邮箱" />
-            <input v-model="authForm.password" type="password" placeholder="密码" />
-          </div>
-
-          <button class="primary-btn" :disabled="loading" @click="submitAuth">
-            {{ loading ? '处理中...' : authMode === 'register' ? '注册并进入' : '登录' }}
-          </button>
-        </div>
-      </div>
-
-      <div v-else class="workspace">
-        <div class="tabs">
-          <button :class="{ active: activeTab === 'files' }" @click="activeTab = 'files'">文件浏览</button>
-          <button :class="{ active: activeTab === 'logs' }" @click="activeTab = 'logs'">日志查看</button>
-        </div>
-
-        <div v-if="activeTab === 'files'">
-          <div class="toolbar">
-            <div class="breadcrumb">
-              <button
-                v-for="item in breadcrumbList"
-                :key="item.path || 'root'"
-                class="link-btn"
-                @click="fetchFiles(item.path)"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-
-            <div class="actions">
-              <input v-model="folderName" class="small-input" placeholder="新建文件夹名称" />
-              <button class="primary-btn" :disabled="loading" @click="createFolder">新建文件夹</button>
-            </div>
-          </div>
-
-          <div class="upload-bar">
-            <input id="file-input" type="file" @change="handleFileChange" />
-            <button class="primary-btn" :disabled="loading" @click="submitUpload">上传文件</button>
-            <button class="ghost-btn" :disabled="loading" @click="fetchFiles(currentPath)">刷新</button>
-          </div>
-
-          <div class="file-list">
-            <div class="file-header">
-              <span>名称</span>
-              <span>大小</span>
-              <span>更新时间</span>
-              <span>操作</span>
-            </div>
-
-            <div v-if="fileItems.length === 0" class="empty">当前目录暂无文件</div>
-
-            <div v-for="item in fileItems" :key="item.path" class="file-row">
-              <span class="file-name" @click="openItem(item)">
-                {{ item.isDirectory ? '📁' : '📄' }} {{ item.name }}
-              </span>
-              <span>{{ item.isDirectory ? '-' : `${item.size} B` }}</span>
-              <span>{{ new Date(item.updatedAt).toLocaleString() }}</span>
-              <span class="row-actions">
-                <button class="ghost-btn" @click="openItem(item)">
-                  {{ item.isDirectory ? '进入' : '下载' }}
-                </button>
-                <button class="danger-btn" @click="removeItem(item)">删除</button>
-              </span>
-            </div>
+          <div class="hero-actions">
+            <ThemeToggle />
+            <el-card v-if="currentUser" class="user-card">
+              <div>{{ currentUser.nickname || currentUser.username }}</div>
+              <div class="user-email">{{ currentUser.email }}</div>
+              <el-button size="small" @click="logout">退出登录</el-button>
+            </el-card>
           </div>
         </div>
 
-        <div v-if="activeTab === 'logs'">
-          <LogViewer />
+        <div v-if="!token || !currentUser" class="auth-layout">
+          <AuthCard
+            :loading="loading"
+            :auth-mode="authMode"
+            :auth-form="authForm"
+            @update:auth-mode="authMode = $event"
+            @submit="submitAuth"
+          />
+        </div>
+
+        <div v-else class="workspace">
+          <el-tabs v-model="activeTab">
+            <el-tab-pane label="文件浏览" name="files">
+              <FileBrowser
+                :current-path="currentPath"
+                :file-items="fileItems"
+                :loading="loading"
+                @navigate="handleNavigate"
+                @create-folder="createFolder"
+                @upload="submitUpload"
+                @delete="removeItem"
+                @refresh="fetchFiles(currentPath)"
+              />
+            </el-tab-pane>
+            <el-tab-pane label="日志查看" name="logs">
+              <LogViewer />
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </div>
     </div>
-  </div>
+  </el-config-provider>
 </template>
+
+<style scoped>
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.user-card {
+  min-width: 220px;
+}
+
+.user-email {
+  color: var(--z-text-muted);
+  font-size: 0.9em;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>

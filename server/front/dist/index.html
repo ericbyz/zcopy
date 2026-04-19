@@ -1,11 +1,19 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
+    <script>
+      (function() {
+        var t = localStorage.getItem('zcopy-theme');
+        var d = t === 'auto' || !t ? window.matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        if (d) document.documentElement.classList.add('dark');
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark">
     <title>ZCopy 文件服务器</title>
-    <script type="module" crossorigin src="/assets/index-37130c1c.js"></script>
-    <link rel="stylesheet" href="/assets/index-68d59f45.css">
+    <script type="module" crossorigin src="/assets/index-6b4e540c.js"></script>
+    <link rel="stylesheet" href="/assets/index-4b80ad73.css">
   </head>
   <body>
     <div id="app"></div>

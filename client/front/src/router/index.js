@@ -12,6 +12,11 @@ const routes = [
     path: '/logs',
     name: 'Logs',
     component: LogViewer
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../views/SettingsView.vue')
   }
 ]
 

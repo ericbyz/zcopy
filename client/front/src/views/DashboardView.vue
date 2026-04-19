@@ -1,6 +1,17 @@
 <script setup>
 import axios from 'axios'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+import AuthCard from './components/AuthCard.vue'
+import TaskForm from './components/TaskForm.vue'
+import TaskList from './components/TaskList.vue'
+import RemoteFolderPicker from './components/RemoteFolderPicker.vue'
+import PlatformInfo from './components/PlatformInfo.vue'
+
+// Inject from App.vue
+const setUserLoggedIn = inject('setUserLoggedIn')
+const createTaskTrigger = inject('createTaskTrigger')
 
 const apiBaseURL =
   import.meta.env.VITE_CLIENT_BACKEND ||
@@ -18,6 +29,9 @@ const message = ref('')
 const tasks = ref([])
 const capabilities = ref(null)
 const onDemandStatuses = ref({})
+
+// Wizard state
+const wizardOpen = ref(false)
 
 const remotePickerOpen = ref(false)
 const remotePickerPath = ref('')
@@ -57,8 +71,6 @@ function emptyTask() {
   }
 }
 
-const formTitle = computed(() => (taskForm.value.id ? '编辑任务' : '新建任务'))
-
 const remotePickerBreadcrumbs = computed(() => {
   const parts = remotePickerPath.value.split('/').filter(Boolean)
   const result = [{ label: '根目录', path: '' }]
@@ -70,8 +82,25 @@ const remotePickerBreadcrumbs = computed(() => {
   return result
 })
 
+// Watch createTaskTrigger from App.vue sidebar
+watch(createTaskTrigger, () => {
+  openCreateWizard()
+})
+
+function openCreateWizard() {
+  resetTaskForm()
+  wizardOpen.value = true
+}
+
 function setMessage(text) {
   message.value = text || ''
+  if (text) {
+    if (text.includes('成功') || text.includes('已退出') || text.includes('已打开') || text.includes('已复制')) {
+      ElMessage.success(text)
+    } else {
+      ElMessage.error(text)
+    }
+  }
 }
 
 function saveToken(value) {
@@ -83,44 +112,9 @@ function saveToken(value) {
   }
 }
 
-function formatBytes(value) {
-  const size = Number(value || 0)
-  if (size >= 1024 * 1024 * 1024) return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`
-  if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(2)} MB`
-  if (size >= 1024) return `${(size / 1024).toFixed(2)} KB`
-  return `${size.toFixed(0)} B`
-}
-
-function formatSpeed(value) {
-  const speed = Number(value || 0)
-  if (speed <= 0) return '0 B/s'
-  if (speed >= 1024 * 1024) return `${(speed / 1024 / 1024).toFixed(2)} MB/s`
-  if (speed >= 1024) return `${(speed / 1024).toFixed(2)} KB/s`
-  return `${speed.toFixed(0)} B/s`
-}
-
-function taskStatusText(task) {
-  const state = task?.syncReport?.state || task?.status || 'idle'
-  if (state === 'syncing') return '同步中'
-  if (state === 'completed' || state === 'idle') return '空闲'
-  if (state === 'failed' || state === 'error') return '失败'
-  return state
-}
-
-function taskStatusClass(task) {
-  const state = task?.syncReport?.state || task?.status || 'idle'
-  if (state === 'syncing') return 'task-status syncing'
-  if (state === 'failed' || state === 'error') return 'task-status failed'
-  return 'task-status idle'
-}
-
-function syncProgress(task) {
-  const total = Number(task?.syncReport?.totalFiles || 0)
-  if (total <= 0) return 0
-  const finished =
-    Number(task?.syncReport?.uploadedFiles || 0) +
-    Number(task?.syncReport?.failedFiles || 0)
-  return Math.min(100, Math.round((finished / total) * 100))
+function updateLoginState() {
+  const loggedIn = !!currentUser.value
+  setUserLoggedIn(loggedIn)
 }
 
 async function submitAuth() {
@@ -136,6 +130,7 @@ async function submitAuth() {
       })
       saveToken(data.token)
       currentUser.value = data.user
+      updateLoginState()
       await refreshDashboard(true)
       startRefreshTimer()
       setMessage(data.message || '注册成功')
@@ -148,6 +143,7 @@ async function submitAuth() {
     })
     saveToken(data.token)
     currentUser.value = data.user
+    updateLoginState()
     await refreshDashboard(true)
     startRefreshTimer()
     setMessage(data.message || '登录成功')
@@ -163,6 +159,7 @@ async function fetchCurrentUser() {
   try {
     const { data } = await api.get('/auth/me')
     currentUser.value = data.user
+    updateLoginState()
   } catch {
     logout(false)
   }
@@ -238,6 +235,7 @@ function editTask(task) {
     autoBackup: task.autoBackup,
     onDemandSync: task.onDemandSync
   }
+  wizardOpen.value = true
 }
 
 async function pickLocalFolder() {
@@ -282,6 +280,7 @@ async function saveTask() {
       task = data.task
       setMessage(data.message || '任务已创建')
     }
+    wizardOpen.value = false
     resetTaskForm()
     await refreshDashboard(true)
     if (task?.id && task.onDemandSync) {
@@ -338,16 +337,25 @@ async function navigateRemoteParent() {
 }
 
 async function deleteTask(taskId) {
-  loading.value = true
   try {
+    await ElMessageBox.confirm('确定要删除这个任务吗？', '确认删除', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
+    
+    loading.value = true
     await api.delete(`/tasks/${taskId}`)
     if (taskForm.value.id === taskId) {
       resetTaskForm()
+      wizardOpen.value = false
     }
     setMessage('任务已删除')
     await refreshDashboard()
   } catch (error) {
-    setMessage(error?.response?.data?.message || '删除失败')
+    if (error !== 'cancel') {
+      setMessage(error?.response?.data?.message || '删除失败')
+    }
   } finally {
     loading.value = false
   }
@@ -413,10 +421,12 @@ async function logout(showMessage = true) {
   }
   saveToken('')
   currentUser.value = null
+  updateLoginState()
   tasks.value = []
   capabilities.value = null
   onDemandStatuses.value = {}
   resetTaskForm()
+  wizardOpen.value = false
   stopRefreshTimer()
   if (showMessage) {
     setMessage('已退出')
@@ -445,6 +455,7 @@ function stopRefreshTimer() {
 onMounted(async () => {
   await fetchCurrentUser()
   if (token.value && currentUser.value) {
+    updateLoginState()
     await refreshDashboard(true)
     startRefreshTimer()
   }
@@ -456,208 +467,118 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="page">
-    <div class="shell">
-      <header class="hero card">
-        <div>
-          <h1>ZCopy Desktop</h1>
-          <p>登录后配置任务。勾选按需同步后会自动完成初始化，不再需要手动点击。</p>
-        </div>
-        <div v-if="currentUser" class="user-card">
-          <strong>{{ currentUser.nickname || currentUser.username }}</strong>
-          <span>{{ currentUser.email }}</span>
-          <button class="btn ghost" :disabled="loading" @click="logout()">退出</button>
-        </div>
-      </header>
-
-      <div v-if="message" class="message card">{{ message }}</div>
-
-      <section v-if="!currentUser" class="auth card">
-        <div class="tabs">
-          <button class="btn" :class="{ active: authMode === 'login' }" @click="authMode = 'login'">登录</button>
-          <button class="btn" :class="{ active: authMode === 'register' }" @click="authMode = 'register'">注册</button>
-        </div>
-
-        <div v-if="authMode === 'register'" class="form-grid">
-          <input v-model="authForm.username" placeholder="用户名" />
-          <input v-model="authForm.email" placeholder="邮箱" />
-          <input v-model="authForm.nickname" placeholder="昵称" />
-          <input v-model="authForm.password" type="password" placeholder="密码（至少 6 位）" />
-        </div>
-
-        <div v-else class="form-grid">
-          <input v-model="authForm.account" placeholder="用户名或邮箱" />
-          <input v-model="authForm.password" type="password" placeholder="密码" />
-        </div>
-
-        <button class="btn primary block" :disabled="loading" @click="submitAuth">
-          {{ loading ? '处理中...' : authMode === 'register' ? '注册并进入' : '登录' }}
-        </button>
-      </section>
-
-      <section v-else class="workspace">
-        <div class="card form-card">
-          <div class="section-header">
-            <h2>{{ formTitle }}</h2>
-          </div>
-
-          <input
-            ref="localFolderInput"
-            type="file"
-            webkitdirectory
-            directory
-            multiple
-            style="display: none"
-            @change="handleLocalFolderInput"
-          />
-
-          <div class="form-grid">
-            <input v-model="taskForm.name" placeholder="备份任务名称" />
-            <div class="input-with-button">
-              <input v-model="taskForm.localPath" placeholder="本地目录" />
-              <button class="btn ghost" @click="pickLocalFolder">选择目录</button>
-            </div>
-            <div class="input-with-button">
-              <input :value="taskForm.remotePath || '根目录'" readonly />
-              <button class="btn ghost" @click="openRemotePicker">选择远程目录</button>
-            </div>
-            <div class="checkbox-row">
-              <label><input v-model="taskForm.autoBackup" type="checkbox" /> 自动备份（fsnotify）</label>
-              <label><input v-model="taskForm.onDemandSync" type="checkbox" /> 按需同步</label>
-            </div>
-          </div>
-
-          <div class="row-actions">
-            <button class="btn primary" :disabled="loading" @click="saveTask">保存任务</button>
-            <button class="btn ghost" :disabled="loading" @click="resetTaskForm">重置</button>
-          </div>
-        </div>
-
-        <div class="card task-card">
-          <div class="section-header">
-            <h2>备份任务</h2>
-            <button class="btn ghost" :disabled="loading" @click="refreshDashboard(true)">刷新</button>
-          </div>
-
-          <div v-if="tasks.length === 0" class="empty">暂无任务</div>
-
-          <div v-for="task in tasks" :key="task.id" class="task-row">
-            <div class="task-main">
-              <h3>{{ task.name }}</h3>
-              <p>{{ task.localPath }} → {{ task.remotePath || '根目录' }}</p>
-              <div class="task-meta">
-                <span :class="taskStatusClass(task)">{{ taskStatusText(task) }}</span>
-                <span>自动：{{ task.autoBackup ? '开启' : '关闭' }}</span>
-                <span>上次同步：{{ task.lastSyncAt ? new Date(task.lastSyncAt).toLocaleString() : '无' }}</span>
-              </div>
-
-              <div v-if="task.syncReport?.state === 'syncing'" class="sync-box">
-                <div class="sync-meta">
-                  <span>{{ task.syncReport.message || taskStatusText(task) }}</span>
-                  <span>{{ task.syncReport.uploadedFiles || 0 }}/{{ task.syncReport.totalFiles || 0 }} 文件</span>
-                  <span>{{ formatSpeed(task.syncReport.speedBytesPerSec) }}</span>
-                </div>
-                <div class="sync-meta">
-                  <span>传输：{{ formatBytes(task.syncReport.transferredBytes) }}</span>
-                  <span>总量：{{ formatBytes(task.syncReport.totalBytes) }}</span>
-                  <span>失败：{{ task.syncReport.failedFiles || 0 }}</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-value" :style="{ width: `${syncProgress(task)}%` }"></div>
-                </div>
-              </div>
-
-              <div v-if="task.syncReport?.state === 'failed' && task.syncReport.failedFilePaths?.length" class="error-box">
-                <div class="error-title">失败文件</div>
-                <div v-for="item in task.syncReport.failedFilePaths.slice(0, 8)" :key="item" class="failed-item">
-                  {{ item }}
-                </div>
-              </div>
-
-              <div v-if="task.lastError" class="error-box">{{ task.lastError }}</div>
-            </div>
-
-            <div class="task-actions">
-              <button class="btn ghost" @click="editTask(task)">编辑</button>
-              <button class="btn primary" :disabled="loading" @click="syncTask(task.id)">手动备份</button>
-              <button class="btn ghost" :disabled="loading" @click="toggleAutoBackup(task)">
-                {{ task.autoBackup ? '停止自动' : '开启自动' }}
-              </button>
-              <button class="btn danger" :disabled="loading" @click="deleteTask(task.id)">删除</button>
-            </div>
-
-            <div v-if="task.onDemandSync" class="ondemand-panel">
-              <span>按需同步：{{ onDemandStatuses[task.id]?.supported ? '支持' : '不支持' }}</span>
-              <span>同步根：{{ onDemandStatuses[task.id]?.registered ? '已注册' : '未注册' }}</span>
-              <span v-if="onDemandStatuses[task.id]?.mountPath">
-                location：{{ onDemandStatuses[task.id].mountPath }}
-              </span>
-              <span v-else-if="onDemandStatuses[task.id]?.reason">
-                原因：{{ onDemandStatuses[task.id].reason }}
-              </span>
-              <button
-                v-if="onDemandStatuses[task.id]?.mountPath"
-                class="btn ghost"
-                :disabled="loading"
-                @click="openLocation(onDemandStatuses[task.id].mountPath)"
-              >
-                打开 location
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="capabilities" class="card info-card">
-          <h2>平台能力</h2>
-          <p>当前系统：{{ capabilities.os }}</p>
-          <p>按需同步支持：{{ capabilities.onDemandSupport ? '支持' : '不支持' }}</p>
-          <p>模式：{{ capabilities.onDemandMode }}</p>
-          <p>说明：启用按需同步后会自动初始化，同步目录请直接从 location 中按需打开文件。</p>
-        </div>
-
-      </section>
-
-      <div v-if="remotePickerOpen" class="picker-mask" @click.self="closeRemotePicker">
-        <div class="picker card">
-          <div class="section-header">
-            <h3>选择远程目录</h3>
-            <button class="btn ghost" @click="closeRemotePicker">关闭</button>
-          </div>
-          <div class="picker-toolbar">
-            <div class="breadcrumbs">
-              <button
-                v-for="item in remotePickerBreadcrumbs"
-                :key="item.path || 'root'"
-                class="btn link"
-                @click="navigateRemote(item.path)"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-            <div class="row-actions">
-              <button class="btn ghost" :disabled="remotePickerLoading || !remotePickerPath" @click="navigateRemoteParent">
-                返回上级
-              </button>
-              <button class="btn primary" :disabled="remotePickerLoading" @click="chooseRemotePath">选择当前目录</button>
-            </div>
-          </div>
-
-          <div v-if="remotePickerError" class="picker-error">{{ remotePickerError }}</div>
-          <div v-if="remotePickerFolders.length === 0" class="empty">
-            {{ remotePickerLoading ? '加载中...' : '当前目录暂无子目录' }}
-          </div>
-          <button
-            v-for="folder in remotePickerFolders"
-            :key="folder.path"
-            class="folder-row"
-            :disabled="remotePickerLoading"
-            @click="navigateRemote(folder.path)"
-          >
-            <span>📁 {{ folder.name }}</span>
-            <span>{{ folder.path || '根目录' }}</span>
-          </button>
-        </div>
+  <div class="dashboard">
+    <!-- Auth Section (no sidebar shown) -->
+    <div v-if="!currentUser" class="auth-page">
+      <div class="auth-hero">
+        <h1>ZCopy Desktop</h1>
+        <p>云文件同步工具 — 登录后配置同步任务，支持自动备份与按需同步。</p>
       </div>
+      <AuthCard
+        :loading="loading"
+        :auth-mode="authMode"
+        :auth-form="authForm"
+        @submit="submitAuth"
+        @update:auth-mode="(v) => authMode = v"
+        @update:auth-form="(v) => authForm = v"
+      />
     </div>
+
+    <!-- Workspace -->
+    <section v-else>
+      <input
+        ref="localFolderInput"
+        type="file"
+        webkitdirectory
+        directory
+        multiple
+        style="display: none"
+        @change="handleLocalFolderInput"
+      />
+
+      <TaskList
+        :tasks="tasks"
+        :loading="loading"
+        :on-demand-statuses="onDemandStatuses"
+        @edit="editTask($event)"
+        @sync="syncTask($event)"
+        @toggle-auto="toggleAutoBackup($event)"
+        @delete="deleteTask($event)"
+        @open-location="openLocation($event)"
+        @refresh="refreshDashboard(true)"
+      />
+
+      <PlatformInfo v-if="capabilities" :capabilities="capabilities" style="margin-top: 24px" />
+
+      <!-- Task Wizard Dialog -->
+      <TaskForm
+        :open="wizardOpen"
+        :task-form="taskForm"
+        :loading="loading"
+        @save="saveTask"
+        @reset="resetTaskForm"
+        @pick-local="pickLocalFolder"
+        @open-remote-picker="openRemotePicker"
+        @close="wizardOpen = false"
+      />
+    </section>
+
+    <!-- Remote Folder Picker Dialog -->
+    <RemoteFolderPicker
+      :open="remotePickerOpen"
+      :path="remotePickerPath"
+      :folders="remotePickerFolders"
+      :breadcrumbs="remotePickerBreadcrumbs"
+      :loading="remotePickerLoading"
+      :error="remotePickerError"
+      @navigate="navigateRemote($event)"
+      @navigate-parent="navigateRemoteParent"
+      @choose="chooseRemotePath"
+      @close="closeRemotePicker"
+    />
   </div>
 </template>
+
+<style scoped>
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 40px 0;
+}
+
+.auth-hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-hero h1 {
+  margin: 0 0 12px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--z-success), var(--z-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-hero p {
+  margin: 0;
+  color: var(--z-text-muted);
+  font-size: 1.05rem;
+  max-width: 480px;
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    min-height: auto;
+    padding: 32px 0;
+  }
+
+  .auth-hero h1 {
+    font-size: 1.6rem;
+  }
+}
+</style>

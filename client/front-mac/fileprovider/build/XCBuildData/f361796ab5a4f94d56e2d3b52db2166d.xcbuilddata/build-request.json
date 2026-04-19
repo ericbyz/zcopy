@@ -20,8 +20,7 @@
     "overrides" : {
       "commandLine" : {
         "table" : {
-          "CODE_SIGN_IDENTITY" : "Apple Development",
-          "CODE_SIGN_STYLE" : "Automatic"
+          "CONFIGURATION_BUILD_DIR" : "/Users/byz/Documents/project/my/zcopy/client/front-mac/fileprovider/.build/Release"
         }
       },
       "synthesized" : {
