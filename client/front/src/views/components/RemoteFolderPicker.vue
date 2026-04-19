@@ -33,7 +33,7 @@ const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
 </script>
 
 <template>
-  <el-dialog :model-value="open" @update:model-value="(v) => emit('close')" title="选择远程目录" width="720px">
+  <el-dialog :model-value="open" @update:model-value="(v) => emit('close')" title="选择远程目录" width="720px" append-to-body>
     <div class="picker-toolbar">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item

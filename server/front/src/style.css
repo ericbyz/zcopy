@@ -145,8 +145,7 @@ input {
 
 .user-card,
 .auth-card,
-.workspace,
-.message {
+.workspace {
   background: var(--z-bg-card);
   border: 1px solid var(--z-border);
   border-radius: var(--z-radius-lg);
@@ -159,12 +158,6 @@ input {
   padding: 18px;
   display: grid;
   gap: 10px;
-}
-
-.message {
-  padding: 14px 18px;
-  color: var(--z-text-primary);
-  margin-bottom: 16px;
 }
 
 .auth-layout {

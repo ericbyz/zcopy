@@ -1,6 +1,5 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { ElMessageBox } from 'element-plus'
 
 const props = defineProps({
   taskForm: {
@@ -56,6 +55,7 @@ const steps = [
     :title="formTitle"
     width="520px"
     :close-on-click-modal="false"
+    append-to-body
     @close="handleClose"
   >
     <!-- Step indicator (only for new tasks) -->
