@@ -20,12 +20,13 @@
 │ │ Go 客户端 │ │                 │ │  文件系统存储    │  │
 │ │ 后端      │ │                 │ │  （按用户目录）  │  │
 │ │ :8090     │ │                 │ └──────────────────┘  │
-│ └───────────┘ │                 │                        │
-│               │                 │ ┌──────────────────┐  │
-│ ┌───────────┐ │                 │ │  Vue 3 SPA       │  │
-│ │ Web 前端  │ │                 │ │  :5173（开发）   │  │
-│ │（服务端） │ │                 │ └──────────────────┘  │
-│ └───────────┘ │                 │                        │
+│ └─────┬─────┘ │                 │                        │
+│       │       │                 │ ┌──────────────────┐  │
+│ ┌─────▼──────┐│                 │ │  Vue 3 SPA       │  │
+│ │Swift FP    ││                 │ │  :5173（开发）   │  │
+│ │Extension   ││                 │ └──────────────────┘  │
+│ │+ Host App  ││                 │                        │
+│ └────────────┘│                 │                        │
 └───────────────┴─────────────────┴───────────────────────┘
 ```
 
@@ -35,10 +36,44 @@
 zcopy/
 ├── client/                    # 桌面客户端（Electron + Go）
 │   ├── backend/               # Go 后端（本地 API + 同步引擎）
-│   │   ├── main.go            # Gin 服务、同步引擎、文件监听、任务 CRUD（约 1500 行）
-│   │   ├── fileprovider.go    # macOS WebDAV + File Provider 桥接（约 600 行）
+│   │   ├── main.go            # 入口：配置加载 + AppState 初始化 + Gin 启动
+│   │   ├── routes.go          # 路由注册（7 组路由）
+│   │   ├── sync_task.go       # 同步任务执行逻辑
+│   │   ├── fileprovider.go    # macOS File Provider 适配层（委托给 fileprovider/ 包）
+│   │   ├── handlers_auth.go   # 认证代理 handler（注册/登录/登出/me）
+│   │   ├── handlers_task.go   # 任务 CRUD handler
+│   │   ├── handlers_sync.go   # 同步操作 handler（手动同步/自动启停）
+│   │   ├── handlers_ondemand.go # 按需同步 handler（释放空间/水合）
+│   │   ├── handlers_platform.go # 平台分发：macOS File Provider vs Windows CFAPI
+│   │   ├── handlers_fileprovider.go # File Provider handler 适配器
+│   │   ├── handlers_remote.go # 远程目录浏览 handler
+│   │   ├── handlers_log.go    # 日志查看/导出 handler
 │   │   ├── config/
 │   │   │   └── config.yaml    # 本地服务配置
+│   │   ├── middleware/
+│   │   │   └── cors.go        # CORS 中间件
+│   │   ├── models/
+│   │   │   └── models.go      # BackupTask、SyncReport 等数据模型
+│   │   ├── store/
+│   │   │   └── task_store.go  # 线程安全的 JSON 文件任务存储
+│   │   ├── sync/
+│   │   │   ├── engine.go      # 同步引擎（快照比对 + 上传）
+│   │   │   ├── ondemand.go    # 按需同步：释放本地空间 + 从云端水合
+│   │   │   └── snapshot.go    # 快照持久化
+│   │   ├── fileprovider/      # macOS File Provider 核心实现
+│   │   │   ├── service.go     # WebDAV 服务器 + Bridge 通信 + 远程操作
+│   │   │   ├── handlers.go    # 7 个 REST 端点供 Swift Extension 调用
+│   │   │   └── webdav.go      # WebDAV FileSystem 实现（读缓存 + 写上传）
+│   │   ├── watcher/
+│   │   │   └── watcher.go     # fsnotify 文件监听 + 防抖
+│   │   ├── proxy/
+│   │   │   └── client.go      # 服务端 HTTP 客户端（RemoteClient 接口）
+│   │   ├── platform/
+│   │   │   └── syncroot.go    # Windows CFAPI Sync Root 注册
+│   │   ├── log/
+│   │   │   # 环形缓冲区传输日志
+│   │   ├── auth/              # 认证状态管理
+│   │   ├── utils/             # 工具函数
 │   │   ├── data/              # 持久化状态
 │   │   │   ├── tasks.json     # 任务存储（JSON 数组）
 │   │   │   └── snapshots/     # 按任务保存的文件指纹，用于增量同步
@@ -48,13 +83,52 @@ zcopy/
 │   │   ├── electron/
 │   │   │   ├── main.js        # Electron 主进程：拉起 Go 后端，加载 Vue 渲染层
 │   │   │   └── preload.js     # IPC 桥：dialog:pick-folder
+│   │   ├── src/
+│   │   │   ├── App.vue        # 根组件
+│   │   │   ├── main.js        # Vue 启动入口
+│   │   │   ├── router/
+│   │   │   │   └── index.js   # Vue Router 路由配置
+│   │   │   ├── views/
+│   │   │   │   ├── DashboardView.vue  # 主控面板（任务列表 + 操作）
+│   │   │   │   ├── LogViewer.vue      # 传输日志查看
+│   │   │   │   ├── SettingsView.vue   # 设置页
+│   │   │   │   └── components/        # 可复用组件
+│   │   │   │       ├── AuthCard.vue       # 登录/注册卡片
+│   │   │   │       ├── TaskCard.vue       # 单个任务卡片
+│   │   │   │       ├── TaskForm.vue       # 创建/编辑任务表单
+│   │   │   │       ├── TaskList.vue       # 任务列表
+│   │   │   │       ├── RemoteFolderPicker.vue  # 远程目录选择器
+│   │   │   │       └── PlatformInfo.vue   # 平台信息展示
+│   │   │   └── utils/
 │   │   ├── index.html         # 渲染层入口（zh-CN）
 │   │   ├── package.json       # 模块：zcopy-client-front（Electron 28 + Vue 3.4）
 │   │   └── dist/              # 前端构建产物
 │   └── front-mac/             # Electron macOS 客户端（File Provider 版本）
 │       ├── electron/
-│       │   ├── main.js        # macOS 主进程：File Provider 桥接 + 后端拉起
+│       │   ├── main.js        # macOS 主进程：File Provider Host 拉起 + 后端启动
 │       │   └── preload.js     # IPC 桥：dialog:pick-folder
+│       ├── fileprovider/      # Swift File Provider Extension（Xcode 项目）
+│       │   └── EleFileProvider/
+│       │       ├── Extension.swift           # NSFileProviderReplicatedExtension 实现
+│       │       ├── FileProviderEnumerator.swift # 目录枚举器
+│       │       ├── FileProviderItem.swift    # NSFileProviderItem 协议实现
+│       │       ├── FileProviderService.swift # HTTP 客户端（直连 Go 后端 :8090）
+│       │       ├── main.swift                # Extension 入口
+│       │       ├── Info.plist                # Extension 配置
+│       │       └── Provider.entitlements     # Extension 沙盒权限
+│       ├── fileprovider-host/ # Swift File Provider Host App（域名注册）
+│       │   ├── Sources/
+│       │   │   └── main.swift  # NWListener HTTP 服务 + NSFileProviderDomain 注册
+│       │   ├── Host.entitlements # Host App 权限
+│       │   └── Info.plist       # Host App 配置
+│       ├── scripts/           # 构建脚本
+│       │   ├── build-fileprovider.mjs      # 编译 EleFileProvider.appex
+│       │   ├── build-fileprovider-host.mjs # 编译 ZCopyFileProviderHost.app
+│       │   ├── build-renderer.mjs          # 构建 Vue 渲染层
+│       │   └── sign-mac-app.sh             # 多目标 codesign
+│       ├── electron/
+│       │   ├── App.entitlements # 主 App 沙盒权限
+│       │   └── App-Inherit.entitlements # 子进程继承权限
 │       ├── package.json       # 模块：zcopy-client-front-mac
 │       └── release/           # macOS 构建输出
 │
@@ -83,13 +157,21 @@ zcopy/
 │   └── front/                 # Web 前端（Vue 3 SPA）
 │       ├── src/
 │       │   ├── main.js        # Vue 启动入口
-│       │   ├── App.vue        # 主组件：认证 + 文件浏览 + CRUD
+│       │   ├── App.vue        # 根组件
+│       │   ├── components/    # 可复用组件
+│       │   │   ├── AuthCard.vue     # 登录/注册卡片
+│       │   │   ├── FileBrowser.vue  # 文件浏览器
+│       │   │   ├── LogViewer.vue    # 日志查看
+│       │   │   └── ThemeToggle.vue  # 主题切换
+│       │   ├── utils/
 │       │   └── style.css      # 深色主题、玻璃态面板、响应式布局
 │       ├── index.html         # 入口 HTML（zh-CN）
 │       ├── vite.config.js     # 端口 5173，host 0.0.0.0
 │       └── package.json       # 模块：zcopy-front（Vue 3.4 + Axios）
 │
-└── README.md                  # （当前为空）
+├── scripts/
+│   └── quick-start.mjs        # 快捷启动脚本
+└── README.md
 ```
 
 ## 技术栈
@@ -104,7 +186,7 @@ zcopy/
 | 数据库 | JSON 文件 | 不是 SQL，内存切片 + mutex 保护 |
 | 配置 | YAML + Viper | — |
 | 文件监听 | fsnotify | v1.9.0 |
-| macOS File Provider | electron-macos-file-provider + WebDAV | golang.org/x/net/webdav |
+| macOS File Provider | 自定义 Swift Extension + Host App + REST API | golang.org/x/net/webdav（遗留兼容） |
 | Windows CFAPI | PowerShell + StorageProviderSyncRootManager | — |
 
 ## 服务端后端（`server/backend/`）
@@ -219,7 +301,7 @@ storage:
 4. 创建 AppState 单例
 5. startWebDAVServer()          → 仅 macOS：启动随机端口 WebDAV，供 File Provider 使用
 6. restoreAutoWatchers()        → 恢复所有 autoBackup 任务的 fsnotify 监听
-7. 在 :8090 启动 Gin 服务
+7. 在 :8090 启动 Gin 服务       → 7 组路由（auth/task/sync/ondemand/remote/file-provider/system）
 ```
 
 ### 本地 API 接口
@@ -260,8 +342,20 @@ storage:
 |------|------|----------|------|
 | GET | `/remote/folders` | `listRemoteFolders` | 仅列远程目录 |
 | GET | `/logs` | `listLogs` | 查看传输日志（可筛选） |
+| GET | `/logs/export` | `exportLogs` | 导出传输日志 |
 | GET | `/system/capabilities` | `systemCapabilities` | 返回操作系统与按需同步能力 |
 | GET | `/health` | 内联处理 | `{"status":"ok"}` |
+
+**File Provider**（`/api/v1/file-provider`）—— 供 macOS Swift Extension 调用（当前无认证）：
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| GET | `/file-provider/tasks/:id/item` | `fileProviderItem` | 获取文件/目录元数据 |
+| GET | `/file-provider/tasks/:id/children` | `fileProviderChildren` | 列出目录子项 |
+| GET | `/file-provider/tasks/:id/content` | `fileProviderContent` | 下载文件内容（流式） |
+| PUT | `/file-provider/tasks/:id/content` | `fileProviderPutContent` | 上传文件（远程 + 本地镜像） |
+| PUT | `/file-provider/tasks/:id/rename` | `fileProviderRenameItem` | 重命名文件/目录 |
+| POST | `/file-provider/tasks/:id/folder` | `fileProviderCreateFolder` | 创建目录（远程 + 本地） |
+| DELETE | `/file-provider/tasks/:id/item` | `fileProviderDeleteItem` | 删除文件/目录 |
 
 ### 核心数据模型
 
@@ -296,16 +390,60 @@ syncTask() 流程：
 - 动态为新建的子目录添加 watcher
 - `restoreAutoWatchers()` 会在启动时恢复所有 `autoBackup` 任务
 
-### macOS File Provider（`fileprovider.go`）
+### macOS File Provider（四进程架构）
 
-- 在 `127.0.0.1:{随机端口}` 启动本地 **WebDAV 服务**，供 macOS Finder 集成使用
-- `remoteWebDAVFS` 实现了 `webdav.FileSystem`，本质是对远程文件进行代理
-  - 读：先下载到临时缓存，再提供给 Finder
-  - 写：先接收写入内容，关闭时上传到服务端
-- **File Provider Bridge**：通过 HTTP 与外部 Swift 进程通信
-  - `POST /register`：为任务注册 File Provider 域
-  - `GET /status`：检查注册状态
-- 桥接通过 `ZCOPY_CLIENT_FP_BRIDGE_URL` + `ZCOPY_CLIENT_FP_BRIDGE_TOKEN` 配置
+```
+Finder  ←→  EleFileProvider.appex（Swift，NSFileProviderReplicatedExtension）
+                  │
+                  │ HTTP → 127.0.0.1:8090
+                  ▼
+           Go Backend（Gin :8090，7 个 REST 端点）
+                  │
+                  │ HTTP → :8890
+                  ▼
+           ZCopy Server（远程文件存储）
+
+           ZCopyFileProviderHost.app（Swift，独立进程）
+             • NWListener HTTP 服务（随机端口）
+             • POST /register → NSFileProviderManager.add(domain)
+             • GET /status → 查询域名注册状态
+             • 写 bridge.json 供 Electron 读取
+```
+
+**Go 层**（`fileprovider/` 包）：
+- `service.go`：WebDAV 服务器（随机端口）+ Bridge HTTP 通信 + 远程文件操作
+- `handlers.go`：7 个 REST 端点，供 Swift Extension 调用（item/children/content/put/rename/folder/delete）
+- `webdav.go`：`remoteWebDAVFS` 实现 `webdav.FileSystem`（读缓存 + 写上传）
+- `fileprovider.go`：薄适配层（20 行），委托给 `fileprovider.Service`
+
+**Swift Extension**（`fileprovider/EleFileProvider/`）：
+- `Extension.swift`：完整实现 `NSFileProviderReplicatedExtension`（item/fetchContents/createItem/modifyItem/deleteItem）
+- `FileProviderEnumerator.swift`：目录枚举器（含 working set 递归枚举）
+- `FileProviderItem.swift`：`NSFileProviderItem` 协议，content policy 为 `downloadLazily`
+- `FileProviderService.swift`：HTTP 客户端直连 Go 后端 :8090，含去重（8 秒窗口）和系统文件过滤
+- 系统文件过滤：.DS_Store、AppleDouble（`._`）、`Icon\r`
+
+**Swift Host App**（`fileprovider-host/`）：
+- 独立 `NSApplication`（`.prohibited` 激活策略，无 Dock 图标）
+- `NWListener` 随机端口 HTTP 服务
+- 域名注册：`NSFileProviderManager.add(domain)`
+- 域名标识符：`ZCopy.{sanitized-task-id}`，显示名：`"ZCopy " + taskName`
+- 写 `bridge.json`（`{url, token}`）供 Electron 主进程读取
+- Bearer token 认证
+
+**Electron 集成**（`front-mac/electron/main.js`）：
+1. 解压 `ZCopyFileProviderHost.zip` → `~/Applications/ZCopyFileProviderHost.app`
+2. 生成 UUID token，注入环境变量
+3. 启动 Host 进程，轮询 `bridge.json`（250ms 间隔，15s 超时）
+4. 将 bridge URL/token 通过环境变量传给 Go 后端
+5. 退出时 kill Host + Go 进程
+
+**已知限制**：
+- App Group entitlements 为空数组，Extension 无法通过共享容器与主 App 交换数据
+- File Provider REST 端点无认证，任何本地进程可访问
+- `enumerateChanges()` 为空实现，远程变更不自动刷新 Finder
+- Working set 枚举递归获取整个文件树，大目录性能差
+- WebDAV 服务器无优雅关闭机制
 
 ### Windows Cloud Files API
 
@@ -362,6 +500,20 @@ macOS 额外逻辑：
 4. 通过桥接完成 File Provider 域注册
 5. 渲染层使用 `client/front/dist` 这套共享 Vue 构建产物
 
+**构建脚本**（`front-mac/scripts/`）：
+- `build-fileprovider.mjs`：编译 EleFileProvider.appex（Xcode）
+- `build-fileprovider-host.mjs`：编译 + codesign + zip ZCopyFileProviderHost.app
+- `build-renderer.mjs`：构建 Vue 渲染层
+- `sign-mac-app.sh`：多目标 codesign（Go 二进制 → efphelper.node → .appex → 主 .app）
+
+**Entitlements**：
+| 文件 | 关键权限 |
+|------|----------|
+| App.entitlements | 沙盒、JIT、文件读写、网络客户端+服务端 |
+| App-Inherit.entitlements | 沙盒 + 继承（子进程） |
+| Provider.entitlements | 沙盒、application-groups（⚠️ 空数组）、网络客户端 |
+| Host.entitlements | 无沙盒、网络客户端+服务端 |
+
 ### 构建命令
 
 **Windows 客户端**：
@@ -398,6 +550,15 @@ npm run dist            # 构建后端 + Electron DMG
 - **文件列表**：名称、大小、更新时间、操作（进入目录、下载、删除）
 - **工具栏**：上传文件、创建目录
 
+### 组件结构（`src/components/`）
+
+| 组件 | 用途 |
+|------|------|
+| `AuthCard.vue` | 登录/注册卡片 |
+| `FileBrowser.vue` | 文件浏览器 |
+| `LogViewer.vue` | 日志查看 |
+| `ThemeToggle.vue` | 主题切换 |
+
 ### 状态管理
 
 - 组件内状态管理（不使用 Vuex / Pinia）
@@ -412,8 +573,13 @@ npm run dist            # 构建后端 + Electron DMG
 |------|------|
 | Token 认证 | ✅ 已实现 |
 | 文件列表 / 建目录 / 上传 / 下载 / 删除 | ✅ 已实现 |
+| macOS File Provider 集成 | ✅ 已实现（Swift Extension + Host App） |
+| Windows CFAPI 集成 | ✅ 已实现 |
+| 目录快照比对（增量同步） | ✅ 已实现（size + modTime） |
+| 按需同步（释放本地空间 / 水合） | ✅ 已实现 |
+| 自动备份（文件监听 + 防抖） | ✅ 已实现 |
+| 传输日志（环形缓冲区） | ✅ 已实现 |
 | 客户端登录 + 刷新 token | 🔲 规划中 |
-| 目录快照比对 | 🔲 规划中 |
 | 基于哈希的增量同步 | 🔲 规划中 |
 | 冲突检测与处理 | 🔲 规划中 |
 | 断点续传 / 断点续下 | 🔲 规划中 |
@@ -469,7 +635,8 @@ cd client/front && npm run build:backend     # 编译 Go → electron/bin/zcopy-
 | 服务端 Web UI | 5173 | Vue SPA（开发） |
 | 客户端后端 | 8090 | Electron 本地 API |
 | 客户端 Vite | 5173 | Vue 开发服务器 |
-| WebDAV | 随机端口 | macOS File Provider |
+| WebDAV | 随机端口 | macOS File Provider（遗留兼容） |
+| FP Host App | 随机端口 | macOS File Provider 域名注册 |
 
 ---
 
@@ -482,4 +649,4 @@ cd client/front && npm run build:backend     # 编译 Go → electron/bin/zcopy-
 - **路径安全**：`resolveUserPath()` 与 `CleanRelativePath()` 防止路径穿越
 - **鉴权**：JWT Bearer token；Web 前端保存在 localStorage；客户端后端保存在本地状态中
 - **同步策略**：基于快照的增量同步（size + modTime 对比）+ 文件监听防抖
-- **平台差异**：macOS 使用 WebDAV + File Provider bridge；Windows 使用 PowerShell 调用 CFAPI
+- **平台差异**：macOS 使用自定义 Swift Extension + REST API + Bridge 通信；Windows 使用 PowerShell 调用 CFAPI

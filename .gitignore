@@ -3,4 +3,3 @@ node_modules*
 release/
 server/backend/storage/*
 .sisyphus/
-data/
