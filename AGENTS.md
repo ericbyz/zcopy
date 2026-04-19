@@ -514,22 +514,34 @@ macOS 额外逻辑：
 | Provider.entitlements | 沙盒、application-groups（⚠️ 空数组）、网络客户端 |
 | Host.entitlements | 无沙盒、网络客户端+服务端 |
 
-### 构建命令
+### ⚠️ 打包必须使用脚本命令
+
+**禁止手动 `go build` + `electron-builder` 拆步执行**。所有打包必须通过以下 `npm run` 脚本，脚本内部会按正确顺序编译 Go 后端 → Vue 前端 → Swift 组件（macOS）→ Electron 打包。
 
 **Windows 客户端**：
 ```bash
 cd client/front
-npm run dist            # 构建后端 + Vue + Electron（目录输出）
-npm run dist:portable   # 构建后端 + Vue + Electron（便携 exe）
+npm run dist            # 完整打包：Go 编译 + Vue 构建 + Electron（目录输出，--win dir）
+npm run dist:portable   # 完整打包：Go 编译 + Vue 构建 + Electron（便携 exe）
 ```
 
 **macOS 客户端**：
 ```bash
-cd client/front         # 先构建共享 Vue 前端
-npm run build
-cd ../front-mac
-npm run dist            # 构建后端 + Electron DMG
+cd client/front-mac
+npm run dist            # 完整打包：Go 编译 + Vue 渲染层 + FileProvider.appex + Host.app + Electron DMG
+npm run dist:dir        # 完整打包：同上，输出目录而非 DMG（调试用）
+npm run sign:app        # 签名：codesign 已构建的 .app（需设置 $CSC_NAME）
 ```
+
+> macOS `dist` / `dist:dir` 内部自动调用 `build:backend` → `build:renderer` → `build:fileprovider` → `build:fileprovider-host` → `electron-builder`，无需先手动 `npm run build` 共享前端。
+
+**统一打包 + 启动服务端**（快捷脚本）：
+```bash
+node scripts/quick-start.mjs
+```
+- 同时启动服务端前后端 + 自动执行对应平台的客户端打包
+- macOS：执行 `client/front-mac npm run dist` → 复制 `.dmg` 和 `.app` 到 `release/quick-start/mac/<时间戳>/`
+- Windows：执行 `client/front npm run dist:portable` → 复制 `.exe` 到 `release/quick-start/windows/<时间戳>/`
 
 ---
 

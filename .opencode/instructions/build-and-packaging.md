@@ -32,15 +32,43 @@ release/
 
 当前服务端 `go 1.21`、客户端 `go 1.25` 不一致。统一为项目支持的最低版本，在 `go.mod` 中声明。
 
-## 构建命令
+## ⚠️ 打包必须使用脚本命令
+
+**禁止手动 `go build` + `electron-builder` 拆步执行**。所有打包必须通过 `npm run` 脚本完成，脚本内部按正确顺序执行：Go 后端编译 → Vue 前端构建 → Swift 组件（macOS）→ Electron 打包。手动拆步会导致产物缺失或顺序错误。
+
+### Windows 客户端
+
+```bash
+cd client/front
+npm run dist            # 完整打包：Go 编译 + Vue 构建 + Electron（目录输出，--win dir）
+npm run dist:portable   # 完整打包：Go 编译 + Vue 构建 + Electron（便携 exe）
+```
+
+### macOS 客户端
+
+```bash
+cd client/front-mac
+npm run dist            # 完整打包：Go 编译 + Vue 渲染层 + FileProvider.appex + Host.app + Electron DMG
+npm run dist:dir        # 完整打包：同上，输出目录而非 DMG（调试用）
+npm run sign:app        # 签名：codesign 已构建的 .app（需设置 $CSC_NAME）
+```
+
+> macOS `dist` / `dist:dir` 内部自动调用 `build:backend` → `build:renderer` → `build:fileprovider` → `build:fileprovider-host` → `electron-builder`，无需先手动 `npm run build` 共享前端。
+
+### 快捷打包 + 启动服务端
+
+```bash
+node scripts/quick-start.mjs
+```
+
+## 其他构建命令（仅限开发调试）
 
 | 目标 | 命令 | 输出 |
 |------|------|------|
 | 服务端启动 | `cd server/backend && go run main.go` | `:8890` |
 | 服务端 Web | `cd server/front && npm run dev` | `:5173` |
 | 客户端开发 | `cd client/front && npm run dev` | Electron + Go `:8090` |
-| Windows 打包 | `cd client/front && npm run dist:portable` | `.exe` |
-| macOS 打包 | `cd client/front-mac && npm run dist` | `.dmg` |
+| 仅编译 Go 后端 | `cd client/front && npm run build:backend` | `electron/bin/zcopy-client-backend` |
 
 ## Electron 启动时序
 
