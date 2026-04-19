@@ -78,6 +78,7 @@ func main() {
 		taskStore,
 		tokens,
 		remote,
+		logs,
 		strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_FP_BRIDGE_URL")),
 		strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_FP_BRIDGE_TOKEN")),
 	)

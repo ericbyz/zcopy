@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"mime/multipart"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"zcopy-client-backend/auth"
+	logpkg "zcopy-client-backend/log"
 	"zcopy-client-backend/models"
 	"zcopy-client-backend/platform"
 	"zcopy-client-backend/proxy"
@@ -34,6 +36,7 @@ type Service struct {
 	store         store.TaskRepository
 	tokens        auth.TokenManager
 	remote        proxy.RemoteClient
+	logs          logpkg.LogStore
 	fpBridgeURL   string
 	fpBridgeToken string
 
@@ -81,13 +84,14 @@ type fileProviderItemPayload struct {
 	ChildCount       int       `json:"childCount"`
 }
 
-func New(cfg models.AppConfig, httpc *http.Client, taskStore store.TaskRepository, tokens auth.TokenManager, remote proxy.RemoteClient, bridgeURL string, bridgeToken string) *Service {
+func New(cfg models.AppConfig, httpc *http.Client, taskStore store.TaskRepository, tokens auth.TokenManager, remote proxy.RemoteClient, logs logpkg.LogStore, bridgeURL string, bridgeToken string) *Service {
 	return &Service{
 		cfg:           cfg,
 		httpc:         httpc,
 		store:         taskStore,
 		tokens:        tokens,
 		remote:        remote,
+		logs:          logs,
 		fpBridgeURL:   strings.TrimSpace(bridgeURL),
 		fpBridgeToken: strings.TrimSpace(bridgeToken),
 	}
@@ -126,7 +130,11 @@ func (s *Service) Available() bool {
 }
 
 func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
-	slog.Info("File Provider 域注册", "task_id", task.ID)
+	slog.Info("[FP] 域注册开始", "task_id", task.ID, "task_name", task.Name)
+	if s.logs != nil {
+		s.logs.Push("info", task, "", fmt.Sprintf("[FP] 域注册开始：task_id=%s, task_name=%s", task.ID, task.Name))
+	}
+
 	payload := fileProviderRegisterRequest{
 		ID:       platform.SyncRootID(task.ID),
 		Name:     "ZCopy " + task.Name,
@@ -136,19 +144,36 @@ func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
 	}
 	var status BridgeStatus
 	if err := s.callFileProviderBridge(http.MethodPost, "/register", payload, &status); err != nil {
+		slog.Error("[FP] 域注册失败", "task_id", task.ID, "error", err)
+		if s.logs != nil {
+			s.logs.Push("error", task, "", fmt.Sprintf("[FP] 域注册失败：error=%s", err.Error()))
+		}
 		return BridgeStatus{}, err
+	}
+
+	slog.Info("[FP] 域注册完成", "task_id", task.ID, "registered", status.Registered, "mount_path", status.MountPath)
+	if s.logs != nil {
+		s.logs.Push("info", task, "", fmt.Sprintf("[FP] 域注册完成：registered=%v, mount_path=%s", status.Registered, status.MountPath))
 	}
 	return status, nil
 }
 
 func (s *Service) GetTaskStatus(task models.BackupTask) (BridgeStatus, error) {
+	slog.Debug("[FP] 查询域状态", "task_id", task.ID, "task_name", task.Name)
+
 	query := url.Values{}
 	query.Set("id", platform.SyncRootID(task.ID))
 	query.Set("name", "ZCopy "+task.Name)
 	var status BridgeStatus
 	if err := s.callFileProviderBridge(http.MethodGet, "/status?"+query.Encode(), nil, &status); err != nil {
+		slog.Error("[FP] 查询域状态失败", "task_id", task.ID, "error", err)
+		if s.logs != nil {
+			s.logs.Push("error", task, "", fmt.Sprintf("[FP] 查询域状态失败：error=%s", err.Error()))
+		}
 		return BridgeStatus{}, err
 	}
+
+	slog.Debug("[FP] 查询域状态完成", "task_id", task.ID, "registered", status.Registered, "mount_path", status.MountPath)
 	return status, nil
 }
 

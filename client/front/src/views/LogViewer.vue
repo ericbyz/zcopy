@@ -256,7 +256,6 @@ onMounted(() => {
   padding: 16px;
   display: grid;
   gap: 12px;
-  backdrop-filter: var(--z-blur);
   margin-bottom: 16px;
 }
 
@@ -278,7 +277,15 @@ onMounted(() => {
   border: 1px solid var(--z-border);
   border-radius: var(--z-radius-lg);
   padding: 16px;
-  backdrop-filter: var(--z-blur);
+  overflow: visible;
+}
+
+.table-container :deep(.el-table__body-wrapper) {
+  overflow: visible;
+}
+
+.table-container :deep(.el-table__body-wrapper tr:hover > td) {
+  overflow: visible;
 }
 
 .pagination {
