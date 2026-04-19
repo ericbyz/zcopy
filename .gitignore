@@ -2,3 +2,5 @@ node_modules*
 .npm-cache*
 release/
 server/backend/storage/*
+.sisyphus/
+data/
