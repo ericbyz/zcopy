@@ -47,6 +47,10 @@ function resolveBundledFileProviderHostArchive() {
 }
 
 function resolveInstalledFileProviderHost() {
+  return path.join(app.getPath('home'), 'Applications', 'zcopy.app')
+}
+
+function resolveLegacyInstalledFileProviderHost() {
   return path.join(app.getPath('home'), 'Applications', 'ZCopyFileProviderHost.app')
 }
 
@@ -61,6 +65,7 @@ function ensureFileProviderHostInstalled() {
     throw new Error(`file provider host archive not found: ${sourceArchive}`)
   }
   fs.mkdirSync(path.dirname(installedBundle), { recursive: true })
+  fs.rmSync(resolveLegacyInstalledFileProviderHost(), { recursive: true, force: true })
   fs.rmSync(installedBundle, { recursive: true, force: true })
   const unzip = spawnSync('ditto', ['-x', '-k', sourceArchive, path.dirname(installedBundle)], {
     stdio: 'ignore'

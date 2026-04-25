@@ -137,7 +137,7 @@ func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
 
 	payload := fileProviderRegisterRequest{
 		ID:       platform.SyncRootID(task.ID),
-		Name:     "ZCopy " + task.Name,
+		Name:     platform.CloudFolderDisplayName(task.Name),
 		URL:      s.fileProviderTaskURL(task.ID),
 		User:     s.webdavUsername,
 		Password: s.webdavPassword,
@@ -163,7 +163,7 @@ func (s *Service) GetTaskStatus(task models.BackupTask) (BridgeStatus, error) {
 
 	query := url.Values{}
 	query.Set("id", platform.SyncRootID(task.ID))
-	query.Set("name", "ZCopy "+task.Name)
+	query.Set("name", platform.CloudFolderDisplayName(task.Name))
 	var status BridgeStatus
 	if err := s.callFileProviderBridge(http.MethodGet, "/status?"+query.Encode(), nil, &status); err != nil {
 		slog.Error("[FP] 查询域状态失败", "task_id", task.ID, "error", err)

@@ -10,8 +10,10 @@
     <string>com.zcopy.client.mac.FileProviderHost</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
+    <key>CFBundleDisplayName</key>
+    <string>zcopy</string>
     <key>CFBundleName</key>
-    <string>ZCopyFileProviderHost</string>
+    <string>zcopy</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

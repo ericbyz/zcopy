@@ -2,7 +2,10 @@ package platform
 
 import (
 	"strings"
+	"unicode/utf8"
 )
+
+const maxCloudFolderDisplayNameRunes = 26
 
 func SyncRootID(taskID string) string {
 	var builder strings.Builder
@@ -22,6 +25,19 @@ func SyncRootID(taskID string) string {
 		}
 	}
 	return builder.String()
+}
+
+func CloudFolderDisplayName(taskName string) string {
+	name := strings.TrimSpace(taskName)
+	if name == "" {
+		return "zcopy"
+	}
+	if utf8.RuneCountInString(name) <= maxCloudFolderDisplayNameRunes {
+		return name
+	}
+
+	runes := []rune(name)
+	return string(runes[:maxCloudFolderDisplayNameRunes-3]) + "..."
 }
 
 func SafeName(name string) string {
