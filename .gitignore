@@ -5,3 +5,4 @@ server/backend/storage/*
 .sisyphus/
 .cache/
 .playwright-mcp/
+server/backend/data/
