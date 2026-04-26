@@ -64,7 +64,10 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		AddSource: true,
 	})))
-	cfg := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 	if err := os.MkdirAll(cfg.Storage.DataDir, 0755); err != nil {
 		log.Fatalf("failed to create data dir: %v", err)
 	}
@@ -78,7 +81,10 @@ func main() {
 	tokens := auth.NewInMemoryTokenManager()
 	remote := proxy.NewHTTPRemoteClient(httpc, cfg.FileServer.BaseURL)
 	logDir := filepath.Join(cfg.Storage.DataDir, "logs")
-	logs := logpkg.NewFileLogStore(logDir)
+	logs, err := logpkg.NewFileLogStore(logDir)
+	if err != nil {
+		log.Fatalf("failed to create log store: %v", err)
+	}
 	snapshotDir := filepath.Join(cfg.Storage.DataDir, "snapshots")
 	syncer := syncpkg.NewEngine(taskStore, tokens, remote, logs, snapshotDir)
 	fp := fileproviderpkg.New(

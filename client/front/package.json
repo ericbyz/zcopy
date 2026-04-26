@@ -38,7 +38,7 @@
   },
   "build": {
     "appId": "com.zcopy.client",
-    "productName": "ZCopyClient",
+    "productName": "ZCopy",
     "directories": {
       "output": "release"
     },

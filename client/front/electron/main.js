@@ -70,11 +70,15 @@ async function waitForBackendHealth() {
 }
 
 function createWindow() {
+  const iconPath = isDev
+    ? path.resolve(__dirname, '../resource/icon.png')
+    : path.join(process.resourcesPath, 'app', 'build', 'icon.png')
   const win = new BrowserWindow({
     width: 1360,
     height: 860,
     minWidth: 1100,
     minHeight: 700,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

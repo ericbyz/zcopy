@@ -1,8 +1,12 @@
 package config
 
 import (
-	"github.com/spf13/viper"
+	"errors"
+	"fmt"
 	"log"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -41,7 +45,7 @@ type LogConfig struct {
 
 var AppConfig Config
 
-func LoadConfig() {
+func LoadConfig() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -50,7 +54,7 @@ func LoadConfig() {
 	viper.SetDefault("server.port", "8890")
 	viper.SetDefault("server.mode", "debug")
 	viper.SetDefault("database.path", "./data/zcopy.db")
-	viper.SetDefault("auth.secret_key", "zcopy-secret-key-change-in-production")
+	// JWT secret must be explicitly configured — no insecure default
 	viper.SetDefault("auth.token_expire_hours", 72)
 	viper.SetDefault("storage.root_dir", "./storage")
 	viper.SetDefault("log.level", "info")
@@ -64,6 +68,12 @@ func LoadConfig() {
 	}
 
 	if err := viper.Unmarshal(&AppConfig); err != nil {
-		log.Fatalf("Failed to unmarshal config: %v", err)
+		return fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	if strings.TrimSpace(AppConfig.Auth.SecretKey) == "" {
+		return errors.New("auth.secret_key is required — set it in config.yaml or AUTH_SECRET_KEY env var")
+	}
+
+	return nil
 }

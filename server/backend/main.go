@@ -18,14 +18,18 @@ import (
 )
 
 func main() {
-	config.LoadConfig()
+	if err := config.LoadConfig(); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 	logger.Init(config.AppConfig.Log.Level, config.AppConfig.Log.Dir)
 
 	if err := utils.EnsureDirectoryExists(config.AppConfig.Storage.RootDir); err != nil {
 		log.Fatalf("failed to create storage root: %v", err)
 	}
 
-	database.InitDB()
+	if err := database.InitDB(); err != nil {
+		log.Fatalf("failed to init database: %v", err)
+	}
 	defer database.DB.Close()
 
 	if err := syncservice.Init(config.AppConfig.Storage.RootDir, filepath.Join(filepath.Dir(config.AppConfig.Database.Path), "sync_tasks.json")); err != nil {
@@ -97,14 +101,23 @@ func main() {
 }
 
 func corsMiddleware() gin.HandlerFunc {
+	allowedOrigins := map[string]bool{
+		"http://localhost:5173":  true,
+		"http://localhost:5176":  true,
+		"http://localhost:8890":  true,
+		"http://localhost:8090":  true,
+		"http://127.0.0.1:5173": true,
+		"http://127.0.0.1:5176": true,
+		"http://127.0.0.1:8890": true,
+		"http://127.0.0.1:8090": true,
+	}
+
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		if origin == "" {
-			origin = "*"
+		if allowedOrigins[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
 		}
-
-		c.Header("Access-Control-Allow-Origin", origin)
-		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 

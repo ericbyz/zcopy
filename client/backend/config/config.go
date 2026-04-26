@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,15 +12,15 @@ import (
 	"zcopy-client-backend/models"
 )
 
-func LoadConfig() models.AppConfig {
+func LoadConfig() (models.AppConfig, error) {
 	configPath := resolveConfigPath()
 	buf, err := os.ReadFile(configPath)
 	if err != nil {
-		log.Fatalf("failed to read config: %v", err)
+		return models.AppConfig{}, fmt.Errorf("read config %s: %w", configPath, err)
 	}
 	var cfg models.AppConfig
 	if err := yaml.Unmarshal(buf, &cfg); err != nil {
-		log.Fatalf("failed to parse config: %v", err)
+		return models.AppConfig{}, fmt.Errorf("parse config: %w", err)
 	}
 	if cfg.Server.Port == "" {
 		cfg.Server.Port = "8090"
@@ -37,7 +37,7 @@ func LoadConfig() models.AppConfig {
 	if envDataDir := strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_DATA_DIR")); envDataDir != "" {
 		cfg.Storage.DataDir = envDataDir
 	}
-	return cfg
+	return cfg, nil
 }
 
 func resolveConfigPath() string {

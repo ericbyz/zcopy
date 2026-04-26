@@ -42,7 +42,9 @@ func (w *FSNotifyWatchManager) StartWatcher(taskID string, task models.BackupTas
 	slog.Info("文件监听已启动", "task_id", taskID, "local_path", task.LocalPath)
 	go w.runWatcher(task, ctrl)
 	go func() {
-		_ = w.onSync(taskID)
+		if err := w.onSync(taskID); err != nil {
+			slog.Error("初始同步失败", "task_id", taskID, "error", err)
+		}
 	}()
 	return nil
 }
@@ -108,7 +110,9 @@ func (w *FSNotifyWatchManager) runWatcher(task models.BackupTask, ctrl *models.W
 		case <-timer.C:
 			pending = false
 			slog.Info("防抖触发同步", "task_id", task.ID)
-			_ = w.onSync(task.ID)
+			if err := w.onSync(task.ID); err != nil {
+				slog.Error("防抖同步失败", "task_id", task.ID, "error", err)
+			}
 		case err := <-watcher.Errors:
 			slog.Warn("文件监听错误", "task_id", task.ID, "error", err)
 		}

@@ -12,7 +12,10 @@ func TestFilePersistence(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create store, push entries
-	store1 := NewFileLogStore(tmpDir)
+	store1, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store1.Close()
 
 	task := models.BackupTask{ID: "task-1", Name: "Test Task"}
@@ -24,7 +27,10 @@ func TestFilePersistence(t *testing.T) {
 	store1.Close()
 
 	// Create new store from same directory
-	store2 := NewFileLogStore(tmpDir)
+	store2, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store2.Close()
 
 	// List entries
@@ -43,7 +49,10 @@ func TestFilePersistence(t *testing.T) {
 
 func TestListPagination(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewFileLogStore(tmpDir)
+	store, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store.Close()
 
 	task := models.BackupTask{ID: "task-paginate", Name: "Paginate Task"}
@@ -72,7 +81,10 @@ func TestListPagination(t *testing.T) {
 
 func TestKeywordSearch(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewFileLogStore(tmpDir)
+	store, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store.Close()
 
 	task := models.BackupTask{ID: "task-keyword", Name: "Keyword Task"}
@@ -97,7 +109,10 @@ func TestKeywordSearch(t *testing.T) {
 
 func TestTimeRangeFilter(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewFileLogStore(tmpDir)
+	store, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store.Close()
 
 	task := models.BackupTask{ID: "task-time", Name: "Time Task"}
@@ -131,7 +146,10 @@ func TestTimeRangeFilter(t *testing.T) {
 
 func TestConcurrentPush(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewFileLogStore(tmpDir)
+	store, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store.Close()
 
 	task := models.BackupTask{ID: "task-concurrent", Name: "Concurrent Task"}
@@ -170,7 +188,10 @@ func TestConcurrentPush(t *testing.T) {
 
 func TestRotationAndRetention(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewFileLogStore(tmpDir)
+	store, err := NewFileLogStore(tmpDir)
+	if err != nil {
+		t.Fatalf("NewFileLogStore failed: %v", err)
+	}
 	defer store.Close()
 
 	// Override rotation settings for test

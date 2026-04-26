@@ -177,9 +177,9 @@ const (
 	defaultCheckInterval = 1 * time.Hour
 )
 
-func NewFileLogStore(logDir string) *FileLogStore {
+func NewFileLogStore(logDir string) (*FileLogStore, error) {
 	if err := os.MkdirAll(logDir, 0755); err != nil {
-		panic(err)
+		return nil, fmt.Errorf("create log dir %s: %w", logDir, err)
 	}
 
 	store := &FileLogStore{
@@ -192,13 +192,13 @@ func NewFileLogStore(logDir string) *FileLogStore {
 	}
 
 	if err := store.openCurrentFile(); err != nil {
-		panic(err)
+		return nil, fmt.Errorf("open current log file: %w", err)
 	}
 
 	store.wg.Add(1)
 	go store.writeLoop()
 
-	return store
+	return store, nil
 }
 
 func (s *FileLogStore) openCurrentFile() error {
@@ -265,7 +265,9 @@ func (s *FileLogStore) writeEntry(entry models.TransferLog) {
 		return
 	}
 	data = append(data, '\n')
-	s.currentFile.Write(data)
+	if _, err := s.currentFile.Write(data); err != nil {
+		fmt.Fprintf(os.Stderr, "log write failed: %v\n", err)
+	}
 }
 
 func (s *FileLogStore) checkRotationAndRetention() {
@@ -275,7 +277,9 @@ func (s *FileLogStore) checkRotationAndRetention() {
 	today := now.Format("2006-01-02")
 	currentFileName := filepath.Base(s.currentFile.Name())
 	if currentFileName != today+".jsonl" {
-		s.openCurrentFile()
+		if err := s.openCurrentFile(); err != nil {
+			fmt.Fprintf(os.Stderr, "log rotation failed: %v\n", err)
+		}
 	}
 
 	// Check size rotation
@@ -297,8 +301,13 @@ func (s *FileLogStore) rotateSize() {
 
 	s.currentFile.Sync()
 	s.currentFile.Close()
-	os.Rename(filepath.Join(s.logDir, baseName), newPath)
-	s.openCurrentFile()
+	if err := os.Rename(filepath.Join(s.logDir, baseName), newPath); err != nil {
+		fmt.Fprintf(os.Stderr, "log rotate rename failed: %v\n", err)
+		return
+	}
+	if err := s.openCurrentFile(); err != nil {
+		fmt.Fprintf(os.Stderr, "log rotate open failed: %v\n", err)
+	}
 }
 
 func (s *FileLogStore) cleanOldFiles() {
