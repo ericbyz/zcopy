@@ -18,6 +18,7 @@ const activeTab = ref('files')
 const loading = ref(false)
 const message = ref('')
 const currentPath = ref('')
+const initialPath = ref('')
 const fileItems = ref([])
 
 const authForm = ref({
@@ -42,7 +43,13 @@ api.interceptors.request.use((config) => {
 function setMessage(text) {
   message.value = text
   if (text) {
-    if (text.includes('成功') || text.includes('已退出')) {
+    if (
+      text.includes('成功') ||
+      text.includes('完成') ||
+      text.includes('已退出') ||
+      text.includes('已删除') ||
+      text.includes('已打开')
+    ) {
       ElMessage.success(text)
     } else {
       ElMessage.error(text)
@@ -73,7 +80,7 @@ async function submitAuth() {
       })
       saveToken(data.token)
       currentUser.value = data.user
-      await fetchFiles('')
+      await fetchFiles(initialPath.value)
       setMessage(data.message || '注册成功')
     } else {
       const { data } = await api.post('/auth/login', {
@@ -82,7 +89,7 @@ async function submitAuth() {
       })
       saveToken(data.token)
       currentUser.value = data.user
-      await fetchFiles('')
+      await fetchFiles(initialPath.value)
       setMessage(data.message || '登录成功')
     }
   } catch (error) {
@@ -232,9 +239,10 @@ function logout() {
 }
 
 onMounted(async () => {
+  initialPath.value = new URLSearchParams(window.location.search).get('path') || ''
   await fetchCurrentUser()
   if (token.value && currentUser.value) {
-    await fetchFiles('')
+    await fetchFiles(initialPath.value)
   }
 })
 </script>
@@ -242,11 +250,11 @@ onMounted(async () => {
 <template>
   <el-config-provider :locale="zhCn">
     <div class="page">
-      <div class="shell">
+      <div class="server-shell">
         <div class="hero">
           <div>
             <h1>ZCopy 文件服务器</h1>
-            <p>支持用户注册登录、独立文件空间、上传下载与基础文件管理。</p>
+            <p>管理文件服务器中的任务目录、文件上传下载与同步日志。</p>
           </div>
           <div class="hero-actions">
             <ThemeToggle />
@@ -295,12 +303,40 @@ onMounted(async () => {
 <style scoped>
 .hero-actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
+}
+
+.server-shell {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.hero {
+  padding: 4px 0 2px;
+}
+
+.hero h1 {
+  font-size: 2rem;
+}
+
+.workspace {
+  padding: 18px;
+  border-radius: 8px;
+}
+
+.workspace :deep(.el-tabs__header) {
+  margin-bottom: 16px;
+}
+
+.workspace :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background: var(--z-border);
 }
 
 .user-card {
   min-width: 220px;
+  border-radius: 8px;
 }
 
 .user-email {

@@ -1,8 +1,8 @@
 <script setup>
 import axios from 'axios'
 import { ref, computed, onMounted, watch } from 'vue'
-import { Search, Download, RefreshCw } from 'lucide-vue-next'
-import { ElMessage } from 'element-plus'
+import { Search, Download, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const apiBaseURL =
   import.meta.env.VITE_CLIENT_BACKEND ||
@@ -45,6 +45,13 @@ watch(dateRange, (newRange) => {
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
+
+const visibleRange = computed(() => {
+  if (totalCount.value === 0) return '0'
+  const start = (currentPage.value - 1) * pageSize + 1
+  const end = Math.min(currentPage.value * pageSize, totalCount.value)
+  return `${start}-${end}`
+})
 
 function getLevelTagType(item) {
   const level = item.level
@@ -128,6 +135,29 @@ async function handleExport() {
   }
 }
 
+async function handleClearLogs() {
+  try {
+    await ElMessageBox.confirm('确定要清空所有客户端日志吗？', '清空日志', {
+      type: 'warning',
+      confirmButtonText: '清空',
+      cancelButtonText: '取消'
+    })
+    loading.value = true
+    const { data } = await api.delete('/logs')
+    ElMessage.success(data.message || '日志已清空')
+    currentPage.value = 1
+    await fetchLogs()
+  } catch (error) {
+    if (error !== 'cancel') {
+      const text = error?.response?.data?.message || '清空日志失败'
+      errorMsg.value = text
+      ElMessage.error(text)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
 function handlePageChange(page) {
   currentPage.value = page
   fetchLogs()
@@ -148,160 +178,246 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page">
-    <div class="shell">
-      <header class="hero">
-        <div>
-          <h1>日志查看器</h1>
-          <p>查看和管理传输日志</p>
-        </div>
-      </header>
+  <div class="log-view">
+    <header class="log-toolbar">
+      <div>
+        <h1>日志</h1>
+        <p>共 {{ totalCount }} 条，当前 {{ visibleRange }}</p>
+      </div>
 
-      <el-alert v-if="errorMsg" type="error" :closable="false" show-icon style="margin-bottom: 16px">
+      <div class="toolbar-actions">
+        <el-button :icon="RefreshCw" :loading="loading" @click="handleReset">刷新</el-button>
+        <el-button :icon="Download" @click="handleExport">导出</el-button>
+        <el-button :icon="Trash2" type="danger" plain @click="handleClearLogs">清空</el-button>
+      </div>
+    </header>
+
+    <el-alert v-if="errorMsg" type="error" :closable="false" show-icon class="log-alert">
         {{ errorMsg }}
-      </el-alert>
+    </el-alert>
 
-      <div class="filter-bar">
-        <div class="filter-row">
-          <el-select v-model="filterLevel" placeholder="日志级别" style="min-width: 120px">
-            <el-option label="全部" value="all" />
-            <el-option label="DEBUG" value="debug" />
-            <el-option label="INFO" value="info" />
-            <el-option label="WARN" value="warn" />
-            <el-option label="ERROR" value="error" />
-          </el-select>
+    <section class="filter-bar">
+      <el-select v-model="filterLevel" placeholder="级别" class="level-filter" @change="handleSearch">
+        <el-option label="全部级别" value="all" />
+        <el-option label="DEBUG" value="debug" />
+        <el-option label="INFO" value="info" />
+        <el-option label="WARN" value="warn" />
+        <el-option label="ERROR" value="error" />
+      </el-select>
 
-          <el-select v-model="filterTaskId" placeholder="任务" style="min-width: 180px">
-            <el-option label="全部任务" value="all" />
-            <el-option v-for="t in tasks" :key="t.id" :label="t.name" :value="t.id" />
-          </el-select>
+      <el-select v-model="filterTaskId" placeholder="任务" class="task-filter" @change="handleSearch">
+        <el-option label="全部任务" value="all" />
+        <el-option v-for="t in tasks" :key="t.id" :label="t.name" :value="t.id" />
+      </el-select>
 
-          <el-input v-model="filterKeyword" placeholder="搜索日志..." style="min-width: 220px" clearable>
-            <template #prefix>
-              <Search class="el-input__icon" />
-            </template>
-          </el-input>
+      <el-input v-model="filterKeyword" placeholder="搜索消息或路径" class="keyword-filter" clearable @keyup.enter="handleSearch">
+        <template #prefix>
+          <Search class="el-input__icon" />
+        </template>
+      </el-input>
 
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            style="min-width: 360px"
-          />
-        </div>
+      <el-date-picker
+        v-model="dateRange"
+        type="datetimerange"
+        range-separator="至"
+        start-placeholder="开始时间"
+        end-placeholder="结束时间"
+        class="date-filter"
+      />
 
-        <div class="filter-actions">
-          <el-button type="primary" :loading="loading" @click="handleSearch">
-            {{ loading ? '查询中...' : '查询' }}
-          </el-button>
-          <el-button :icon="RefreshCw" @click="handleReset">重置</el-button>
-          <el-button :icon="Download" @click="handleExport">导出</el-button>
-        </div>
+      <el-button type="primary" :loading="loading" @click="handleSearch">
+        {{ loading ? '查询中' : '查询' }}
+      </el-button>
+    </section>
+
+    <section class="log-table" v-loading="loading">
+      <el-table :data="logItems" stripe height="100%" style="width: 100%">
+        <el-table-column prop="createdAt" label="时间" width="156">
+          <template #default="{ row }">
+            <span class="time-cell">{{ formatTime(row.createdAt) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="level" label="级别" width="84">
+          <template #default="{ row }">
+            <el-tag :type="getLevelTagType(row)" size="small" effect="light">
+              {{ (row.level || '').toUpperCase() }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="taskName" label="任务" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.taskName || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="filePath" label="路径" min-width="170" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="path-cell">{{ row.filePath || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="message" label="消息" min-width="220" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.message || '-' }}
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div v-if="!loading && logItems.length === 0" class="empty-logs">
+        <el-empty description="暂无日志" :image-size="86" />
       </div>
+    </section>
 
-      <div class="table-container" v-loading="loading">
-        <el-table :data="logItems" stripe style="width: 100%">
-          <el-table-column prop="createdAt" label="时间" min-width="180">
-            <template #default="{ row }">
-              {{ formatTime(row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="level" label="级别" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getLevelTagType(row)" size="small">
-                {{ (row.level || '').toUpperCase() }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="taskName" label="任务名" min-width="160" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ row.taskName || '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="filePath" label="文件路径" min-width="240" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ row.filePath || '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="message" label="消息" min-width="300" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ row.message || '-' }}
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <el-empty v-if="!loading && logItems.length === 0" description="暂无日志" />
-
-        <div v-if="totalCount > 0" class="pagination">
-          <el-pagination
-            :total="totalCount"
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            layout="total, prev, pager, next"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </div>
+    <footer v-if="totalCount > 0" class="pagination">
+      <el-pagination
+        :total="totalCount"
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        small
+        layout="prev, pager, next"
+        @current-change="handlePageChange"
+      />
+      <span>{{ currentPage }} / {{ totalPages }}</span>
+    </footer>
     </div>
-  </div>
 </template>
 
 <style scoped>
-.filter-bar {
-  background: var(--z-bg-card);
-  border: 1px solid var(--z-border);
-  border-radius: var(--z-radius-lg);
-  padding: 16px;
+.log-view {
+  height: calc(100vh - 52px);
+  min-height: 0;
   display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 10px;
 }
 
-.filter-row {
+.log-toolbar {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.filter-actions {
+.log-toolbar h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.log-toolbar p {
+  margin: 4px 0 0;
+  color: var(--z-text-muted);
+  font-size: 0.8rem;
+}
+
+.toolbar-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.log-alert {
+  margin: 0;
+}
+
+.filter-bar {
+  min-width: 0;
+  background: var(--z-bg-elevated);
+  border: 1px solid var(--z-border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
-.table-container {
-  background: var(--z-bg-card);
+.level-filter {
+  width: 112px;
+}
+
+.task-filter {
+  width: 150px;
+}
+
+.keyword-filter {
+  width: 190px;
+  flex: 1 1 170px;
+}
+
+.date-filter {
+  width: 290px;
+}
+
+.log-table {
+  position: relative;
+  min-height: 0;
+  background: var(--z-bg-elevated);
   border: 1px solid var(--z-border);
-  border-radius: var(--z-radius-lg);
-  padding: 16px;
-  overflow: visible;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.table-container :deep(.el-table__body-wrapper) {
-  overflow: visible;
+.log-table :deep(.el-table) {
+  --el-table-header-bg-color: var(--z-bg-elevated);
+  --el-table-tr-bg-color: var(--z-bg-elevated);
+  --el-table-row-hover-bg-color: var(--z-accent-bg);
+  font-size: 0.82rem;
 }
 
-.table-container :deep(.el-table__body-wrapper tr:hover > td) {
-  overflow: visible;
+.log-table :deep(.el-table th.el-table__cell) {
+  color: var(--z-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.log-table :deep(.el-table .cell) {
+  line-height: 1.35;
+}
+
+.time-cell,
+.path-cell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.path-cell {
+  color: var(--z-text-secondary);
+}
+
+.empty-logs {
+  position: absolute;
+  inset: 44px 0 0;
+  display: grid;
+  place-items: center;
+  background: var(--z-bg-elevated);
 }
 
 .pagination {
-  margin-top: 16px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: var(--z-text-muted);
+  font-size: 0.8rem;
 }
 
-@media (max-width: 1024px) {
-  .filter-row,
-  .filter-actions {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 760px) {
+  .log-toolbar {
+    align-items: flex-start;
   }
 
-  .filter-row > * {
+  .toolbar-actions {
+    gap: 6px;
+  }
+
+  .toolbar-actions :deep(.el-button) {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .level-filter,
+  .task-filter,
+  .keyword-filter,
+  .date-filter,
+  .filter-bar > :deep(.el-button) {
     width: 100% !important;
   }
 }

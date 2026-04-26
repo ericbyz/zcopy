@@ -20,6 +20,7 @@ type LogStore interface {
 	List(taskID, level string, limit int) []models.TransferLog
 	Query(q ListQuery) (*ListResult, error)
 	Export(q ListQuery) (io.Reader, error)
+	Clear() error
 }
 
 type RingBufferLogStore struct {
@@ -140,6 +141,13 @@ func (s *RingBufferLogStore) Export(q ListQuery) (io.Reader, error) {
 	return r, nil
 }
 
+func (s *RingBufferLogStore) Clear() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.logs = s.logs[:0]
+	return nil
+}
+
 type ListQuery struct {
 	TaskID    string
 	Level     string
@@ -158,17 +166,17 @@ type ListResult struct {
 }
 
 type FileLogStore struct {
-	mu             sync.Mutex
-	logDir         string
-	currentFile    *os.File
-	writeCh        chan models.TransferLog
-	stopCh         chan struct{}
-	closeOnce      sync.Once
-	wg             sync.WaitGroup
-	writeWg        sync.WaitGroup
-	maxFileSize    int64
-	retentionDays  int
-	checkInterval  time.Duration
+	mu            sync.Mutex
+	logDir        string
+	currentFile   *os.File
+	writeCh       chan models.TransferLog
+	stopCh        chan struct{}
+	closeOnce     sync.Once
+	wg            sync.WaitGroup
+	writeWg       sync.WaitGroup
+	maxFileSize   int64
+	retentionDays int
+	checkInterval time.Duration
 }
 
 const (
@@ -496,6 +504,32 @@ func (s *FileLogStore) Export(q ListQuery) (io.Reader, error) {
 	}()
 
 	return r, nil
+}
+
+func (s *FileLogStore) Clear() error {
+	s.Flush()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.currentFile != nil {
+		s.currentFile.Sync()
+		s.currentFile.Close()
+		s.currentFile = nil
+	}
+
+	files, err := os.ReadDir(s.logDir)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if file.IsDir() || !strings.HasSuffix(file.Name(), ".jsonl") {
+			continue
+		}
+		if err := os.Remove(filepath.Join(s.logDir, file.Name())); err != nil {
+			return err
+		}
+	}
+	return s.openCurrentFile()
 }
 
 func (s *FileLogStore) Close() {

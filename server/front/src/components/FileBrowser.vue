@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { Folder, FileText, RefreshCw } from 'lucide-vue-next'
+import { Folder, FileText, FolderPlus, RefreshCw, UploadCloud } from 'lucide-vue-next'
 import { buildBreadcrumbList } from '../utils/breadcrumb.js'
 
 const props = defineProps({
@@ -12,22 +12,15 @@ const props = defineProps({
 const emit = defineEmits(['navigate', 'create-folder', 'upload', 'delete', 'refresh'])
 
 const folderName = ref('')
-const uploadFile = ref(null)
+const uploadRef = ref(null)
 
 const breadcrumbList = computed(() => buildBreadcrumbList(props.currentPath))
 
 function handleFileChange(file) {
-  uploadFile.value = file.raw || null
-}
-
-function handleCreateFolder() {
-  emit('create-folder', folderName.value)
-  folderName.value = ''
-}
-
-function handleSubmitUpload() {
-  emit('upload', uploadFile.value)
-  uploadFile.value = null
+  if (file?.raw) {
+    emit('upload', file.raw)
+    uploadRef.value?.clearFiles()
+  }
 }
 
 function handleOpenItem(item) {
@@ -44,26 +37,38 @@ function handleRefresh() {
 </script>
 
 <template>
-  <div>
-    <div class="toolbar">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item v-for="item in breadcrumbList" :key="item.path || 'root'" @click="emit('navigate', { path: item.path, isDirectory: true })">
-          {{ item.label }}
-        </el-breadcrumb-item>
-      </el-breadcrumb>
-      <div class="actions">
-        <el-input v-model="folderName" placeholder="新建文件夹名称" style="width: 200px" />
-        <el-button type="primary" :loading="loading" @click="handleCreateFolder">新建文件夹</el-button>
+  <section class="file-browser">
+    <header class="file-browser-toolbar">
+      <div class="path-panel">
+        <span class="path-label">当前位置</span>
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item v-for="item in breadcrumbList" :key="item.path || 'root'" @click="emit('navigate', { path: item.path, isDirectory: true })">
+            {{ item.label }}
+          </el-breadcrumb-item>
+        </el-breadcrumb>
       </div>
-    </div>
-    <div class="upload-bar">
-      <el-upload :auto-upload="false" :on-change="handleFileChange" :show-file-list="false">
-        <el-button>选择文件</el-button>
-      </el-upload>
-      <el-button type="primary" :loading="loading" @click="handleSubmitUpload">上传文件</el-button>
-      <el-button :icon="RefreshCw" :loading="loading" @click="handleRefresh">刷新</el-button>
-    </div>
-    <el-table :data="fileItems" v-loading="loading" stripe style="width: 100%">
+
+      <div class="primary-actions">
+        <el-upload
+          ref="uploadRef"
+          :auto-upload="false"
+          :on-change="handleFileChange"
+          :show-file-list="false"
+        >
+          <el-button type="primary" :icon="UploadCloud" :loading="loading">上传文件</el-button>
+        </el-upload>
+        <el-button :icon="RefreshCw" :loading="loading" @click="handleRefresh">刷新</el-button>
+      </div>
+    </header>
+
+    <section class="folder-tools">
+      <el-input v-model="folderName" placeholder="新建文件夹名称" @keyup.enter="emit('create-folder', folderName); folderName = ''" />
+      <el-button :icon="FolderPlus" :disabled="!folderName.trim()" @click="emit('create-folder', folderName); folderName = ''">
+        新建文件夹
+      </el-button>
+    </section>
+
+    <el-table :data="fileItems" v-loading="loading" stripe class="file-table">
       <el-table-column label="名称" min-width="220">
         <template #default="{ row }">
           <span class="file-name" @click="handleOpenItem(row)">
@@ -95,10 +100,60 @@ function handleRefresh() {
       </el-table-column>
     </el-table>
     <el-empty v-if="fileItems.length === 0" description="当前目录暂无文件" />
-  </div>
+  </section>
 </template>
 
 <style scoped>
+.file-browser {
+  display: grid;
+  gap: 14px;
+}
+
+.file-browser-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  background: var(--z-bg-elevated);
+  border: 1px solid var(--z-border);
+  border-radius: 8px;
+}
+
+.path-panel {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.path-label {
+  color: var(--z-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.primary-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.folder-tools {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  gap: 8px;
+  justify-content: end;
+  align-items: center;
+}
+
+.file-table {
+  width: 100%;
+  border: 1px solid var(--z-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .file-name {
   cursor: pointer;
   font-weight: 600;
@@ -113,26 +168,15 @@ function handleRefresh() {
   flex-shrink: 0;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.upload-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
 @media (max-width: 640px) {
-  .toolbar {
+  .file-browser-toolbar,
+  .primary-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .folder-tools {
+    grid-template-columns: 1fr;
   }
 }
 </style>

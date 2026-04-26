@@ -8,7 +8,6 @@ import AuthCard from './components/AuthCard.vue'
 import TaskForm from './components/TaskForm.vue'
 import TaskList from './components/TaskList.vue'
 import RemoteFolderPicker from './components/RemoteFolderPicker.vue'
-import PlatformInfo from './components/PlatformInfo.vue'
 
 // Inject from App.vue
 const setUserLoggedIn = inject('setUserLoggedIn')
@@ -30,7 +29,6 @@ const loading = ref(false)
 const message = ref('')
 
 const tasks = ref([])
-const capabilities = ref(null)
 const onDemandStatuses = ref({})
 
 // Wizard state
@@ -111,7 +109,17 @@ function openCreateWizard(mode = currentPageMode.value) {
 function setMessage(text) {
   message.value = text || ''
   if (text) {
-    if (text.includes('成功') || text.includes('已退出') || text.includes('已打开') || text.includes('已复制')) {
+    if (
+      text.includes('成功') ||
+      text.includes('完成') ||
+      text.includes('已退出') ||
+      text.includes('已打开') ||
+      text.includes('已删除') ||
+      text.includes('已停止') ||
+      text.includes('已启动') ||
+      text.includes('已更新') ||
+      text.includes('已创建')
+    ) {
       ElMessage.success(text)
     } else {
       ElMessage.error(text)
@@ -186,11 +194,6 @@ async function fetchTasks() {
   tasks.value = data.items || []
 }
 
-async function fetchCapabilities() {
-  const { data } = await api.get('/system/capabilities')
-  capabilities.value = data
-}
-
 async function initTaskFileProvider(taskId, silent = false) {
   if (autoInitPending.has(taskId)) return
   autoInitPending.add(taskId)
@@ -231,7 +234,7 @@ async function fetchOnDemandStatuses(autoInitMissing = false) {
 
 async function refreshDashboard(autoInitMissing = false) {
   if (!currentUser.value) return
-  await Promise.all([fetchTasks(), fetchCapabilities()])
+  await fetchTasks()
   await fetchOnDemandStatuses(autoInitMissing)
 }
 
@@ -430,16 +433,46 @@ async function openLocation(path) {
     if (window.desktopApi?.openPath) {
       const failure = await window.desktopApi.openPath(path)
       if (failure) {
-        setMessage(failure)
+        setMessage(`打开文件夹失败：${failure}`)
       } else {
-        setMessage(`已打开 location：${path}`)
+        setMessage(`已打开文件夹：${path}`)
       }
       return
     }
-    await navigator.clipboard.writeText(path)
-    setMessage(`location 已复制：${path}`)
-  } catch {
-    setMessage(path)
+    setMessage('当前环境无法直接打开文件夹，请在桌面客户端中操作')
+  } catch (error) {
+    setMessage(`打开文件夹失败：${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+async function openTaskLocalFolder(task) {
+  const status = onDemandStatuses.value[task.id]
+  const targetPath = task.onDemandSync && status?.mountPath ? status.mountPath : task.localPath
+  if (!targetPath) {
+    setMessage(task.onDemandSync ? '按需同步位置尚未就绪' : '本地路径为空')
+    return
+  }
+  await openLocation(targetPath)
+}
+
+async function openRemoteFolder(task) {
+  const remotePath = task.remotePath || ''
+  const baseURL = import.meta.env.VITE_FILE_SERVER_WEB_URL || 'http://localhost:5176'
+  const url = new URL(baseURL)
+  if (remotePath) {
+    url.searchParams.set('path', remotePath)
+  }
+  try {
+    if (window.desktopApi?.openExternal) {
+      const failure = await window.desktopApi.openExternal(url.toString())
+      if (failure) {
+        setMessage(failure)
+      }
+      return
+    }
+    window.open(url.toString(), '_blank', 'noopener,noreferrer')
+  } catch (error) {
+    setMessage(error instanceof Error ? error.message : String(error))
   }
 }
 
@@ -455,7 +488,6 @@ async function logout(showMessage = true) {
   currentUser.value = null
   updateLoginState()
   tasks.value = []
-  capabilities.value = null
   onDemandStatuses.value = {}
   resetTaskForm()
   wizardOpen.value = false
@@ -539,10 +571,10 @@ onUnmounted(() => {
         @toggle-auto="toggleAutoBackup($event)"
         @delete="deleteTask($event)"
         @open-location="openLocation($event)"
+        @open-local="openTaskLocalFolder($event)"
+        @open-remote="openRemoteFolder($event)"
         @refresh="refreshDashboard(true)"
       />
-
-      <PlatformInfo v-if="capabilities" :capabilities="capabilities" style="margin-top: 24px" />
 
       <!-- Task Wizard Dialog -->
       <TaskForm
@@ -583,17 +615,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 80vh;
-  padding: 40px 0;
+  padding: 28px 0;
 }
 
 .auth-hero {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 22px;
 }
 
 .auth-hero h1 {
   margin: 0 0 12px;
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--z-success), var(--z-accent));
   -webkit-background-clip: text;
@@ -604,8 +636,8 @@ onUnmounted(() => {
 .auth-hero p {
   margin: 0;
   color: var(--z-text-muted);
-  font-size: 1.05rem;
-  max-width: 480px;
+  font-size: 0.96rem;
+  max-width: 420px;
 }
 
 @media (max-width: 768px) {

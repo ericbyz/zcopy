@@ -1,7 +1,7 @@
 <script setup>
 import { computed, inject, ref, onMounted, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Sun, Moon, Monitor, HardDrive, Repeat, FileText, Settings, Plus } from 'lucide-vue-next'
+import { Sun, Moon, Monitor, HardDrive, Repeat, FileText, Info, Settings, Plus } from 'lucide-vue-next'
 
 const zhCn = inject('element-locale')
 
@@ -63,7 +63,11 @@ provide('themeMode', themeMode)
 const navItems = [
   { icon: HardDrive, label: '备份任务', path: '/' },
   { icon: Repeat, label: '同步任务', path: '/sync' },
-  { icon: FileText, label: '日志', path: '/logs' },
+  { icon: FileText, label: '日志', path: '/logs' }
+]
+
+const bottomNavItems = [
+  { icon: Info, label: '平台能力', path: '/platform' },
   { icon: Settings, label: '设置', path: '/settings' }
 ]
 
@@ -83,10 +87,6 @@ onMounted(() => {
     <div class="app-layout">
       <!-- Sidebar -->
       <aside v-if="isLoggedIn" class="app-sidebar">
-        <div class="sidebar-brand">
-          <span class="brand-text">ZCopy</span>
-        </div>
-
         <nav class="sidebar-nav">
           <router-link
             v-for="item in navItems"
@@ -110,6 +110,19 @@ onMounted(() => {
             {{ createButtonLabel }}
           </el-button>
 
+          <nav class="sidebar-nav sidebar-nav-bottom">
+            <router-link
+              v-for="item in bottomNavItems"
+              :key="item.path"
+              :to="item.path"
+              class="sidebar-nav-item"
+              :class="{ active: route.path === item.path }"
+            >
+              <component :is="item.icon" style="width:18px;height:18px" />
+              <span>{{ item.label }}</span>
+            </router-link>
+          </nav>
+
           <div class="sidebar-theme" @click="cycleTheme">
             <component :is="themeIcon" style="width:16px;height:16px" />
             <span>{{ themeLabel }}</span>
@@ -129,53 +142,44 @@ onMounted(() => {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  background: var(--z-bg-base);
 }
 
 .app-sidebar {
-  width: 220px;
-  min-width: 220px;
+  width: 164px;
+  min-width: 164px;
   background: var(--z-bg-elevated);
   border-right: 1px solid var(--z-border);
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
+  padding: 36px 0 10px;
   position: sticky;
   top: 0;
   height: 100vh;
-}
-
-.sidebar-brand {
-  padding: 0 20px 24px;
-  border-bottom: 1px solid var(--z-border);
-  margin-bottom: 12px;
-}
-
-.brand-text {
-  font-size: 1.4rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--z-success), var(--z-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 12px;
+  gap: 3px;
+  padding: 0 8px;
+}
+
+.sidebar-nav-bottom {
+  flex: 0 0 auto;
+  padding: 0;
 }
 
 .sidebar-nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 9px 8px;
   border-radius: 8px;
   text-decoration: none;
   color: var(--z-text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 500;
   transition: background 0.15s, color 0.15s;
   cursor: pointer;
@@ -192,26 +196,27 @@ onMounted(() => {
 }
 
 .sidebar-bottom {
-  padding: 12px 12px 0;
+  padding: 10px 8px 0;
   border-top: 1px solid var(--z-border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sidebar-create-btn {
   width: 100%;
   border-radius: 8px;
+  font-size: 0.86rem;
 }
 
 .sidebar-theme {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 7px 8px;
   border-radius: 8px;
   color: var(--z-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -223,17 +228,32 @@ onMounted(() => {
 
 .app-main {
   flex: 1;
-  padding: 24px;
+  min-width: 0;
+  padding: 36px 16px 16px;
   overflow-y: auto;
-  background:
-    radial-gradient(circle at top right, var(--z-accent-bg), transparent 28%),
-    radial-gradient(circle at bottom left, var(--z-success-bg), transparent 26%),
-    var(--z-bg-base);
+  background: var(--z-bg-base);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 760px) {
   .app-sidebar {
+    width: 64px;
+    min-width: 64px;
+  }
+
+  .sidebar-nav-item,
+  .sidebar-theme {
+    justify-content: center;
+  }
+
+  .sidebar-nav-item span,
+  .sidebar-theme span,
+  .sidebar-create-btn span {
     display: none;
+  }
+
+  .sidebar-create-btn {
+    aspect-ratio: 1;
+    padding: 8px;
   }
 }
 </style>

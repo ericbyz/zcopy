@@ -111,3 +111,11 @@ func (a *AppState) exportLogs(c *gin.Context) {
 
 	io.Copy(c.Writer, reader)
 }
+
+func (a *AppState) clearLogs(c *gin.Context) {
+	if err := a.logs.Clear(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "清空日志失败: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "日志已清空"})
+}

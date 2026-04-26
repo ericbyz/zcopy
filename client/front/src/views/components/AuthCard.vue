@@ -70,38 +70,38 @@ const emit = defineEmits(['submit', 'update:authMode', 'update:authForm'])
 }
 
 .auth-card {
-  width: min(560px, 100%);
+  width: min(420px, 100%);
 }
 
 .auth-card :deep(.el-card__body) {
-  padding: 32px 36px;
+  padding: 22px 26px;
 }
 
 .auth-card :deep(.el-tabs__header) {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .auth-card :deep(.el-tabs__item) {
-  font-size: 1.05rem;
-  padding: 0 24px;
+  font-size: 0.96rem;
+  padding: 0 18px;
 }
 
 .auth-card :deep(.el-form-item) {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .auth-card :deep(.el-input__wrapper) {
-  padding: 10px 14px;
-  font-size: 1rem;
+  padding: 7px 12px;
+  font-size: 0.92rem;
 }
 
 .auth-card :deep(.el-input__inner) {
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .auth-card :deep(.el-button) {
-  padding: 14px 24px;
-  font-size: 1.05rem;
+  padding: 10px 18px;
+  font-size: 0.95rem;
   height: auto;
 }
 </style>

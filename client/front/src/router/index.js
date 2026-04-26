@@ -21,6 +21,11 @@ const routes = [
     component: LogViewer
   },
   {
+    path: '/platform',
+    name: 'Platform',
+    component: () => import('../views/PlatformView.vue')
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('../views/SettingsView.vue')

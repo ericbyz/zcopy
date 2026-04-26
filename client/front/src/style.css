@@ -104,10 +104,7 @@ body {
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
   color: var(--z-text-primary);
-  background:
-    radial-gradient(circle at top right, var(--z-accent-bg), transparent 28%),
-    radial-gradient(circle at bottom left, var(--z-success-bg), transparent 26%),
-    var(--z-bg-base);
+  background: var(--z-bg-base);
 }
 
 button,

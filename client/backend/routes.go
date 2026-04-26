@@ -51,6 +51,7 @@ func registerOnDemandRoutes(api *gin.RouterGroup, app *AppState) {
 func registerRemoteRoutes(api *gin.RouterGroup, app *AppState) {
 	api.GET("/remote/folders", app.listRemoteFolders)
 	api.GET("/logs/export", app.exportLogs)
+	api.DELETE("/logs", app.clearLogs)
 	api.GET("/logs", app.listLogs)
 }
 

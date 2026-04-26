@@ -24,7 +24,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-location', 'refresh'])
+const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-location', 'open-local', 'open-remote', 'refresh'])
 </script>
 
 <template>
@@ -46,6 +46,8 @@ const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-locatio
         @toggle-auto="emit('toggle-auto', $event)"
         @delete="emit('delete', $event)"
         @open-location="emit('open-location', $event)"
+        @open-local="emit('open-local', $event)"
+        @open-remote="emit('open-remote', $event)"
       />
     </div>
   </div>
@@ -54,8 +56,11 @@ const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-locatio
 <style scoped>
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 48px 16px;
   color: var(--z-text-muted);
+  background: var(--z-bg-elevated);
+  border: 1px solid var(--z-border);
+  border-radius: 8px;
 }
 
 .empty-state p {
@@ -75,6 +80,6 @@ const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-locatio
 .tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 </style>

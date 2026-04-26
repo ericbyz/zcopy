@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { Play, MoreVertical, Folder, Cloud, Edit, Trash2, RefreshCw } from 'lucide-vue-next'
+import { Play, MoreVertical, FolderCheck, Edit, Trash2, RefreshCw, Cloud } from 'lucide-vue-next'
 import { formatBytes } from '../../utils/format.js'
 import { getTaskStatusText, calcSyncProgress } from '../../utils/task.js'
 
@@ -19,7 +19,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-location'])
+const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-location', 'open-local', 'open-remote'])
 
 const taskStatusText = computed(() => getTaskStatusText(props.task))
 
@@ -34,8 +34,28 @@ const statusType = computed(() => {
   return 'info'
 })
 
-const progressLabel = computed(() => {
-  if (!isSyncing.value) return ''
+const taskKindLabel = computed(() => props.task.taskMode === 'sync' ? '同步任务' : '备份任务')
+
+const actionLabel = computed(() => props.task.taskMode === 'sync' ? '开始同步' : '开始备份')
+
+const remoteLabel = computed(() => props.task.taskMode === 'sync' ? '文件服务器路径' : '备份目标路径')
+
+const ruleLabel = computed(() => {
+  if (props.task.taskMode === 'sync') {
+    const mode = props.task.conflictMode
+    if (mode === 'local') return '本地优先'
+    if (mode === 'remote') return '文件服务器优先'
+    return '最新优先'
+  }
+  return props.task.autoBackup ? '自动备份' : '手动备份'
+})
+
+const lastSyncText = computed(() => {
+  if (!props.task.lastSyncAt) return '无'
+  return new Date(props.task.lastSyncAt).toLocaleString()
+})
+
+const progressStats = computed(() => {
   const r = props.task.syncReport
   const totalItems = r?.totalFiles || 0
   const totalSize = formatBytes(r?.totalBytes || 0)
@@ -43,37 +63,57 @@ const progressLabel = computed(() => {
   const doneSize = formatBytes(r?.transferredBytes || 0)
   return `共 ${totalItems} 项 (${totalSize}) | 传输完成 ${doneItems} 项 (${doneSize})`
 })
+
+const idleStats = computed(() => {
+  const r = props.task.syncReport
+  if (!r?.totalFiles && !r?.transferredBytes) return `上次${props.task.taskMode === 'sync' ? '同步' : '备份'} ${lastSyncText.value}`
+  return `共 ${r.totalFiles || 0} 项 | 已传输 ${formatBytes(r.transferredBytes || 0)}`
+})
 </script>
 
 <template>
   <div class="task-card">
-    <!-- Header: name + status + actions -->
     <div class="task-header">
-      <div class="task-title">
-        <h3>{{ task.name }}</h3>
-        <el-tag size="small" effect="plain">{{ task.taskMode === 'sync' ? '同步模式' : '备份模式' }}</el-tag>
-        <el-tag :type="statusType" size="small" round>
-          {{ isSyncing ? `${task.taskMode === 'sync' ? '正在同步' : '正在备份'} ${syncProgress}%` : taskStatusText }}
-        </el-tag>
+      <div class="task-main">
+        <div class="task-icon" :class="{ syncing: isSyncing }">
+          <component :is="FolderCheck" />
+        </div>
+        <div class="task-summary">
+          <div class="task-title">
+            <h3>{{ task.name || taskKindLabel }}</h3>
+            <span v-if="task.onDemandSync" class="ondemand-badge">
+              <component :is="Cloud" />
+              按需同步
+            </span>
+          </div>
+          <div class="task-status-line">
+            <span class="status-text" :class="statusType">
+              {{ isSyncing ? `${task.taskMode === 'sync' ? '正在同步' : '正在备份'} ${syncProgress}%` : taskStatusText }}
+            </span>
+            <span class="divider"></span>
+            <span>{{ isSyncing ? progressStats : idleStats }}</span>
+          </div>
+        </div>
       </div>
+
       <div class="task-header-actions">
         <el-button
           v-if="!isSyncing && !task.cloudOnly"
-          circle
+          text
           size="small"
           :disabled="loading"
+          :aria-label="actionLabel"
           @click="emit('sync', task.id)"
-          aria-label="开始备份"
         >
-          <component :is="Play" style="width:16px;height:16px" />
+          <component :is="Play" style="width:18px;height:18px" />
         </el-button>
         <el-dropdown trigger="click" @command="(cmd) => {
           if (cmd === 'edit') emit('edit', task)
           else if (cmd === 'toggle') emit('toggle-auto', task)
           else if (cmd === 'delete') emit('delete', task.id)
         }">
-          <el-button circle size="small" aria-label="更多操作">
-            <component :is="MoreVertical" style="width:16px;height:16px" />
+          <el-button text size="small" aria-label="更多操作">
+            <component :is="MoreVertical" style="width:18px;height:18px" />
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -95,38 +135,29 @@ const progressLabel = computed(() => {
       </div>
     </div>
 
-    <!-- Progress section (only when syncing) -->
-    <div v-if="isSyncing" class="task-progress">
-      <div class="progress-stats">{{ progressLabel }}</div>
-      <el-progress :percentage="syncProgress" :stroke-width="12" :show-text="true" />
+    <div v-if="isSyncing" class="task-progress" :aria-label="`任务进度 ${syncProgress}%`">
+      <span :style="{ width: `${syncProgress}%` }"></span>
     </div>
 
-    <!-- Paths -->
-    <div class="task-paths">
-      <div v-if="task.localPath" class="path-row">
-        <component :is="Folder" style="width:14px;height:14px;flex-shrink:0" />
-        <span class="path-label">本地路径</span>
-        <span class="path-value">{{ task.localPath }}</span>
+    <div class="task-columns">
+      <div class="task-column">
+        <span class="column-label">本地路径</span>
+        <button class="column-value path-button" type="button" @click="emit('open-local', task)">
+          {{ task.onDemandSync && onDemandStatus?.mountPath ? onDemandStatus.mountPath : (task.localPath || '云端按需管理') }}
+        </button>
       </div>
-      <div class="path-row">
-        <component :is="Cloud" style="width:14px;height:14px;flex-shrink:0" />
-        <span class="path-label">远程路径</span>
-        <span class="path-value">{{ task.remotePath || '根目录' }}</span>
+      <div class="task-column">
+        <span class="column-label">{{ remoteLabel }}</span>
+        <button class="column-value path-button" type="button" @click="emit('open-remote', task)">
+          {{ task.remotePath || '根目录' }}
+        </button>
       </div>
-      <div v-if="task.cloudOnly" class="path-row">
-        <el-tag type="warning" size="small">全新模式</el-tag>
-        <span class="path-label">云文件在 location 中管理</span>
+      <div class="task-column rule-column">
+        <span class="column-label">{{ task.taskMode === 'sync' ? '同步规则' : '备份规则' }}</span>
+        <span class="column-value">{{ ruleLabel }}</span>
       </div>
     </div>
 
-    <!-- Meta -->
-    <div class="task-meta">
-      <span>自动：{{ task.autoBackup ? '开启' : '关闭' }}</span>
-      <span v-if="task.taskMode === 'sync'">冲突：{{ task.conflictMode === 'local' ? '本地优先' : task.conflictMode === 'remote' ? '文件服务器优先' : '最新优先' }}</span>
-      <span>上次备份：{{ task.lastSyncAt ? new Date(task.lastSyncAt).toLocaleString() : '无' }}</span>
-    </div>
-
-    <!-- Error Alert -->
     <el-alert
       v-if="task.syncReport?.state === 'failed' && task.syncReport.failedFilePaths?.length"
       title="失败文件"
@@ -149,32 +180,6 @@ const progressLabel = computed(() => {
       style="margin-top: 12px"
     />
 
-    <!-- On-Demand Panel -->
-    <div v-if="task.onDemandSync" class="ondemand-panel">
-      <el-descriptions :column="2" border size="small" style="margin-top: 16px">
-        <el-descriptions-item label="按需同步">
-          {{ onDemandStatus?.supported ? '支持' : '不支持' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="同步根">
-          {{ onDemandStatus?.registered ? '已注册' : '未注册' }}
-        </el-descriptions-item>
-        <el-descriptions-item v-if="onDemandStatus?.mountPath" label="Location" :span="2">
-          {{ onDemandStatus.mountPath }}
-        </el-descriptions-item>
-        <el-descriptions-item v-else-if="onDemandStatus?.reason" label="原因" :span="2">
-          {{ onDemandStatus.reason }}
-        </el-descriptions-item>
-      </el-descriptions>
-      <el-button
-        v-if="onDemandStatus?.mountPath"
-        size="small"
-        style="margin-top: 12px"
-        :disabled="loading"
-        @click="emit('open-location', onDemandStatus.mountPath)"
-      >
-        打开 location
-      </el-button>
-    </div>
   </div>
 </template>
 
@@ -182,83 +187,205 @@ const progressLabel = computed(() => {
 .task-card {
   background: var(--z-bg-elevated);
   border: 1px solid var(--z-border);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 8px;
+  overflow: hidden;
   transition: box-shadow 0.15s;
 }
 
 .task-card:hover {
-  box-shadow: var(--z-shadow-lg);
+  box-shadow: var(--z-shadow);
 }
 
 .task-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px 16px;
+}
+
+.task-main {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.task-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  color: #5b8def;
+  background: rgba(91, 141, 239, 0.16);
+  border-radius: 7px;
+}
+
+.task-icon :deep(svg) {
+  width: 25px;
+  height: 25px;
+}
+
+.task-icon.syncing {
+  color: var(--z-success);
+  background: var(--z-success-bg);
+}
+
+.task-summary {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
 }
 
 .task-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .task-title h3 {
   margin: 0;
-  font-size: 1.1rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
   font-weight: 600;
+}
+
+.ondemand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--z-success);
+  background: var(--z-success-bg);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.ondemand-badge :deep(svg) {
+  width: 12px;
+  height: 12px;
+}
+
+.task-status-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--z-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.task-status-line span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-text {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.status-text.success {
+  color: var(--z-accent);
+}
+
+.status-text.danger {
+  color: var(--z-danger);
+}
+
+.status-text.info {
+  color: var(--z-text-secondary);
+}
+
+.divider {
+  width: 1px;
+  height: 14px;
+  background: var(--z-border);
 }
 
 .task-header-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.task-header-actions :deep(.el-button) {
+  color: var(--z-text-primary);
+  padding: 4px;
 }
 
 .task-progress {
-  margin-bottom: 12px;
+  height: 2px;
+  background: var(--z-bg-sunken);
 }
 
-.progress-stats {
-  font-size: 0.9rem;
-  color: var(--z-text-secondary);
-  margin-bottom: 8px;
+.task-progress span {
+  display: block;
+  height: 100%;
+  background: var(--z-accent);
+  transition: width 0.2s ease;
 }
 
-.task-paths {
+.task-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(110px, 0.7fr);
+  border-top: 1px solid var(--z-border);
+  background: var(--z-bg-elevated);
+}
+
+.task-column {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding: 12px;
-  background: var(--z-bg-sunken);
-  border-radius: 8px;
+  gap: 7px;
+  padding: 14px 20px 15px;
+  border-right: 1px solid var(--z-border);
 }
 
-.path-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--z-text-secondary);
-  font-size: 0.9rem;
+.task-column:last-child {
+  border-right: 0;
 }
 
-.path-label {
+.column-label {
   color: var(--z-text-muted);
-  min-width: 56px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-.path-value {
-  font-family: monospace;
+.column-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--z-text-primary);
-  word-break: break-all;
+  font-size: 0.85rem;
 }
 
-.task-meta {
-  display: flex;
-  gap: 24px;
-  color: var(--z-text-muted);
-  font-size: 0.85rem;
+.path-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.path-button:hover {
+  color: var(--z-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .failed-files {
@@ -274,28 +401,39 @@ const progressLabel = computed(() => {
   font-size: 0.85rem;
 }
 
-.ondemand-panel {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--z-border);
-}
-
 @media (max-width: 640px) {
-  .task-title {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .task-meta {
-    flex-direction: column;
-    gap: 4px;
-  }
-
   .task-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 14px;
+  }
+
+  .task-icon {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .task-status-line {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    white-space: normal;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .task-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .task-column {
+    border-right: 0;
+    border-bottom: 1px solid var(--z-border);
+    padding: 12px 14px;
+  }
+
+  .task-column:last-child {
+    border-bottom: 0;
   }
 }
 </style>

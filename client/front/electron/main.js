@@ -74,10 +74,13 @@ function createWindow() {
     ? path.resolve(__dirname, '../resource/icon.png')
     : path.join(process.resourcesPath, 'app', 'build', 'icon.png')
   const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
-    minWidth: 1100,
-    minHeight: 700,
+    width: 900,
+    height: 640,
+    minWidth: 760,
+    minHeight: 540,
+    title: '',
+    titleBarStyle: 'hidden',
+    backgroundColor: '#f5f5f7',
     icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -167,11 +170,15 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
     if (fs.existsSync(targetPath)) {
       const stat = fs.statSync(targetPath)
       if (stat.isDirectory()) {
-        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-        if (fallback.status === 0) {
+        const failure = await shell.openPath(targetPath)
+        if (!failure) {
           return ''
         }
+        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+        return fallback.status === 0 ? '' : failure
       }
+    } else {
+      return `路径不存在：${targetPath}`
     }
     const failure = await shell.openPath(targetPath)
     if (!failure) {
@@ -186,6 +193,22 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
       return ''
     }
     return failure
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
+})
+
+ipcMain.handle('shell:open-external', async (_event, targetUrl) => {
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return '链接无效'
+  }
+  try {
+    const parsed = new URL(targetUrl)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return '仅支持打开 http/https 链接'
+    }
+    await shell.openExternal(parsed.toString())
+    return ''
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }
