@@ -1,4 +1,8 @@
-# 测试规范
+# 测试与 API 规范
+
+> 本文件定义测试要求和 API 文档标准。
+> 测试方法论（TDD 流程、覆盖率标准、Go 测试模式）→ 参见 `rules/testing.md`
+> 完整 API 端点文档 → 参见 `instructions/api-reference.md`
 
 ## 现状
 
@@ -50,6 +54,9 @@
 ---
 
 # API 文档规范
+
+> 实际 API 端点文档 → 参见 `instructions/api-reference.md`（服务端 + 客户端全部端点）
+> 本节定义 API 文档的**编写标准**，不包含具体端点内容。
 
 ## OpenAPI 规范
 

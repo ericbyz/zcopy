@@ -1,5 +1,10 @@
 # Go 项目规范
 
+> 本文件定义 Go 后端的架构纪律、接口抽象和安全底线。
+> 后端开发方法论（API 设计模式、并发规范、日志规范）→ 参见 `rules/backend.md`
+> 完整 API 端点文档 → 参见 `instructions/api-reference.md`
+> 架构详解（启动流程、同步引擎、File Provider）→ 参见 `instructions/architecture.md`
+
 ## 架构纪律
 
 **单文件不超过 300 行。** 超过必须按职责拆包。当前 `client/backend/main.go`（1506 行）是已确认的技术债务，拆分方向：

@@ -1,5 +1,9 @@
 # 构建与打包规范
 
+> 本文件定义构建命令和打包规则。
+> 架构详解（启动流程、Electron 时序、多进程协作）→ 参见 `instructions/architecture.md`
+> 构建相关领域专家 → 参见 `agents/infra.md`
+
 ## Git 卫生
 
 ### .gitignore 必须包含
