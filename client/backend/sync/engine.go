@@ -70,6 +70,10 @@ func (e *Engine) SyncTask(taskID string) error {
 	}
 	defer e.release(taskID, task)
 
+	if task.TaskMode == models.TaskModeSync {
+		return e.syncBidirectionalTask(task, token)
+	}
+
 	if task.CloudOnly {
 		e.logs.Push("info", task, "", "全新模式任务跳过本地备份：task_id="+taskID)
 		return nil
@@ -125,6 +129,12 @@ func (e *Engine) release(taskID string, task models.BackupTask) {
 }
 
 func syncMode(task models.BackupTask) string {
+	if task.TaskMode == models.TaskModeSync {
+		if task.OnDemandSync {
+			return "sync_on_demand"
+		}
+		return "sync_full"
+	}
 	if task.CloudOnly {
 		return "cloud_only"
 	}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,10 +35,18 @@ type AppState struct {
 	watcher *watcher.FSNotifyWatchManager
 	syncer  syncpkg.SyncEngine
 	fp      *fileproviderpkg.Service
+
+	remoteSyncMu     sync.Mutex
+	remoteSyncTimers map[string]*time.Timer
 }
 
-func (a *AppState) getToken() string  { return a.tokens.GetToken() }
-func (a *AppState) setToken(t string) { a.tokens.SetToken(t) }
+func (a *AppState) getToken() string { return a.tokens.GetToken() }
+func (a *AppState) setToken(t string) {
+	a.tokens.SetToken(t)
+	if strings.TrimSpace(t) != "" {
+		go a.restoreRemoteSyncTasks()
+	}
+}
 func (a *AppState) proxyRaw(method, path string, body io.Reader, contentType, token string) ([]byte, int, error) {
 	return a.remote.RawRequest(method, path, body, contentType, token)
 }
@@ -84,14 +93,15 @@ func main() {
 	)
 
 	app := &AppState{
-		cfg:    cfg,
-		httpc:  httpc,
-		store:  taskStore,
-		tokens: tokens,
-		remote: remote,
-		logs:   logs,
-		syncer: syncer,
-		fp:     fp,
+		cfg:              cfg,
+		httpc:            httpc,
+		store:            taskStore,
+		tokens:           tokens,
+		remote:           remote,
+		logs:             logs,
+		syncer:           syncer,
+		fp:               fp,
+		remoteSyncTimers: make(map[string]*time.Timer),
 	}
 
 	app.watcher = watcher.NewFSNotifyWatchManager(taskStore, app.syncTask)
@@ -101,6 +111,7 @@ func main() {
 	}
 
 	app.watcher.RestoreAutoWatchers()
+	app.startRemoteEventLoop()
 
 	gin.SetMode(cfg.Server.Mode)
 	router := gin.Default()

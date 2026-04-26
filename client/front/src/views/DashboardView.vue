@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios'
 import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import AuthCard from './components/AuthCard.vue'
@@ -12,6 +13,8 @@ import PlatformInfo from './components/PlatformInfo.vue'
 // Inject from App.vue
 const setUserLoggedIn = inject('setUserLoggedIn')
 const createTaskTrigger = inject('createTaskTrigger')
+const createTaskPreset = inject('createTaskPreset', ref('backup'))
+const route = useRoute()
 
 const apiBaseURL =
   import.meta.env.VITE_CLIENT_BACKEND ||
@@ -38,6 +41,7 @@ const remotePickerPath = ref('')
 const remotePickerFolders = ref([])
 const remotePickerLoading = ref(false)
 const remotePickerError = ref('')
+const remotePickerCurrentOwner = ref({ occupied: false, taskId: '', taskName: '' })
 
 const localFolderInput = ref(null)
 const autoInitPending = new Set()
@@ -52,6 +56,14 @@ const authForm = ref({
 })
 
 const taskForm = ref(emptyTask())
+const currentPageMode = computed(() => route.meta?.taskMode === 'sync' ? 'sync' : 'backup')
+const isSyncPage = computed(() => currentPageMode.value === 'sync')
+const filteredTasks = computed(() => tasks.value.filter((task) => {
+  const mode = task.taskMode || 'backup'
+  return currentPageMode.value === 'sync' ? mode === 'sync' : mode !== 'sync'
+}))
+const emptyText = computed(() => isSyncPage.value ? '暂无同步任务' : '暂无备份任务')
+const emptyHint = computed(() => isSyncPage.value ? '点击左侧「创建同步任务」开始' : '点击左侧「创建备份任务」开始')
 
 api.interceptors.request.use((config) => {
   if (token.value) {
@@ -64,6 +76,8 @@ function emptyTask() {
   return {
     id: '',
     name: '',
+    taskMode: 'backup',
+    conflictMode: 'latest',
     localPath: '',
     remotePath: '',
     autoBackup: false,
@@ -85,11 +99,12 @@ const remotePickerBreadcrumbs = computed(() => {
 
 // Watch createTaskTrigger from App.vue sidebar
 watch(createTaskTrigger, () => {
-  openCreateWizard()
+  openCreateWizard(createTaskPreset.value || currentPageMode.value)
 })
 
-function openCreateWizard() {
+function openCreateWizard(mode = currentPageMode.value) {
   resetTaskForm()
+  taskForm.value.taskMode = mode
   wizardOpen.value = true
 }
 
@@ -225,12 +240,15 @@ function resetTaskForm() {
   remotePickerPath.value = ''
   remotePickerFolders.value = []
   remotePickerError.value = ''
+  remotePickerCurrentOwner.value = { occupied: false, taskId: '', taskName: '' }
 }
 
 function editTask(task) {
   taskForm.value = {
     id: task.id,
     name: task.name,
+    taskMode: task.taskMode || 'backup',
+    conflictMode: task.conflictMode || 'latest',
     localPath: task.localPath,
     remotePath: task.remotePath,
     autoBackup: task.autoBackup,
@@ -300,10 +318,14 @@ async function loadRemoteFolders(path = '') {
   remotePickerError.value = ''
   try {
     const { data } = await api.get('/remote/folders', {
-      params: path ? { path } : {}
+      params: {
+        ...(path ? { path } : {}),
+        ...(taskForm.value.id ? { excludeTaskId: taskForm.value.id } : {})
+      }
     })
     remotePickerPath.value = data.path || ''
     remotePickerFolders.value = data.folders || []
+    remotePickerCurrentOwner.value = data.currentOwner || { occupied: false, taskId: '', taskName: '' }
   } catch (error) {
     const text = error?.response?.data?.message || '加载远程目录失败'
     remotePickerError.value = text
@@ -323,8 +345,16 @@ function closeRemotePicker() {
 }
 
 function chooseRemotePath() {
+  if (remotePickerCurrentOwner.value?.occupied) {
+    setMessage(`当前目录已被任务「${remotePickerCurrentOwner.value.taskName}」占用`)
+    return
+  }
   taskForm.value.remotePath = remotePickerPath.value
   remotePickerOpen.value = false
+}
+
+function handleBlockedRemoteFolder(folder) {
+  setMessage(`文件服务器文件夹「${folder.path || folder.name}」已被任务「${folder.taskName}」占用`)
 }
 
 async function navigateRemote(path) {
@@ -499,9 +529,11 @@ onUnmounted(() => {
       />
 
       <TaskList
-        :tasks="tasks"
+        :tasks="filteredTasks"
         :loading="loading"
         :on-demand-statuses="onDemandStatuses"
+        :empty-text="emptyText"
+        :empty-hint="emptyHint"
         @edit="editTask($event)"
         @sync="syncTask($event)"
         @toggle-auto="toggleAutoBackup($event)"
@@ -516,6 +548,7 @@ onUnmounted(() => {
       <TaskForm
         :open="wizardOpen"
         :task-form="taskForm"
+        :mode-lock="currentPageMode"
         :loading="loading"
         @save="saveTask"
         @reset="resetTaskForm"
@@ -530,10 +563,12 @@ onUnmounted(() => {
       :open="remotePickerOpen"
       :path="remotePickerPath"
       :folders="remotePickerFolders"
+      :current-owner="remotePickerCurrentOwner"
       :breadcrumbs="remotePickerBreadcrumbs"
       :loading="remotePickerLoading"
       :error="remotePickerError"
       @navigate="navigateRemote($event)"
+      @blocked="handleBlockedRemoteFolder"
       @navigate-parent="navigateRemoteParent"
       @choose="chooseRemotePath"
       @close="closeRemotePicker"

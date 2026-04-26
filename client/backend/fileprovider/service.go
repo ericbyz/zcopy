@@ -60,6 +60,11 @@ type fileProviderRegisterRequest struct {
 	Password string `json:"password"`
 }
 
+type fileProviderSignalRequest struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+}
+
 type remoteWebDAVItem struct {
 	Name        string    `json:"name"`
 	Path        string    `json:"path"`
@@ -175,6 +180,35 @@ func (s *Service) GetTaskStatus(task models.BackupTask) (BridgeStatus, error) {
 
 	slog.Debug("[FP] 查询域状态完成", "task_id", task.ID, "registered", status.Registered, "mount_path", status.MountPath)
 	return status, nil
+}
+
+func (s *Service) SignalTask(task models.BackupTask, changedPath string) error {
+	if !s.Available() {
+		return nil
+	}
+	payload := fileProviderSignalRequest{
+		ID:   platform.SyncRootID(task.ID),
+		Path: signalPathForTask(task, changedPath),
+	}
+	if err := s.callFileProviderBridge(http.MethodPost, "/signal", payload, nil); err != nil {
+		slog.Warn("[FP] 通知域刷新失败", "task_id", task.ID, "error", err)
+		if s.logs != nil {
+			s.logs.Push("warn", task, "", fmt.Sprintf("[FP] 通知域刷新失败：error=%s", err.Error()))
+		}
+		return err
+	}
+	slog.Debug("[FP] 已通知域刷新", "task_id", task.ID)
+	return nil
+}
+
+func signalPathForTask(task models.BackupTask, changedPath string) string {
+	clean := utils.NormalizeRemote(changedPath)
+	base := utils.NormalizeRemote(task.RemotePath)
+	if base != "" && (clean == base || strings.HasPrefix(clean, base+"/")) {
+		clean = strings.TrimPrefix(clean, base)
+		clean = strings.TrimPrefix(clean, "/")
+	}
+	return clean
 }
 
 func (s *Service) fileProviderTaskURL(taskID string) string {

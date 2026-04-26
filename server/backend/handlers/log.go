@@ -18,32 +18,48 @@ import (
 )
 
 type LogEntry struct {
-	ID         string `json:"id"`
-	Time       string `json:"time"`
-	Level      string `json:"level"`
-	Msg        string `json:"msg"`
-	UserID     string `json:"userId,omitempty"`
-	Operation  string `json:"operation,omitempty"`
-	Path       string `json:"path,omitempty"`
-	Method     string `json:"method,omitempty"`
-	StatusCode int    `json:"statusCode,omitempty"`
-	DurationMs int64  `json:"durationMs,omitempty"`
-	RequestID  string `json:"requestId,omitempty"`
-	Error      string `json:"error,omitempty"`
+	ID              string `json:"id"`
+	Time            string `json:"time"`
+	Level           string `json:"level"`
+	Msg             string `json:"msg"`
+	UserID          string `json:"userId,omitempty"`
+	Operation       string `json:"operation,omitempty"`
+	Path            string `json:"path,omitempty"`
+	Method          string `json:"method,omitempty"`
+	StatusCode      int    `json:"statusCode,omitempty"`
+	DurationMs      int64  `json:"durationMs,omitempty"`
+	RequestID       string `json:"requestId,omitempty"`
+	Error           string `json:"error,omitempty"`
+	TaskID          string `json:"taskId,omitempty"`
+	TaskName        string `json:"taskName,omitempty"`
+	RemotePath      string `json:"remotePath,omitempty"`
+	EventType       string `json:"eventType,omitempty"`
+	Result          string `json:"result,omitempty"`
+	Detail          string `json:"detail,omitempty"`
+	SubscriberCount int    `json:"subscriberCount,omitempty"`
+	IsDirectory     bool   `json:"isDirectory,omitempty"`
 }
 
 type rawLogEntry struct {
-	Time       string `json:"time"`
-	Level      string `json:"level"`
-	Msg        string `json:"msg"`
-	UserID     string `json:"user_id,omitempty"`
-	Operation  string `json:"operation,omitempty"`
-	Path       string `json:"path,omitempty"`
-	Method     string `json:"method,omitempty"`
-	StatusCode int    `json:"status_code,omitempty"`
-	DurationMs int64  `json:"duration_ms,omitempty"`
-	RequestID  string `json:"request_id,omitempty"`
-	Error      string `json:"error,omitempty"`
+	Time            string `json:"time"`
+	Level           string `json:"level"`
+	Msg             string `json:"msg"`
+	UserID          string `json:"user_id,omitempty"`
+	Operation       string `json:"operation,omitempty"`
+	Path            string `json:"path,omitempty"`
+	Method          string `json:"method,omitempty"`
+	StatusCode      int    `json:"status_code,omitempty"`
+	DurationMs      int64  `json:"duration_ms,omitempty"`
+	RequestID       string `json:"request_id,omitempty"`
+	Error           string `json:"error,omitempty"`
+	TaskID          string `json:"task_id,omitempty"`
+	TaskName        string `json:"task_name,omitempty"`
+	RemotePath      string `json:"remote_path,omitempty"`
+	EventType       string `json:"event_type,omitempty"`
+	Result          string `json:"result,omitempty"`
+	Detail          string `json:"detail,omitempty"`
+	SubscriberCount int    `json:"subscriber_count,omitempty"`
+	IsDirectory     bool   `json:"is_directory,omitempty"`
 }
 
 func ListLogs(c *gin.Context) {
@@ -140,7 +156,13 @@ func ListLogs(c *gin.Context) {
 
 			if keyword != "" {
 				hasKeyword := strings.Contains(strings.ToLower(raw.Msg), strings.ToLower(keyword)) ||
-					strings.Contains(strings.ToLower(raw.Path), strings.ToLower(keyword))
+					strings.Contains(strings.ToLower(raw.Path), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.TaskName), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.TaskID), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.RemotePath), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.EventType), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.Result), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.Detail), strings.ToLower(keyword))
 				if !hasKeyword {
 					continue
 				}
@@ -159,18 +181,26 @@ func ListLogs(c *gin.Context) {
 			}
 
 			entry := LogEntry{
-				ID:         "log-" + strconv.Itoa(lineCounter) + "-" + fileName,
-				Time:       raw.Time,
-				Level:      raw.Level,
-				Msg:        raw.Msg,
-				UserID:     raw.UserID,
-				Operation:  raw.Operation,
-				Path:       raw.Path,
-				Method:     raw.Method,
-				StatusCode: raw.StatusCode,
-				DurationMs: raw.DurationMs,
-				RequestID:  raw.RequestID,
-				Error:      raw.Error,
+				ID:              "log-" + strconv.Itoa(lineCounter) + "-" + fileName,
+				Time:            raw.Time,
+				Level:           raw.Level,
+				Msg:             raw.Msg,
+				UserID:          raw.UserID,
+				Operation:       raw.Operation,
+				Path:            raw.Path,
+				Method:          raw.Method,
+				StatusCode:      raw.StatusCode,
+				DurationMs:      raw.DurationMs,
+				RequestID:       raw.RequestID,
+				Error:           raw.Error,
+				TaskID:          raw.TaskID,
+				TaskName:        raw.TaskName,
+				RemotePath:      raw.RemotePath,
+				EventType:       raw.EventType,
+				Result:          raw.Result,
+				Detail:          raw.Detail,
+				SubscriberCount: raw.SubscriberCount,
+				IsDirectory:     raw.IsDirectory,
 			}
 
 			allEntries = append(allEntries, entry)
@@ -283,7 +313,13 @@ func ExportLogs(c *gin.Context) {
 
 			if keyword != "" {
 				hasKeyword := strings.Contains(strings.ToLower(raw.Msg), strings.ToLower(keyword)) ||
-					strings.Contains(strings.ToLower(raw.Path), strings.ToLower(keyword))
+					strings.Contains(strings.ToLower(raw.Path), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.TaskName), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.TaskID), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.RemotePath), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.EventType), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.Result), strings.ToLower(keyword)) ||
+					strings.Contains(strings.ToLower(raw.Detail), strings.ToLower(keyword))
 				if !hasKeyword {
 					continue
 				}

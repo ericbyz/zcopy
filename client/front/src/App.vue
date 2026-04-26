@@ -1,7 +1,7 @@
 <script setup>
-import { computed, inject, ref, onMounted, provide, watch } from 'vue'
+import { computed, inject, ref, onMounted, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Sun, Moon, Monitor, HardDrive, FileText, Settings, Plus } from 'lucide-vue-next'
+import { Sun, Moon, Monitor, HardDrive, Repeat, FileText, Settings, Plus } from 'lucide-vue-next'
 
 const zhCn = inject('element-locale')
 
@@ -40,27 +40,35 @@ const themeLabel = computed(() => {
 // Shared state with child views via provide/inject
 const isLoggedIn = ref(false)
 const createTaskTrigger = ref(0)
+const createTaskPreset = ref('backup')
 
 function setUserLoggedIn(val) {
   isLoggedIn.value = val
 }
 
-function triggerCreateTask() {
+function triggerCreateTask(mode = 'backup') {
+  createTaskPreset.value = mode
   createTaskTrigger.value++
-  if (route.path !== '/') {
-    router.push('/')
+  const target = mode === 'sync' ? '/sync' : '/'
+  if (route.path !== target) {
+    router.push(target)
   }
 }
 
 provide('setUserLoggedIn', setUserLoggedIn)
 provide('createTaskTrigger', createTaskTrigger)
+provide('createTaskPreset', createTaskPreset)
 provide('themeMode', themeMode)
 
 const navItems = [
   { icon: HardDrive, label: '备份任务', path: '/' },
+  { icon: Repeat, label: '同步任务', path: '/sync' },
   { icon: FileText, label: '日志', path: '/logs' },
   { icon: Settings, label: '设置', path: '/settings' }
 ]
+
+const createButtonLabel = computed(() => route.path === '/sync' ? '创建同步任务' : '创建备份任务')
+const createButtonMode = computed(() => route.path === '/sync' ? 'sync' : 'backup')
 
 onMounted(() => {
   applyTheme()
@@ -97,9 +105,9 @@ onMounted(() => {
             type="primary"
             :icon="Plus"
             class="sidebar-create-btn"
-            @click="triggerCreateTask"
+            @click="triggerCreateTask(createButtonMode)"
           >
-            创建新任务
+            {{ createButtonLabel }}
           </el-button>
 
           <div class="sidebar-theme" @click="cycleTheme">

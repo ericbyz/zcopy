@@ -37,9 +37,9 @@ final class FileProviderItem: NSObject, NSFileProviderItem {
 
     var capabilities: NSFileProviderItemCapabilities {
         if remoteItem.isDirectory {
-            return [.allowsReading, .allowsContentEnumerating, .allowsAddingSubItems, .allowsDeleting, .allowsRenaming]
+            return [.allowsReading, .allowsContentEnumerating, .allowsAddingSubItems, .allowsTrashing, .allowsDeleting, .allowsRenaming, .allowsEvicting]
         }
-        return [.allowsReading, .allowsWriting, .allowsDeleting, .allowsRenaming]
+        return [.allowsReading, .allowsWriting, .allowsTrashing, .allowsDeleting, .allowsRenaming, .allowsEvicting]
     }
 
     var documentSize: NSNumber? {
@@ -64,8 +64,28 @@ final class FileProviderItem: NSObject, NSFileProviderItem {
         return NSFileProviderItemVersion(contentVersion: data, metadataVersion: data)
     }
 
+    var isUploaded: Bool {
+        true
+    }
+
+    var isUploading: Bool {
+        false
+    }
+
+    var uploadingError: Error? {
+        nil
+    }
+
     var isDownloaded: Bool {
         remoteItem.isDirectory || service.isDownloaded(path: remoteItem.path)
+    }
+
+    var isDownloading: Bool {
+        false
+    }
+
+    var downloadingError: Error? {
+        nil
     }
 
     var isMostRecentVersionDownloaded: Bool {

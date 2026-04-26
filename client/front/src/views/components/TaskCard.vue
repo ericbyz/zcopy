@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { Play, Pause, MoreVertical, Folder, Cloud, ArrowUpRight, Edit, Trash2, RefreshCw } from 'lucide-vue-next'
-import { formatBytes, formatSpeed } from '../../utils/format.js'
+import { Play, MoreVertical, Folder, Cloud, Edit, Trash2, RefreshCw } from 'lucide-vue-next'
+import { formatBytes } from '../../utils/format.js'
 import { getTaskStatusText, calcSyncProgress } from '../../utils/task.js'
 
 const props = defineProps({
@@ -51,8 +51,9 @@ const progressLabel = computed(() => {
     <div class="task-header">
       <div class="task-title">
         <h3>{{ task.name }}</h3>
+        <el-tag size="small" effect="plain">{{ task.taskMode === 'sync' ? '同步模式' : '备份模式' }}</el-tag>
         <el-tag :type="statusType" size="small" round>
-          {{ isSyncing ? `正在备份 ${syncProgress}%` : taskStatusText }}
+          {{ isSyncing ? `${task.taskMode === 'sync' ? '正在同步' : '正在备份'} ${syncProgress}%` : taskStatusText }}
         </el-tag>
       </div>
       <div class="task-header-actions">
@@ -121,6 +122,7 @@ const progressLabel = computed(() => {
     <!-- Meta -->
     <div class="task-meta">
       <span>自动：{{ task.autoBackup ? '开启' : '关闭' }}</span>
+      <span v-if="task.taskMode === 'sync'">冲突：{{ task.conflictMode === 'local' ? '本地优先' : task.conflictMode === 'remote' ? '文件服务器优先' : '最新优先' }}</span>
       <span>上次备份：{{ task.lastSyncAt ? new Date(task.lastSyncAt).toLocaleString() : '无' }}</span>
     </div>
 

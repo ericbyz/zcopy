@@ -1,16 +1,12 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"zcopy-client-backend/models"
-	"zcopy-client-backend/utils"
 )
 
 func (a *AppState) listTasks(c *gin.Context) {
@@ -24,35 +20,16 @@ func (a *AppState) createTask(c *gin.Context) {
 		c.JSON(400, gin.H{"message": "请求参数格式错误"})
 		return
 	}
-	req.Name = strings.TrimSpace(req.Name)
-	req.RemotePath = utils.NormalizeRemote(req.RemotePath)
-	if req.Name == "" {
-		c.JSON(400, gin.H{"message": "任务名称不能为空"})
+	if err := a.validateAndPrepareTask(&req); err != nil {
+		c.JSON(400, gin.H{"message": err.Error()})
 		return
-	}
-	if req.CloudOnly {
-		if !req.OnDemandSync {
-			c.JSON(400, gin.H{"message": "全新模式需要开启按需同步"})
-			return
-		}
-	} else {
-		req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
-		if req.LocalPath == "" {
-			c.JSON(400, gin.H{"message": "本地目录不能为空"})
-			return
-		}
-		info, err := os.Stat(req.LocalPath)
-		if err != nil || !info.IsDir() {
-			c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
-			return
-		}
 	}
 	token := a.getToken()
 	if token == "" {
 		c.JSON(401, gin.H{"message": "请先登录客户端"})
 		return
 	}
-	if req.CloudOnly && req.RemotePath != "" {
+	if req.RemotePath != "" {
 		if err := a.ensureRemotePath(req.RemotePath, token); err != nil {
 			c.JSON(500, gin.H{"message": "创建远程目录失败: " + err.Error()})
 			return
@@ -65,6 +42,10 @@ func (a *AppState) createTask(c *gin.Context) {
 	req.UpdatedAt = now
 	if err := a.store.Upsert(req); err != nil {
 		c.JSON(500, gin.H{"message": "保存任务失败: " + err.Error()})
+		return
+	}
+	if err := a.upsertRemoteSyncTask(req); err != nil {
+		c.JSON(409, gin.H{"message": err.Error()})
 		return
 	}
 	if !req.CloudOnly && req.AutoBackup {
@@ -93,28 +74,9 @@ func (a *AppState) updateTask(c *gin.Context) {
 		c.JSON(400, gin.H{"message": "请求参数格式错误"})
 		return
 	}
-	req.Name = strings.TrimSpace(req.Name)
-	req.RemotePath = utils.NormalizeRemote(req.RemotePath)
-	if req.Name == "" {
-		c.JSON(400, gin.H{"message": "任务名称不能为空"})
+	if err := a.validateAndPrepareTask(&req); err != nil {
+		c.JSON(400, gin.H{"message": err.Error()})
 		return
-	}
-	if req.CloudOnly {
-		if !req.OnDemandSync {
-			c.JSON(400, gin.H{"message": "全新模式需要开启按需同步"})
-			return
-		}
-	} else {
-		req.LocalPath = filepath.Clean(strings.TrimSpace(req.LocalPath))
-		if req.LocalPath == "" {
-			c.JSON(400, gin.H{"message": "本地目录不能为空"})
-			return
-		}
-		info, err := os.Stat(req.LocalPath)
-		if err != nil || !info.IsDir() {
-			c.JSON(400, gin.H{"message": "本地目录不存在或不可用"})
-			return
-		}
 	}
 	req.ID = oldTask.ID
 	req.CreatedAt = oldTask.CreatedAt
@@ -125,6 +87,16 @@ func (a *AppState) updateTask(c *gin.Context) {
 	req.UpdatedAt = time.Now()
 	if err := a.store.Upsert(req); err != nil {
 		c.JSON(500, gin.H{"message": "更新任务失败"})
+		return
+	}
+	if isSyncTask(oldTask) && !isSyncTask(req) {
+		if err := a.deleteRemoteSyncTask(oldTask); err != nil {
+			c.JSON(500, gin.H{"message": "更新任务成功，但移除服务端同步任务失败: " + err.Error()})
+			return
+		}
+	}
+	if err := a.upsertRemoteSyncTask(req); err != nil {
+		c.JSON(409, gin.H{"message": err.Error()})
 		return
 	}
 	if !req.CloudOnly && req.AutoBackup {
@@ -147,6 +119,10 @@ func (a *AppState) deleteTask(c *gin.Context) {
 	id := c.Param("id")
 	task, _ := a.store.Get(id)
 	a.watcher.StopWatcher(id)
+	if err := a.deleteRemoteSyncTask(task); err != nil {
+		c.JSON(500, gin.H{"message": "删除服务端同步任务失败: " + err.Error()})
+		return
+	}
 	if err := a.store.Remove(id); err != nil {
 		c.JSON(404, gin.H{"message": "任务不存在"})
 		return

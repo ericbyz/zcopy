@@ -69,7 +69,16 @@ function handleRefresh() {
           <span class="file-name" @click="handleOpenItem(row)">
             <component :is="row.isDirectory ? Folder : FileText" class="file-icon" />
             {{ row.name }}
+            <el-tag v-if="row.isDirectory && row.occupied" size="small" type="warning">
+              任务：{{ row.taskName }}
+            </el-tag>
           </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="任务占用" width="180">
+        <template #default="{ row }">
+          <span v-if="row.isDirectory && row.occupied">{{ row.taskName }}</span>
+          <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="大小" width="120">

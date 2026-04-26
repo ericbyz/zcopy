@@ -14,12 +14,19 @@ import (
 )
 
 type remoteFileListResponse struct {
-	Path  string `json:"path"`
-	Items []struct {
-		Name        string `json:"name"`
-		Path        string `json:"path"`
-		IsDirectory bool   `json:"isDirectory"`
-	} `json:"items"`
+	Path         string `json:"path"`
+	CurrentOwner struct {
+		Occupied bool   `json:"occupied"`
+		TaskID   string `json:"taskId"`
+		TaskName string `json:"taskName"`
+	} `json:"currentOwner"`
+	Folders []struct {
+		Name     string `json:"name"`
+		Path     string `json:"path"`
+		Occupied bool   `json:"occupied"`
+		TaskID   string `json:"taskId"`
+		TaskName string `json:"taskName"`
+	} `json:"folders"`
 }
 
 func (a *AppState) listRemoteFolders(c *gin.Context) {
@@ -30,9 +37,15 @@ func (a *AppState) listRemoteFolders(c *gin.Context) {
 		return
 	}
 	currentPath := strings.Trim(filepath.ToSlash(strings.TrimSpace(c.Query("path"))), "/")
-	endpoint := "/files"
+	excludeTaskID := strings.TrimSpace(c.Query("excludeTaskId"))
+	endpoint := "/sync/folders"
 	if currentPath != "" {
 		endpoint += "?path=" + url.QueryEscape(currentPath)
+		if excludeTaskID != "" {
+			endpoint += "&excludeTaskId=" + url.QueryEscape(excludeTaskID)
+		}
+	} else if excludeTaskID != "" {
+		endpoint += "?excludeTaskId=" + url.QueryEscape(excludeTaskID)
 	}
 	data, status, err := a.proxyRaw(http.MethodGet, endpoint, nil, "", token)
 	if err != nil {
@@ -58,28 +71,24 @@ func (a *AppState) listRemoteFolders(c *gin.Context) {
 		return
 	}
 
-	folders := make([]gin.H, 0)
-	for _, item := range payload.Items {
-		if !item.IsDirectory {
-			continue
-		}
+	folders := make([]gin.H, 0, len(payload.Folders))
+	for _, item := range payload.Folders {
 		folders = append(folders, gin.H{
-			"name": item.Name,
-			"path": strings.Trim(filepath.ToSlash(item.Path), "/"),
+			"name":     item.Name,
+			"path":     strings.Trim(item.Path, "/"),
+			"occupied": item.Occupied,
+			"taskId":   item.TaskID,
+			"taskName": item.TaskName,
 		})
 	}
 
-	parentPath := ""
-	if payload.Path != "" {
-		parentPath = filepath.ToSlash(filepath.Dir(payload.Path))
-		if parentPath == "." {
-			parentPath = ""
-		}
-	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"path":       strings.Trim(filepath.ToSlash(payload.Path), "/"),
-		"parentPath": strings.Trim(parentPath, "/"),
-		"folders":    folders,
+		"path":    strings.Trim(payload.Path, "/"),
+		"folders": folders,
+		"currentOwner": gin.H{
+			"occupied": payload.CurrentOwner.Occupied,
+			"taskId":   payload.CurrentOwner.TaskID,
+			"taskName": payload.CurrentOwner.TaskName,
+		},
 	})
 }

@@ -6,7 +6,14 @@ const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: DashboardView
+    component: DashboardView,
+    meta: { taskMode: 'backup' }
+  },
+  {
+    path: '/sync',
+    name: 'SyncDashboard',
+    component: DashboardView,
+    meta: { taskMode: 'sync' }
   },
   {
     path: '/logs',

@@ -21,6 +21,8 @@ type AppConfig struct {
 type BackupTask struct {
 	ID           string      `json:"id"`
 	Name         string      `json:"name"`
+	TaskMode     string      `json:"taskMode,omitempty"`
+	ConflictMode string      `json:"conflictMode,omitempty"`
 	LocalPath    string      `json:"localPath"`
 	RemotePath   string      `json:"remotePath"`
 	AutoBackup   bool        `json:"autoBackup"`
@@ -33,6 +35,15 @@ type BackupTask struct {
 	CreatedAt    time.Time   `json:"createdAt"`
 	UpdatedAt    time.Time   `json:"updatedAt"`
 }
+
+const (
+	TaskModeBackup = "backup"
+	TaskModeSync   = "sync"
+
+	ConflictLatestPriority = "latest"
+	ConflictLocalPriority  = "local"
+	ConflictRemotePriority = "remote"
+)
 
 type SyncReport struct {
 	State            string     `json:"state"`

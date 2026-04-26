@@ -4,12 +4,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"zcopy-server-backend/config"
 	"zcopy-server-backend/database"
 	"zcopy-server-backend/handlers"
 	"zcopy-server-backend/logger"
 	"zcopy-server-backend/middleware"
+	"zcopy-server-backend/syncservice"
 	"zcopy-server-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +27,10 @@ func main() {
 
 	database.InitDB()
 	defer database.DB.Close()
+
+	if err := syncservice.Init(config.AppConfig.Storage.RootDir, filepath.Join(filepath.Dir(config.AppConfig.Database.Path), "sync_tasks.json")); err != nil {
+		log.Fatalf("failed to initialize sync service: %v", err)
+	}
 
 	gin.SetMode(config.AppConfig.Server.Mode)
 
@@ -51,6 +57,16 @@ func main() {
 			fileGroup.GET("/download", handlers.DownloadFile)
 			fileGroup.PUT("/rename", handlers.RenameFile)
 			fileGroup.DELETE("", handlers.DeleteFile)
+		}
+
+		syncGroup := api.Group("/sync")
+		syncGroup.Use(middleware.AuthRequired())
+		{
+			syncGroup.PUT("/tasks", handlers.UpsertSyncTask)
+			syncGroup.DELETE("/tasks/:taskId", handlers.DeleteSyncTask)
+			syncGroup.GET("/folders", handlers.ListSyncFolders)
+			syncGroup.GET("/events/stream", handlers.StreamSyncEvents)
+			syncGroup.POST("/events/ack", handlers.AckSyncEvent)
 		}
 
 		clientGroup := api.Group("/client")

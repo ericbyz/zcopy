@@ -18,3 +18,7 @@ func (a *AppState) initTaskFileProvider(task models.BackupTask) (fileProviderBri
 func (a *AppState) getTaskFileProviderStatus(task models.BackupTask) (fileProviderBridgeStatus, error) {
 	return a.fp.GetTaskStatus(task)
 }
+
+func (a *AppState) signalTaskFileProvider(task models.BackupTask, changedPath string) error {
+	return a.fp.SignalTask(task, changedPath)
+}

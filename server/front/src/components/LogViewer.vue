@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios'
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Search, Download, RefreshCw } from 'lucide-vue-next'
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
@@ -36,8 +36,6 @@ watch(dateRange, (newRange) => {
     filterEndDate.value = ''
   }
 })
-
-const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
 
 function getLevelTagType(item) {
   const level = extractField(item, 'level')
@@ -194,6 +192,26 @@ onMounted(() => {
             {{ extractField(row, 'user_id', 'userId') }}
           </template>
         </el-table-column>
+        <el-table-column prop="task_name" label="任务" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ extractField(row, 'task_name', 'taskName') }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="event_type" label="同步事件" width="120">
+          <template #default="{ row }">
+            {{ extractField(row, 'event_type', 'eventType') }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="result" label="施加结果" width="120">
+          <template #default="{ row }">
+            {{ extractField(row, 'result') }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="detail" label="结果详情" min-width="220" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ extractField(row, 'detail') }}
+          </template>
+        </el-table-column>
         <el-table-column prop="method" label="操作" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             {{ extractField(row, 'method') ? extractField(row, 'method') + ' ' + (extractField(row, 'path') || '') : '-' }}
@@ -201,7 +219,7 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="path" label="路径" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ extractField(row, 'path') || '-' }}
+            {{ extractField(row, 'path') || extractField(row, 'remote_path', 'remotePath') || '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="msg" label="消息" min-width="240" show-overflow-tooltip>

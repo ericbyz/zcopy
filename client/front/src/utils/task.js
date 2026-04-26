@@ -1,6 +1,6 @@
 export function getTaskStatusText(task) {
   const state = task?.syncReport?.state || task?.status || 'idle'
-  if (state === 'syncing') return '备份中'
+  if (state === 'syncing') return task?.taskMode === 'sync' ? '同步中' : '备份中'
   if (state === 'completed' || state === 'idle') return '空闲'
   if (state === 'failed' || state === 'error') return '失败'
   return state

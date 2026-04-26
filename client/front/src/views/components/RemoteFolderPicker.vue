@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue'
 import { Folder } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -15,6 +14,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  currentOwner: {
+    type: Object,
+    default: () => ({ occupied: false, taskId: '', taskName: '' })
+  },
   breadcrumbs: {
     type: Array,
     default: () => []
@@ -29,11 +32,19 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
+const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close', 'blocked'])
+
+function handleFolderClick(folder) {
+  if (folder.occupied) {
+    emit('blocked', folder)
+    return
+  }
+  emit('navigate', folder.path)
+}
 </script>
 
 <template>
-  <el-dialog :model-value="open" @update:model-value="(v) => emit('close')" title="选择远程目录" width="720px" append-to-body>
+  <el-dialog :model-value="open" @update:model-value="() => emit('close')" title="选择远程目录" width="720px" append-to-body>
     <div class="picker-toolbar">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item
@@ -53,6 +64,13 @@ const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
     </div>
 
     <el-alert v-if="error" :title="error" type="error" :closable="false" style="margin: 16px 0" />
+    <el-alert
+      v-if="currentOwner?.occupied"
+      :title="`当前目录已被任务「${currentOwner.taskName}」占用，无法选择`"
+      type="warning"
+      :closable="false"
+      style="margin: 16px 0"
+    />
 
     <div v-loading="loading" class="folder-list">
       <el-empty v-if="folders.length === 0 && !loading" description="当前目录暂无子目录" />
@@ -62,11 +80,15 @@ const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
           v-for="folder in folders"
           :key="folder.path"
           class="folder-item"
-          @click="emit('navigate', folder.path)"
+          :class="{ occupied: folder.occupied }"
+          @click="handleFolderClick(folder)"
         >
           <div class="folder-info">
             <Folder class="folder-icon" />
             <span class="folder-name">{{ folder.name }}</span>
+            <el-tag v-if="folder.occupied" size="small" type="warning">
+              {{ folder.taskName }}
+            </el-tag>
           </div>
           <span class="folder-path">{{ folder.path || '根目录' }}</span>
         </div>
@@ -75,7 +97,7 @@ const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
 
     <template #footer>
       <el-button @click="emit('close')">关闭</el-button>
-      <el-button type="primary" :disabled="loading" @click="emit('choose')">
+      <el-button type="primary" :disabled="loading || currentOwner?.occupied" @click="emit('choose')">
         选择当前目录
       </el-button>
     </template>
@@ -130,6 +152,10 @@ const emit = defineEmits(['navigate', 'navigate-parent', 'choose', 'close'])
 .folder-item:hover {
   background: var(--z-bg-sunken);
   border-color: var(--z-accent);
+}
+
+.folder-item.occupied {
+  border-color: var(--el-color-warning);
 }
 
 .folder-info {

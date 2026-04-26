@@ -12,6 +12,7 @@ import (
 	"zcopy-server-backend/config"
 	"zcopy-server-backend/logger"
 	"zcopy-server-backend/middleware"
+	"zcopy-server-backend/syncservice"
 	"zcopy-server-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,9 @@ type fileItem struct {
 	Size        int64     `json:"size"`
 	IsDirectory bool      `json:"isDirectory"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	Occupied    bool      `json:"occupied,omitempty"`
+	TaskID      string    `json:"taskId,omitempty"`
+	TaskName    string    `json:"taskName,omitempty"`
 }
 
 func ListFiles(c *gin.Context) {
@@ -72,13 +76,21 @@ func ListFiles(c *gin.Context) {
 		}
 
 		itemPath := filepath.ToSlash(filepath.Join(relativePath, entry.Name()))
-		items = append(items, fileItem{
+		item := fileItem{
 			Name:        entry.Name(),
 			Path:        itemPath,
 			Size:        info.Size(),
 			IsDirectory: entry.IsDir(),
 			UpdatedAt:   info.ModTime(),
-		})
+		}
+		if entry.IsDir() && syncservice.Service != nil {
+			if occupiedBy, exists := syncservice.Service.OccupiedBy(user.ID, itemPath, ""); exists {
+				item.Occupied = true
+				item.TaskID = occupiedBy.ClientTaskID
+				item.TaskName = occupiedBy.TaskName
+			}
+		}
+		items = append(items, item)
 	}
 
 	sort.Slice(items, func(i, j int) bool {
