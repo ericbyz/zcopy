@@ -34,6 +34,8 @@ type BackupTask struct {
 	SyncReport   *SyncReport `json:"syncReport,omitempty"`
 	CreatedAt    time.Time   `json:"createdAt"`
 	UpdatedAt    time.Time   `json:"updatedAt"`
+	ServerID     string      `json:"serverId"`
+	ServerIDs    []string    `json:"serverIds"`
 }
 
 const (

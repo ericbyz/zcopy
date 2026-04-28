@@ -3,7 +3,7 @@ import axios from 'axios'
 import { ref, onMounted, watch } from 'vue'
 import { Search, Download, RefreshCw } from 'lucide-vue-next'
 
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 const token = ref(localStorage.getItem('zcopy_token') || '')
 
 const api = axios.create({ baseURL: apiBaseURL })

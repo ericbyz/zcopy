@@ -4,15 +4,15 @@ import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-import AuthCard from './components/AuthCard.vue'
 import TaskForm from './components/TaskForm.vue'
 import TaskList from './components/TaskList.vue'
 import RemoteFolderPicker from './components/RemoteFolderPicker.vue'
 
 // Inject from App.vue
-const setUserLoggedIn = inject('setUserLoggedIn')
 const createTaskTrigger = inject('createTaskTrigger')
 const createTaskPreset = inject('createTaskPreset', ref('backup'))
+const currentServerId = inject('currentServerId', ref(''))
+const serverList = inject('serverList', ref([]))
 const route = useRoute()
 
 const apiBaseURL =
@@ -22,11 +22,8 @@ const apiBaseURL =
 
 const api = axios.create({ baseURL: apiBaseURL })
 
-const token = ref(localStorage.getItem('zcopy_token') || '')
-const currentUser = ref(null)
-const authMode = ref('login')
+const token = ref('')
 const loading = ref(false)
-const message = ref('')
 
 const tasks = ref([])
 const onDemandStatuses = ref({})
@@ -45,20 +42,15 @@ const localFolderInput = ref(null)
 const autoInitPending = new Set()
 let refreshTimer = null
 
-const authForm = ref({
-  username: '',
-  email: '',
-  nickname: '',
-  account: '',
-  password: ''
-})
-
 const taskForm = ref(emptyTask())
 const currentPageMode = computed(() => route.meta?.taskMode === 'sync' ? 'sync' : 'backup')
 const isSyncPage = computed(() => currentPageMode.value === 'sync')
+const serverFilter = ref('')
 const filteredTasks = computed(() => tasks.value.filter((task) => {
   const mode = task.taskMode || 'backup'
-  return currentPageMode.value === 'sync' ? mode === 'sync' : mode !== 'sync'
+  if (currentPageMode.value === 'sync' ? mode !== 'sync' : mode === 'sync') return false
+  if (serverFilter.value && task.serverId !== serverFilter.value) return false
+  return true
 }))
 const emptyText = computed(() => isSyncPage.value ? '暂无同步任务' : '暂无备份任务')
 const emptyHint = computed(() => isSyncPage.value ? '点击左侧「创建同步任务」开始' : '点击左侧「创建备份任务」开始')
@@ -74,6 +66,7 @@ function emptyTask() {
   return {
     id: '',
     name: '',
+    serverId: currentServerId.value || '',
     taskMode: 'backup',
     conflictMode: 'latest',
     localPath: '',
@@ -107,86 +100,29 @@ function openCreateWizard(mode = currentPageMode.value) {
 }
 
 function setMessage(text) {
-  message.value = text || ''
-  if (text) {
-    if (
-      text.includes('成功') ||
-      text.includes('完成') ||
-      text.includes('已退出') ||
-      text.includes('已打开') ||
-      text.includes('已删除') ||
-      text.includes('已停止') ||
-      text.includes('已启动') ||
-      text.includes('已更新') ||
-      text.includes('已创建')
-    ) {
-      ElMessage.success(text)
-    } else {
-      ElMessage.error(text)
-    }
-  }
-}
-
-function saveToken(value) {
-  token.value = value
-  if (value) {
-    localStorage.setItem('zcopy_token', value)
+  if (!text) return
+  if (
+    text.includes('成功') ||
+    text.includes('完成') ||
+    text.includes('已打开') ||
+    text.includes('已删除') ||
+    text.includes('已停止') ||
+    text.includes('已启动') ||
+    text.includes('已更新') ||
+    text.includes('已创建')
+  ) {
+    ElMessage.success(text)
   } else {
-    localStorage.removeItem('zcopy_token')
+    ElMessage.error(text)
   }
 }
 
-function updateLoginState() {
-  const loggedIn = !!currentUser.value
-  setUserLoggedIn(loggedIn)
+function getTokenKey() {
+  return currentServerId.value ? `zcopy_token_${currentServerId.value}` : 'zcopy_token'
 }
 
-async function submitAuth() {
-  loading.value = true
-  setMessage('')
-  try {
-    if (authMode.value === 'register') {
-      const { data } = await api.post('/auth/register', {
-        username: authForm.value.username,
-        email: authForm.value.email,
-        nickname: authForm.value.nickname,
-        password: authForm.value.password
-      })
-      saveToken(data.token)
-      currentUser.value = data.user
-      updateLoginState()
-      await refreshDashboard(true)
-      startRefreshTimer()
-      setMessage(data.message || '注册成功')
-      return
-    }
-
-    const { data } = await api.post('/auth/login', {
-      account: authForm.value.account,
-      password: authForm.value.password
-    })
-    saveToken(data.token)
-    currentUser.value = data.user
-    updateLoginState()
-    await refreshDashboard(true)
-    startRefreshTimer()
-    setMessage(data.message || '登录成功')
-  } catch (error) {
-    setMessage(error?.response?.data?.message || '操作失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-async function fetchCurrentUser() {
-  if (!token.value) return
-  try {
-    const { data } = await api.get('/auth/me')
-    currentUser.value = data.user
-    updateLoginState()
-  } catch {
-    logout(false)
-  }
+function loadToken() {
+  token.value = localStorage.getItem(getTokenKey()) || ''
 }
 
 async function fetchTasks() {
@@ -233,7 +169,6 @@ async function fetchOnDemandStatuses(autoInitMissing = false) {
 }
 
 async function refreshDashboard(autoInitMissing = false) {
-  if (!currentUser.value) return
   await fetchTasks()
   await fetchOnDemandStatuses(autoInitMissing)
 }
@@ -250,6 +185,7 @@ function editTask(task) {
   taskForm.value = {
     id: task.id,
     name: task.name,
+    serverId: task.serverId || '',
     taskMode: task.taskMode || 'backup',
     conflictMode: task.conflictMode || 'latest',
     localPath: task.localPath,
@@ -323,7 +259,8 @@ async function loadRemoteFolders(path = '') {
     const { data } = await api.get('/remote/folders', {
       params: {
         ...(path ? { path } : {}),
-        ...(taskForm.value.id ? { excludeTaskId: taskForm.value.id } : {})
+        ...(taskForm.value.id ? { excludeTaskId: taskForm.value.id } : {}),
+        ...(taskForm.value.serverId ? { serverId: taskForm.value.serverId } : {})
       }
     })
     remotePickerPath.value = data.path || ''
@@ -476,31 +413,10 @@ async function openRemoteFolder(task) {
   }
 }
 
-async function logout(showMessage = true) {
-  try {
-    if (token.value) {
-      await api.post('/auth/logout')
-    }
-  } catch {
-    // ignore logout transport failures
-  }
-  saveToken('')
-  currentUser.value = null
-  updateLoginState()
-  tasks.value = []
-  onDemandStatuses.value = {}
-  resetTaskForm()
-  wizardOpen.value = false
-  stopRefreshTimer()
-  if (showMessage) {
-    setMessage('已退出')
-  }
-}
-
 function startRefreshTimer() {
   stopRefreshTimer()
   refreshTimer = setInterval(async () => {
-    if (!currentUser.value || loading.value) return
+    if (loading.value) return
     try {
       await refreshDashboard(false)
     } catch {
@@ -517,12 +433,9 @@ function stopRefreshTimer() {
 }
 
 onMounted(async () => {
-  await fetchCurrentUser()
-  if (token.value && currentUser.value) {
-    updateLoginState()
-    await refreshDashboard(true)
-    startRefreshTimer()
-  }
+  loadToken()
+  await refreshDashboard(true)
+  startRefreshTimer()
 })
 
 onUnmounted(() => {
@@ -532,63 +445,58 @@ onUnmounted(() => {
 
 <template>
   <div class="dashboard">
-    <!-- Auth Section (no sidebar shown) -->
-    <div v-if="!currentUser" class="auth-page">
-      <div class="auth-hero">
-        <h1>ZCopy Desktop</h1>
-        <p>云文件同步工具 — 登录后配置备份任务，支持自动备份与按需同步。</p>
-      </div>
-      <AuthCard
-        :loading="loading"
-        :auth-mode="authMode"
-        :auth-form="authForm"
-        @submit="submitAuth"
-        @update:auth-mode="(v) => authMode = v"
-        @update:auth-form="(v) => authForm = v"
-      />
+    <input
+      ref="localFolderInput"
+      type="file"
+      webkitdirectory
+      directory
+      multiple
+      style="display: none"
+      @change="handleLocalFolderInput"
+    />
+
+    <div v-if="serverList && serverList.length > 1" class="task-toolbar">
+      <el-select v-model="serverFilter" placeholder="全部服务器" clearable size="small" style="width: 180px">
+        <el-option label="全部服务器" value="" />
+        <el-option
+          v-for="server in serverList"
+          :key="server.id"
+          :label="server.name"
+          :value="server.id"
+        />
+      </el-select>
     </div>
 
-    <!-- Workspace -->
-    <section v-else>
-      <input
-        ref="localFolderInput"
-        type="file"
-        webkitdirectory
-        directory
-        multiple
-        style="display: none"
-        @change="handleLocalFolderInput"
-      />
+    <TaskList
+      :tasks="filteredTasks"
+      :loading="loading"
+      :on-demand-statuses="onDemandStatuses"
+      :empty-text="emptyText"
+      :empty-hint="emptyHint"
+      :server-list="serverList"
+      @edit="editTask($event)"
+      @sync="syncTask($event)"
+      @toggle-auto="toggleAutoBackup($event)"
+      @delete="deleteTask($event)"
+      @open-location="openLocation($event)"
+      @open-local="openTaskLocalFolder($event)"
+      @open-remote="openRemoteFolder($event)"
+      @refresh="refreshDashboard(true)"
+    />
 
-      <TaskList
-        :tasks="filteredTasks"
-        :loading="loading"
-        :on-demand-statuses="onDemandStatuses"
-        :empty-text="emptyText"
-        :empty-hint="emptyHint"
-        @edit="editTask($event)"
-        @sync="syncTask($event)"
-        @toggle-auto="toggleAutoBackup($event)"
-        @delete="deleteTask($event)"
-        @open-location="openLocation($event)"
-        @open-local="openTaskLocalFolder($event)"
-        @open-remote="openRemoteFolder($event)"
-        @refresh="refreshDashboard(true)"
-      />
-
-      <!-- Task Wizard Dialog -->
-      <TaskForm
-        :open="wizardOpen"
-        :task-form="taskForm"
-        :mode-lock="currentPageMode"
-        :loading="loading"
-        @save="saveTask"
-        @reset="resetTaskForm"
-        @pick-local="pickLocalFolder"
-        @open-remote-picker="openRemotePicker"
-        @close="wizardOpen = false"
-      />
-    </section>
+    <!-- Task Wizard Dialog -->
+    <TaskForm
+      :open="wizardOpen"
+      :task-form="taskForm"
+      :mode-lock="currentPageMode"
+      :loading="loading"
+      :server-list="serverList"
+      @save="saveTask"
+      @reset="resetTaskForm"
+      @pick-local="pickLocalFolder"
+      @open-remote-picker="openRemotePicker"
+      @close="wizardOpen = false"
+    />
 
     <!-- Remote Folder Picker Dialog -->
     <RemoteFolderPicker
@@ -609,45 +517,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.auth-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  padding: 28px 0;
+.dashboard {
+  max-width: 900px;
 }
 
-.auth-hero {
-  text-align: center;
-  margin-bottom: 22px;
-}
-
-.auth-hero h1 {
-  margin: 0 0 12px;
-  font-size: 1.8rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--z-success), var(--z-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.auth-hero p {
-  margin: 0;
-  color: var(--z-text-muted);
-  font-size: 0.96rem;
-  max-width: 420px;
-}
-
-@media (max-width: 768px) {
-  .auth-page {
-    min-height: auto;
-    padding: 32px 0;
-  }
-
-  .auth-hero h1 {
-    font-size: 1.6rem;
-  }
+.task-toolbar {
+  margin-bottom: 12px;
 }
 </style>

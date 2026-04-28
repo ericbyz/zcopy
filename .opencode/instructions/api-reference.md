@@ -181,3 +181,91 @@ auth:
 storage:
   root_dir: "./storage"
 ```
+
+---
+
+## 新增端点（多服务器支持）
+
+### 服务端新增端点
+
+#### 服务器信息（公开，无需认证）
+
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| GET | `/api/v1/server/info` | `GetServerInfo` | 返回服务器 UUID、名称、版本、地址 |
+
+响应：`{ "message": "ok", "data": { "uuid": "...", "name": "...", "version": "...", "address": "...", "createdAt": "..." } }`
+
+#### 客户端心跳（需要认证）
+
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| POST | `/api/v1/client/heartbeat` | `ClientHeartbeat` | 客户端心跳，10s 间隔 |
+
+请求体：`{ "activeTasks": N }`
+响应：`{ "message": "heartbeat received", "data": { "next_heartbeat_seconds": 10 } }`
+
+#### 在线客户端列表（需要认证）
+
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| GET | `/api/v1/admin/clients` | `ListOnlineClients` | 返回在线客户端列表 |
+
+响应：`{ "items": [...ClientSession], "total": N }`
+
+### 客户端新增端点（本地 :8090）
+
+#### 服务器管理
+
+| 方法 | 路径 | 处理函数 | 说明 |
+|------|------|----------|------|
+| GET | `/api/v1/servers` | `ListServers` | 列出已配置服务器 |
+| POST | `/api/v1/servers` | `AddServer` | 添加服务器 `{ name, address }` |
+| PUT | `/api/v1/servers/:id` | `UpdateServer` | 更新服务器 |
+| DELETE | `/api/v1/servers/:id` | `DeleteServer` | 删除服务器 |
+| POST | `/api/v1/servers/:id/test` | `TestConnection` | 测试服务器连接 |
+| POST | `/api/v1/servers/scan` | `ScanServers` | SSDP 扫描局域网 |
+
+### 新增数据模型
+
+#### ServerInfo（server/backend）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| UUID | string | 服务器唯一标识（v4 UUID） |
+| Name | string | 服务器名称 |
+| Version | string | 版本号 |
+| Address | string | 监听地址 |
+| CreatedAt | time | 首次启动时间 |
+
+#### ClientSession（server/backend，内存）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| SessionID | string | 会话 ID |
+| UserID | uint | 用户 ID |
+| Username | string | 用户名 |
+| ClientIP | string | 客户端 IP |
+| ActiveTasks | int | 活跃任务数 |
+| LastHeartbeat | time | 最后心跳时间 |
+| Status | string | online / offline |
+| ConnectedAt | time | 连接时间 |
+
+#### ServerConfig（client/backend）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| ID | string | 服务器 UUID |
+| Name | string | 显示名称 |
+| Address | string | host:port |
+| IsDefault | bool | 是否为默认服务器 |
+| Status | string | online / offline / unknown |
+| LastConnectedAt | time | 最后连接时间 |
+| AddedAt | time | 添加时间 |
+
+#### BackupTask 新增字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| ServerID | string | 关联的服务器 UUID |
+| ServerIDs | []string | 预留集群备份 |

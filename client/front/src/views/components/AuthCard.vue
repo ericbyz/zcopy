@@ -4,60 +4,32 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  authMode: {
-    type: String,
-    required: true
-  },
   authForm: {
     type: Object,
     required: true
   }
 })
 
-const emit = defineEmits(['submit', 'update:authMode', 'update:authForm'])
+const emit = defineEmits(['submit', 'update:authForm'])
 </script>
 
 <template>
   <section class="auth-section">
     <el-card class="auth-card">
-      <el-tabs :model-value="authMode" @update:model-value="(v) => emit('update:authMode', v)">
-        <el-tab-pane label="登录" name="login">
-          <el-form>
-            <el-form-item>
-              <el-input :model-value="authForm.account" @update:model-value="(v) => emit('update:authForm', { ...authForm, account: v })" placeholder="用户名或邮箱" />
-            </el-form-item>
-            <el-form-item>
-              <el-input :model-value="authForm.password" @update:model-value="(v) => emit('update:authForm', { ...authForm, password: v })" type="password" placeholder="密码" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" :loading="loading" style="width: 100%" @click="emit('submit')">
-                {{ loading ? '处理中...' : '登录' }}
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="注册" name="register">
-          <el-form>
-            <el-form-item>
-              <el-input :model-value="authForm.username" @update:model-value="(v) => emit('update:authForm', { ...authForm, username: v })" placeholder="用户名" />
-            </el-form-item>
-            <el-form-item>
-              <el-input :model-value="authForm.email" @update:model-value="(v) => emit('update:authForm', { ...authForm, email: v })" placeholder="邮箱" />
-            </el-form-item>
-            <el-form-item>
-              <el-input :model-value="authForm.nickname" @update:model-value="(v) => emit('update:authForm', { ...authForm, nickname: v })" placeholder="昵称" />
-            </el-form-item>
-            <el-form-item>
-              <el-input :model-value="authForm.password" @update:model-value="(v) => emit('update:authForm', { ...authForm, password: v })" type="password" placeholder="密码（至少 6 位）" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" :loading="loading" style="width: 100%" @click="emit('submit')">
-                {{ loading ? '处理中...' : '注册并进入' }}
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-      </el-tabs>
+      <div class="auth-title">登录</div>
+      <el-form>
+        <el-form-item>
+          <el-input :model-value="authForm.account" @update:model-value="(v) => emit('update:authForm', { ...authForm, account: v })" placeholder="用户名或邮箱" />
+        </el-form-item>
+        <el-form-item>
+          <el-input :model-value="authForm.password" @update:model-value="(v) => emit('update:authForm', { ...authForm, password: v })" type="password" placeholder="密码" show-password />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" style="width: 100%" @click="emit('submit')">
+            {{ loading ? '处理中...' : '登录' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
     </el-card>
   </section>
 </template>
@@ -77,13 +49,11 @@ const emit = defineEmits(['submit', 'update:authMode', 'update:authForm'])
   padding: 22px 26px;
 }
 
-.auth-card :deep(.el-tabs__header) {
+.auth-title {
+  font-size: 1rem;
+  font-weight: 600;
   margin-bottom: 18px;
-}
-
-.auth-card :deep(.el-tabs__item) {
-  font-size: 0.96rem;
-  padding: 0 18px;
+  color: var(--z-text-primary);
 }
 
 .auth-card :deep(.el-form-item) {

@@ -4,11 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"zcopy-client-backend/handlers"
 )
 
 func registerRoutes(router *gin.Engine, app *AppState) {
 	api := router.Group("/api/v1")
 	registerAuthRoutes(api, app)
+	registerServerRoutes(api, app)
 	registerTaskRoutes(api, app)
 	registerSyncRoutes(api, app)
 	registerOnDemandRoutes(api, app)
@@ -26,6 +29,15 @@ func registerAuthRoutes(api *gin.RouterGroup, app *AppState) {
 	api.POST("/auth/login", app.proxyLogin)
 	api.POST("/auth/logout", app.logout)
 	api.GET("/auth/me", app.proxyMe)
+}
+
+func registerServerRoutes(api *gin.RouterGroup, app *AppState) {
+	api.GET("/servers", handlers.ListServers(app.Registry))
+	api.POST("/servers", handlers.AddServer(app.Registry))
+	api.PUT("/servers/:id", handlers.UpdateServer(app.Registry))
+	api.DELETE("/servers/:id", handlers.DeleteServer(app.Registry))
+	api.POST("/servers/:id/test", handlers.TestConnection(app.Registry))
+	api.POST("/servers/scan", handlers.ScanServers())
 }
 
 func registerTaskRoutes(api *gin.RouterGroup, app *AppState) {

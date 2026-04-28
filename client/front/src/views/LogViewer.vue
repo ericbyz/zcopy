@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios'
-import { ref, computed, onMounted, watch } from 'vue'
+import { inject, ref, computed, onMounted, watch } from 'vue'
 import { Search, Download, RefreshCw, Trash2 } from 'lucide-vue-next'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -9,7 +9,8 @@ const apiBaseURL =
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:8090/api/v1'
 
-const token = ref(localStorage.getItem('zcopy_token') || '')
+const currentServerId = inject('currentServerId', ref(''))
+const token = ref('')
 const api = axios.create({ baseURL: apiBaseURL })
 
 api.interceptors.request.use((config) => {
@@ -169,7 +170,8 @@ function formatTime(ts) {
 }
 
 onMounted(() => {
-  token.value = localStorage.getItem('zcopy_token') || ''
+  const tokenKey = currentServerId.value ? `zcopy_token_${currentServerId.value}` : 'zcopy_token'
+  token.value = localStorage.getItem(tokenKey) || ''
   if (token.value) {
     fetchTasks()
     fetchLogs()

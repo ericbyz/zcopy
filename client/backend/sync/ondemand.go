@@ -70,9 +70,13 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 	if err != nil {
 		return models.BackupTask{}, err
 	}
-	token := e.tokens.GetToken()
-	if token == "" {
-		return task, ErrUnauthorized
+	remote, err := e.remoteForTask(task)
+	if err != nil {
+		return task, err
+	}
+	token, err := e.tokenForTask(task)
+	if err != nil {
+		return task, err
 	}
 	snapshot := LoadSnapshot(e.snapshotDir, task.ID, e.logs, task)
 	if len(snapshot.Files) == 0 {
@@ -117,7 +121,7 @@ func (e *Engine) HydrateFromCloud(taskID string) (models.BackupTask, error) {
 			continue
 		}
 		remoteFile := utils.NormalizeRemote(filepath.ToSlash(filepath.Join(task.RemotePath, rel)))
-		if err := e.remote.DownloadRemoteFile(remoteFile, localPath, token); err != nil {
+		if err := remote.DownloadRemoteFile(remoteFile, localPath, token); err != nil {
 			report.FailedFiles++
 			failed = append(failed, rel)
 			if firstErr == nil {

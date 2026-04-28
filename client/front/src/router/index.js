@@ -1,17 +1,28 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import ServerConnectView from '../views/ServerConnectView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LogViewer from '../views/LogViewer.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Dashboard',
+    name: 'Home',
+    redirect: '/servers'
+  },
+  {
+    path: '/connect',
+    name: 'ServerConnect',
+    component: ServerConnectView
+  },
+  {
+    path: '/tasks',
+    name: 'BackupTasks',
     component: DashboardView,
     meta: { taskMode: 'backup' }
   },
   {
     path: '/sync',
-    name: 'SyncDashboard',
+    name: 'SyncTasks',
     component: DashboardView,
     meta: { taskMode: 'sync' }
   },
@@ -29,6 +40,11 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: () => import('../views/SettingsView.vue')
+  },
+  {
+    path: '/servers',
+    name: 'Servers',
+    component: () => import('../views/ServersView.vue')
   }
 ]
 

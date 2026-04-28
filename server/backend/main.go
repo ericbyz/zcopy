@@ -1,16 +1,24 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"strings"
+	"syscall"
+	"time"
 
 	"zcopy-server-backend/config"
 	"zcopy-server-backend/database"
+	"zcopy-server-backend/discovery"
 	"zcopy-server-backend/handlers"
 	"zcopy-server-backend/logger"
 	"zcopy-server-backend/middleware"
+	"zcopy-server-backend/serverinfo"
+	"zcopy-server-backend/session"
 	"zcopy-server-backend/syncservice"
 	"zcopy-server-backend/utils"
 
@@ -32,9 +40,36 @@ func main() {
 	}
 	defer database.DB.Close()
 
+	addr := ":" + config.AppConfig.Server.Port
+	if _, initErr := serverinfo.InitServerInfo(filepath.Dir(config.AppConfig.Database.Path), addr); initErr != nil {
+		log.Fatalf("failed to init server info: %v", initErr)
+	}
+
+	responder := discovery.NewResponder(serverinfo.GetServerInfo(), 1900)
+	if err := responder.Start(); err != nil {
+		log.Printf("warning: SSDP discovery responder failed to start (port 1900 may be in use): %v", err)
+	} else {
+		log.Println("SSDP discovery responder started on port 1900")
+	}
+	defer responder.Stop()
+
 	if err := syncservice.Init(config.AppConfig.Storage.RootDir, filepath.Join(filepath.Dir(config.AppConfig.Database.Path), "sync_tasks.json")); err != nil {
 		log.Fatalf("failed to initialize sync service: %v", err)
 	}
+
+	sessionMgr := session.NewSessionManager()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go sessionMgr.StartCleanupLoop(ctx, 30*time.Second, 30*time.Second)
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel()
+	}()
 
 	gin.SetMode(config.AppConfig.Server.Mode)
 
@@ -45,6 +80,8 @@ func main() {
 
 	api := router.Group("/api/v1")
 	{
+		api.GET("/server/info", handlers.GetServerInfo)
+
 		authGroup := api.Group("/auth")
 		{
 			authGroup.POST("/register", handlers.Register)
@@ -77,6 +114,7 @@ func main() {
 		clientGroup.Use(middleware.AuthRequired())
 		{
 			clientGroup.GET("/capabilities", handlers.ClientCapabilities)
+			clientGroup.POST("/heartbeat", handlers.ClientHeartbeat(sessionMgr))
 		}
 
 		logsGroup := api.Group("/logs")
@@ -84,6 +122,12 @@ func main() {
 		{
 			logsGroup.GET("", handlers.ListLogs)
 			logsGroup.GET("/export", handlers.ExportLogs)
+		}
+
+		adminGroup := api.Group("/admin")
+		adminGroup.Use(middleware.AuthRequired())
+		{
+			adminGroup.GET("/clients", handlers.ListOnlineClients(sessionMgr))
 		}
 	}
 
@@ -105,11 +149,20 @@ func corsMiddleware() gin.HandlerFunc {
 		"http://localhost:5173":  true,
 		"http://localhost:5176":  true,
 		"http://localhost:8890":  true,
+		"http://localhost:8891":  true,
 		"http://localhost:8090":  true,
 		"http://127.0.0.1:5173": true,
 		"http://127.0.0.1:5176": true,
 		"http://127.0.0.1:8890": true,
+		"http://127.0.0.1:8891": true,
 		"http://127.0.0.1:8090": true,
+	}
+
+	extraOrigins := strings.TrimSpace(os.Getenv("ZCOPY_CORS_ORIGINS"))
+	if extraOrigins != "" {
+		for _, o := range strings.Split(extraOrigins, ",") {
+			allowedOrigins[strings.TrimSpace(o)] = true
+		}
 	}
 
 	return func(c *gin.Context) {

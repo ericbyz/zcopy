@@ -29,8 +29,8 @@ type SyncEngine interface {
 
 type Engine struct {
 	store       store.TaskRepository
-	tokens      auth.TokenManager
-	remote      proxy.RemoteClient
+	tokens      auth.TokenProvider
+	multiProxy  *proxy.MultiServerProxy
 	logs        logpkg.LogStore
 	snapshotDir string
 
@@ -45,15 +45,33 @@ type ReleaseResult struct {
 	SkippedFiles  int
 }
 
-func NewEngine(store store.TaskRepository, tokens auth.TokenManager, remote proxy.RemoteClient, logs logpkg.LogStore, snapshotDir string) *Engine {
+func NewEngine(store store.TaskRepository, tokens auth.TokenProvider, multiProxy *proxy.MultiServerProxy, logs logpkg.LogStore, snapshotDir string) *Engine {
 	return &Engine{
 		store:       store,
 		tokens:      tokens,
-		remote:      remote,
+		multiProxy:  multiProxy,
 		logs:        logs,
 		snapshotDir: snapshotDir,
 		syncing:     make(map[string]bool),
 	}
+}
+
+func (e *Engine) remoteForTask(task models.BackupTask) (proxy.RemoteClient, error) {
+	if task.ServerID == "" {
+		return nil, errors.New("任务未分配服务器")
+	}
+	return e.multiProxy.GetClient(task.ServerID)
+}
+
+func (e *Engine) tokenForTask(task models.BackupTask) (string, error) {
+	if task.ServerID == "" {
+		return "", ErrUnauthorized
+	}
+	token, ok := e.tokens.GetToken(task.ServerID)
+	if !ok || token == "" {
+		return "", ErrUnauthorized
+	}
+	return token, nil
 }
 
 func (e *Engine) SyncTask(taskID string) error {
@@ -61,9 +79,13 @@ func (e *Engine) SyncTask(taskID string) error {
 	if err != nil {
 		return err
 	}
-	token := e.tokens.GetToken()
-	if token == "" {
-		return ErrUnauthorized
+	remote, err := e.remoteForTask(task)
+	if err != nil {
+		return err
+	}
+	token, err := e.tokenForTask(task)
+	if err != nil {
+		return err
 	}
 	if !e.acquire(taskID, task) {
 		return nil
@@ -71,7 +93,7 @@ func (e *Engine) SyncTask(taskID string) error {
 	defer e.release(taskID, task)
 
 	if task.TaskMode == models.TaskModeSync {
-		return e.syncBidirectionalTask(task, token)
+		return e.syncBidirectionalTask(task, remote, token)
 	}
 
 	if task.CloudOnly {
@@ -93,10 +115,10 @@ func (e *Engine) SyncTask(taskID string) error {
 	report.Message = "扫描完成，开始传输"
 	_ = e.store.Upsert(task)
 
-	if err := e.remote.EnsureRemotePath(task.RemotePath, token); err != nil {
+	if err := remote.EnsureRemotePath(task.RemotePath, token); err != nil {
 		return e.failSync(&task, report, "创建远程目录失败", err, 0)
 	}
-	if err := e.uploadPendingFiles(&task, token, files, pendingFiles, snapshot, report); err != nil {
+	if err := e.uploadPendingFiles(&task, remote, token, files, pendingFiles, snapshot, report); err != nil {
 		return err
 	}
 	return e.finishSuccessfulSync(&task, mode, report)
@@ -193,7 +215,7 @@ func (e *Engine) collectPendingFiles(task models.BackupTask, report *models.Sync
 	return files, pendingFiles, snapshot, nil
 }
 
-func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files []models.LocalFileItem, pendingFiles []models.LocalFileItem, snapshot models.TaskSnapshot, report *models.SyncReport) error {
+func (e *Engine) uploadPendingFiles(task *models.BackupTask, remote proxy.RemoteClient, token string, files []models.LocalFileItem, pendingFiles []models.LocalFileItem, snapshot models.TaskSnapshot, report *models.SyncReport) error {
 	var firstErr error
 	failedFilePaths := make([]string, 0)
 	totalCount := len(pendingFiles)
@@ -202,7 +224,7 @@ func (e *Engine) uploadPendingFiles(task *models.BackupTask, token string, files
 		if remoteDir == "." {
 			remoteDir = ""
 		}
-		if err := e.remote.UploadFile(item.AbsPath, remoteDir, token); err != nil {
+		if err := remote.UploadFile(item.AbsPath, remoteDir, token); err != nil {
 			report.FailedFiles++
 			failedFilePaths = append(failedFilePaths, item.RelPath)
 			e.logs.Push("error", *task, item.RelPath, err.Error())

@@ -250,9 +250,102 @@ Renderer（Vue 3）  ←→  preload.js  ←→  main.js（Electron 主进程）
 | 按需同步（释放本地空间 / 水合） | ✅ 已实现 |
 | 自动备份（文件监听 + 防抖） | ✅ 已实现 |
 | 传输日志（环形缓冲区） | ✅ 已实现 |
+| 多文件服务器支持 | ✅ 已实现 |
+| 服务器 UUID 标识 | ✅ 已实现 |
+| SSDP 局域网发现 | ✅ 已实现 |
+| 客户端心跳 + 在线监控 | ✅ 已实现 |
+| 服务器管理 CRUD | ✅ 已实现 |
 | 客户端登录 + 刷新 token | 🔲 规划中 |
 | 基于哈希的增量同步 | 🔲 规划中 |
 | 冲突检测与处理 | 🔲 规划中 |
 | 断点续传 / 断点续下 | 🔲 规划中 |
 | 设备绑定 | 🔲 规划中 |
 | 同步任务历史 | 🔲 规划中 |
+| 多服务器集群备份 | 🔲 规划中 |
+
+---
+
+## 多服务器架构
+
+### 架构图
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  客户端                                                  │
+│  ┌──────────┐  ┌──────────────┐  ┌───────────────────┐ │
+│  │ Server   │  │ Multi-Server │  │ LAN Scanner       │ │
+│  │ Registry │  │ Proxy        │  │ (SSDP)            │ │
+│  └──────────┘  └──────────────┘  └───────────────────┘ │
+│  ┌──────────┐  ┌──────────────┐                         │
+│  │ Heartbeat│  │ TokenManager │                         │
+│  │ Sender   │  │ (per-server) │                         │
+│  └──────────┘  └──────────────┘                         │
+└─────────┬──────────────┬───────────────────────────────┘
+          │              │
+    ┌─────▼─────┐  ┌─────▼─────┐
+    │ Server A  │  │ Server B  │
+    │ :8890     │  │ :8891     │
+    └───────────┘  └───────────┘
+```
+
+### 多服务器启动流程
+
+```
+客户端启动：
+1. loadConfig() → 加载配置
+2. registry.NewServerRegistry(dataDir) → 加载/创建 servers.json
+3. 若 registry 为空（首次升级）：
+   a. 从旧 config 的 file_server.base_url 提取地址
+   b. 创建 "默认服务器" 条目
+   c. 尝试 GET /api/v1/server/info 获取真实 UUID
+4. MigrateTasksToServer(store, defaultServerID) → 迁移旧任务
+5. 继续正常启动流程
+```
+
+### 服务器标识
+
+- 首次启动时自动生成 UUID v4（crypto/rand）
+- 持久化到 `data/server_info.json`
+- 包含：UUID、名称（默认 "ZCopy Server"）、版本、地址、创建时间
+- GET /api/v1/server/info（公开端点）返回服务器信息
+
+### SSDP 局域网发现
+
+```
+协议格式：
+请求（客户端 → 广播）：
+  M-SEARCH * HTTP/1.1
+  Host: 239.255.255.250:1900
+  ST: zcopy:server
+  Man: "ssdp:discover"
+  MX: 3
+
+响应（服务器 → 客户端）：
+  HTTP/1.1 200 OK
+  ST: zcopy:server
+  SERVER-ID: <uuid>
+  SERVER-NAME: <name>
+  LOCATION: http://<host>:<port>
+```
+
+- 默认端口 1900（可配置）
+- 客户端同时发送广播和组播
+- 响应按 ServerID 去重
+
+### 心跳机制
+
+- 客户端每 10 秒发送 POST /api/v1/client/heartbeat
+- 请求体：`{ "activeTasks": N }`
+- 服务端维护内存 ClientSession 列表（sync.RWMutex 保护）
+- 后台 goroutine 每 30 秒清理超时会话
+- GET /api/v1/admin/clients 返回在线客户端列表
+
+### 数据模型（新增）
+
+| 模型 | 位置 | 关键字段 |
+|------|------|----------|
+| ServerInfo | server/backend/models/ | UUID, Name, Version, Address, CreatedAt |
+| ClientSession | server/backend/models/ | SessionID, UserID, Username, ClientIP, ActiveTasks, LastHeartbeat, Status |
+| ServerConfig | client/backend/models/ | ID, Name, Address, IsDefault, Status, LastConnectedAt, AddedAt |
+| BackupTask.ServerID | client/backend/models/ | 关联的服务器 UUID |
+| BackupTask.ServerIDs | client/backend/models/ | 预留集群备份 []string |

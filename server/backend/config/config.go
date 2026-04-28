@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -48,8 +49,13 @@ var AppConfig Config
 func LoadConfig() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./config")
+
+	if cfgPath := strings.TrimSpace(os.Getenv("ZCOPY_SERVER_CONFIG")); cfgPath != "" {
+		viper.SetConfigFile(cfgPath)
+	} else {
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("./config")
+	}
 
 	viper.SetDefault("server.port", "8890")
 	viper.SetDefault("server.mode", "debug")

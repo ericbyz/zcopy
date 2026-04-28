@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"zcopy-client-backend/models"
+	"zcopy-client-backend/proxy"
 	"zcopy-client-backend/utils"
 )
 
@@ -27,7 +28,7 @@ type remoteListResponse struct {
 	} `json:"items"`
 }
 
-func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) error {
+func (e *Engine) syncBidirectionalTask(task models.BackupTask, remote proxy.RemoteClient, token string) error {
 	mode := syncMode(task)
 	e.logs.Push("info", task, "", "双向同步开始：task_id="+task.ID+", task_name="+task.Name)
 	report := e.startSync(&task, mode, "准备双向同步")
@@ -41,7 +42,7 @@ func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) err
 		localMap[item.RelPath] = item
 	}
 
-	remoteMap, err := e.collectRemoteFiles(task.RemotePath, token)
+	remoteMap, err := e.collectRemoteFiles(task.RemotePath, remote, token)
 	if err != nil {
 		return e.failSync(&task, report, "扫描文件服务器目录失败", err, 0)
 	}
@@ -69,7 +70,7 @@ func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) err
 		action := chooseSyncAction(task, rel, snapshot.Files[rel], localMap, remoteMap)
 		switch action {
 		case "upload":
-			if err := e.uploadSingleFile(task, rel, localMap[rel], token); err != nil {
+			if err := e.uploadSingleFile(task, rel, localMap[rel], remote, token); err != nil {
 				report.FailedFiles++
 				report.FailedFilePaths = append(report.FailedFilePaths, rel)
 				continue
@@ -77,7 +78,7 @@ func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) err
 			report.UploadedFiles++
 			report.TransferredBytes += localMap[rel].Size
 		case "download":
-			if err := e.downloadSingleFile(task, rel, remoteMap[rel], token); err != nil {
+			if err := e.downloadSingleFile(task, rel, remoteMap[rel], remote, token); err != nil {
 				report.FailedFiles++
 				report.FailedFilePaths = append(report.FailedFilePaths, rel)
 				continue
@@ -91,7 +92,7 @@ func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) err
 				continue
 			}
 		case "delete_remote":
-			if err := e.deleteRemotePath(joinRemotePath(task.RemotePath, rel), token); err != nil {
+			if err := e.deleteRemotePath(joinRemotePath(task.RemotePath, rel), remote, token); err != nil {
 				report.FailedFiles++
 				report.FailedFilePaths = append(report.FailedFilePaths, rel)
 				continue
@@ -103,7 +104,7 @@ func (e *Engine) syncBidirectionalTask(task models.BackupTask, token string) err
 	if err != nil {
 		return e.failSync(&task, report, "刷新本地快照失败", err, report.UploadedFiles)
 	}
-	remoteMap, err = e.collectRemoteFiles(task.RemotePath, token)
+	remoteMap, err = e.collectRemoteFiles(task.RemotePath, remote, token)
 	if err != nil {
 		return e.failSync(&task, report, "刷新远端快照失败", err, report.UploadedFiles)
 	}
@@ -210,7 +211,7 @@ func resolveDeletionConflict(task models.BackupTask, changedModUnix, snapshotMod
 	}
 }
 
-func (e *Engine) collectRemoteFiles(basePath string, token string) (map[string]models.FileFingerprint, error) {
+func (e *Engine) collectRemoteFiles(basePath string, remote proxy.RemoteClient, token string) (map[string]models.FileFingerprint, error) {
 	result := make(map[string]models.FileFingerprint)
 	var walk func(current string) error
 	walk = func(current string) error {
@@ -219,7 +220,7 @@ func (e *Engine) collectRemoteFiles(basePath string, token string) (map[string]m
 		if clean := utils.NormalizeRemote(remotePath); clean != "" {
 			endpoint += "?path=" + url.QueryEscape(clean)
 		}
-		data, status, err := e.remote.RawRequest(http.MethodGet, endpoint, nil, "", token)
+		data, status, err := remote.RawRequest(http.MethodGet, endpoint, nil, "", token)
 		if err != nil {
 			return err
 		}
@@ -249,29 +250,29 @@ func (e *Engine) collectRemoteFiles(basePath string, token string) (map[string]m
 	return result, walk("")
 }
 
-func (e *Engine) uploadSingleFile(task models.BackupTask, rel string, item models.LocalFileItem, token string) error {
+func (e *Engine) uploadSingleFile(task models.BackupTask, rel string, item models.LocalFileItem, remote proxy.RemoteClient, token string) error {
 	remoteDir := utils.NormalizeRemote(path.Dir(joinRemotePath(task.RemotePath, rel)))
 	if remoteDir == "." {
 		remoteDir = ""
 	}
-	if err := e.remote.EnsureRemotePath(remoteDir, token); err != nil {
+	if err := remote.EnsureRemotePath(remoteDir, token); err != nil {
 		return err
 	}
-	return e.remote.UploadFile(item.AbsPath, remoteDir, token)
+	return remote.UploadFile(item.AbsPath, remoteDir, token)
 }
 
-func (e *Engine) downloadSingleFile(task models.BackupTask, rel string, remote models.FileFingerprint, token string) error {
+func (e *Engine) downloadSingleFile(task models.BackupTask, rel string, remoteInfo models.FileFingerprint, remote proxy.RemoteClient, token string) error {
 	localPath := filepath.Join(task.LocalPath, filepath.FromSlash(rel))
-	if err := e.remote.DownloadRemoteFile(joinRemotePath(task.RemotePath, rel), localPath, token); err != nil {
+	if err := remote.DownloadRemoteFile(joinRemotePath(task.RemotePath, rel), localPath, token); err != nil {
 		return err
 	}
-	modTime := time.Unix(remote.ModUnix, 0)
+	modTime := time.Unix(remoteInfo.ModUnix, 0)
 	return os.Chtimes(localPath, modTime, modTime)
 }
 
-func (e *Engine) deleteRemotePath(remotePath string, token string) error {
+func (e *Engine) deleteRemotePath(remotePath string, remote proxy.RemoteClient, token string) error {
 	endpoint := "/files?path=" + url.QueryEscape(utils.NormalizeRemote(remotePath))
-	data, status, err := e.remote.RawRequest(http.MethodDelete, endpoint, nil, "", token)
+	data, status, err := remote.RawRequest(http.MethodDelete, endpoint, nil, "", token)
 	if err != nil {
 		return err
 	}

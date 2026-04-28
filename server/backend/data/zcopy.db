@@ -1,5 +1,5 @@
 {
-  "nextId": 24,
+  "nextId": 25,
   "users": [
     {
       "ID": 1,
@@ -252,6 +252,17 @@
       "Avatar": "",
       "CreatedAt": "2026-04-14T23:44:17.184531+08:00",
       "UpdatedAt": "2026-04-14T23:44:17.184531+08:00",
+      "DeletedAt": null
+    },
+    {
+      "ID": 24,
+      "Username": "testuser",
+      "Email": "test@test.com",
+      "Password": "$2a$10$zHUFnLbXIqBfCGNpZzP9yu7YoMnUbEKunnmOwbee6tQqXsCG.X46K",
+      "Nickname": "Test",
+      "Avatar": "",
+      "CreatedAt": "2026-04-28T16:36:11.817577+08:00",
+      "UpdatedAt": "2026-04-28T16:36:11.817577+08:00",
       "DeletedAt": null
     }
   ]

@@ -17,6 +17,10 @@ const props = defineProps({
   open: {
     type: Boolean,
     default: false
+  },
+  serverList: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -82,6 +86,19 @@ watch(() => props.taskForm.taskMode, (value) => {
     <el-form label-position="top">
       <!-- Step 1 or Edit: all fields -->
       <template v-if="step === 0 || isEdit">
+        <el-form-item v-if="serverList.length > 0" label="文件服务器">
+          <el-select v-model="taskForm.serverId" placeholder="选择服务器" style="width: 100%">
+            <el-option
+              v-for="server in serverList"
+              :key="server.id"
+              :label="server.name"
+              :value="server.id"
+            >
+              <span>{{ server.name }}</span>
+              <span style="float: right; color: var(--z-text-muted); font-size: 0.8rem">{{ server.address }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="任务名称">
           <el-input
             v-model="taskForm.name"

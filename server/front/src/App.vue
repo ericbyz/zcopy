@@ -5,12 +5,13 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import LogViewer from './components/LogViewer.vue'
 import ThemeToggle from './components/ThemeToggle.vue'
 import AuthCard from './components/AuthCard.vue'
+import ClientMonitor from './components/ClientMonitor.vue'
 import FileBrowser from './components/FileBrowser.vue'
 import { parseDownloadFilename } from './utils/format.js'
 
 const zhCn = inject('element-locale')
 
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8890/api/v1'
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 const token = ref(localStorage.getItem('zcopy_token') || '')
 const currentUser = ref(null)
 const authMode = ref('login')
@@ -292,6 +293,9 @@ onMounted(async () => {
             </el-tab-pane>
             <el-tab-pane label="日志查看" name="logs">
               <LogViewer />
+            </el-tab-pane>
+            <el-tab-pane label="客户端监控" name="clients">
+              <ClientMonitor />
             </el-tab-pane>
           </el-tabs>
         </div>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { Play, MoreVertical, FolderCheck, Edit, Trash2, RefreshCw, Cloud } from 'lucide-vue-next'
+import { Play, MoreVertical, FolderCheck, Edit, Trash2, RefreshCw, Cloud, Server } from 'lucide-vue-next'
 import { formatBytes } from '../../utils/format.js'
 import { getTaskStatusText, calcSyncProgress } from '../../utils/task.js'
 
@@ -16,12 +16,22 @@ const props = defineProps({
   onDemandStatus: {
     type: Object,
     default: null
+  },
+  serverList: {
+    type: Array,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-location', 'open-local', 'open-remote'])
 
 const taskStatusText = computed(() => getTaskStatusText(props.task))
+
+const serverInfo = computed(() => {
+  return props.serverList?.find(s => s.id === props.task.serverId)
+})
+const serverName = computed(() => serverInfo.value?.name || '')
+const serverStatus = computed(() => serverInfo.value?.status || 'unknown')
 
 const syncProgress = computed(() => calcSyncProgress(props.task))
 
@@ -84,6 +94,10 @@ const idleStats = computed(() => {
             <span v-if="task.onDemandSync" class="ondemand-badge">
               <component :is="Cloud" />
               按需同步
+            </span>
+            <span v-if="serverName" class="server-badge" :class="serverStatus">
+              <Server style="width:12px;height:12px" />
+              {{ serverName }}
             </span>
           </div>
           <div class="task-status-line">
@@ -180,6 +194,15 @@ const idleStats = computed(() => {
       style="margin-top: 12px"
     />
 
+    <el-alert
+      v-if="serverStatus === 'offline'"
+      title="服务器离线"
+      type="warning"
+      :closable="false"
+      description="无法连接到该任务关联的文件服务器"
+      style="margin-top: 12px"
+    />
+
   </div>
 </template>
 
@@ -271,6 +294,29 @@ const idleStats = computed(() => {
 .ondemand-badge :deep(svg) {
   width: 12px;
   height: 12px;
+}
+
+.server-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.server-badge.online {
+  color: var(--z-success);
+  background: var(--z-success-bg);
+}
+.server-badge.offline {
+  color: var(--z-danger);
+  background: var(--z-danger-bg);
+}
+.server-badge.unknown {
+  color: var(--z-text-muted);
+  background: var(--z-bg-sunken);
 }
 
 .task-status-line {

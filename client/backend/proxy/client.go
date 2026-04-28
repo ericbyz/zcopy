@@ -13,8 +13,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
+	"zcopy-client-backend/auth"
 	"zcopy-client-backend/utils"
 )
 
@@ -178,4 +180,58 @@ func (c *HTTPRemoteClient) EnsureRemotePath(path, token string) error {
 		}
 	}
 	return nil
+}
+
+var ErrServerNotRegistered = errors.New("server not registered")
+
+type MultiServerProxy struct {
+	clients      map[string]*HTTPRemoteClient
+	tokenProvider auth.TokenProvider
+	mu           sync.RWMutex
+}
+
+func NewMultiServerProxy(tokenProvider auth.TokenProvider) *MultiServerProxy {
+	return &MultiServerProxy{
+		clients:      make(map[string]*HTTPRemoteClient),
+		tokenProvider: tokenProvider,
+	}
+}
+
+func (p *MultiServerProxy) AddServer(serverID, baseURL string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.clients[serverID] = NewHTTPRemoteClient(http.DefaultClient, baseURL)
+}
+
+func (p *MultiServerProxy) RemoveServer(serverID string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.clients, serverID)
+}
+
+func (p *MultiServerProxy) GetClient(serverID string) (*HTTPRemoteClient, error) {
+	p.mu.RLock()
+	client, exists := p.clients[serverID]
+	p.mu.RUnlock()
+	if !exists {
+		return nil, ErrServerNotRegistered
+	}
+	return client, nil
+}
+
+func (p *MultiServerProxy) HasServer(serverID string) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	_, exists := p.clients[serverID]
+	return exists
+}
+
+func (p *MultiServerProxy) ListServerIDs() []string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	ids := make([]string, 0, len(p.clients))
+	for id := range p.clients {
+		ids = append(ids, id)
+	}
+	return ids
 }

@@ -1,94 +1,131 @@
 {
-  "active_plan": "/Users/byz/Documents/project/my/zcopy/.sisyphus/plans/frontend-redesign.md",
-  "started_at": "2026-04-18T13:13:29Z",
+  "active_plan": "/Users/byz/Documents/project/my/zcopy/.sisyphus/plans/multi-server-architecture.md",
+  "started_at": "2026-04-28T12:52:00Z",
   "session_ids": [
-    "ses_25f93ab66ffe7RAV7zSYJNnwzX"
+    "ses_22b9596d4ffekLqfATJd2WgWR4"
   ],
-  "plan_name": "frontend-redesign",
+  "plan_name": "multi-server-architecture",
   "worktree_path": null,
   "session_origins": {
-    "ses_25f93ab66ffe7RAV7zSYJNnwzX": "direct"
+    "ses_22b9596d4ffekLqfATJd2WgWR4": "direct"
   },
   "task_sessions": {
     "todo:1": {
       "task_key": "todo:1",
       "task_label": "1",
-      "task_title": "安装依赖 + 配置 Vite 插件（两个前端）",
-      "session_id": "ses_25f44baa5ffeBRR01z0RjVzA7C",
+      "task_title": "ServerInfo 模型 + UUID 生成",
+      "session_id": "ses_22d501150ffeJOYiMk5dnFHfNe",
       "agent": "Sisyphus-Junior",
       "category": "quick",
-      "updated_at": "2026-04-18T13:17:56.726Z"
+      "updated_at": "2026-04-28T12:55:00Z"
     },
     "todo:2": {
       "task_key": "todo:2",
       "task_label": "2",
-      "task_title": "配置 Element Plus zh-CN locale + 全局注册",
-      "session_id": "ses_25f417586ffeIUfR1HXglsdoEz",
+      "task_title": "ClientSession 模型 + 在线会话存储",
+      "session_id": "ses_22d4fb00bffet6qzSAXfxQchxe",
       "agent": "Sisyphus-Junior",
       "category": "quick",
-      "updated_at": "2026-04-18T13:19:57.750Z"
+      "updated_at": "2026-04-28T12:54:00Z"
     },
     "todo:3": {
       "task_key": "todo:3",
       "task_label": "3",
-      "task_title": "创建 CSS 设计 Token + 主题系统",
-      "session_id": "ses_25f3f02b2ffeWD4G2JMLxzZ94R",
+      "task_title": "ServerConfig 模型 + ServerRegistry 存储",
+      "session_id": "ses_22d4f4e76ffeVGVPdglTkBTJnb",
       "agent": "Sisyphus-Junior",
-      "category": "visual-engineering",
-      "updated_at": "2026-04-18T13:25:02.842Z"
+      "category": "quick",
+      "updated_at": "2026-04-28T12:54:00Z"
     },
     "todo:4": {
       "task_key": "todo:4",
       "task_label": "4",
-      "task_title": "服务端前端 — 认证页面重构",
-      "session_id": "ses_25f379fe9ffe2jQFB2HcjWIqdo",
+      "task_title": "BackupTask 增加 ServerID 字段 + 迁移逻辑",
+      "session_id": "ses_22d4eee05ffeOZox13o61m4Tf3",
       "agent": "Sisyphus-Junior",
-      "category": "visual-engineering",
-      "updated_at": "2026-04-18T13:51:01.513Z"
+      "category": "quick",
+      "updated_at": "2026-04-28T12:54:00Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "多服务器 Token 管理器接口",
+      "session_id": "ses_22d4ea3b4ffeRpkPFvi2HscjP3",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-28T12:54:00Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "服务器信息 API 端点",
+      "session_id": "ses_22d4b57feffea7CFRufX93fbDM",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-28T13:01:00Z"
     },
     "todo:7": {
       "task_key": "todo:7",
       "task_label": "7",
-      "task_title": "客户端前端 — 认证页面 + Hero 区域重构",
-      "session_id": "ses_25f208bf8ffejyEVMGNcFDo0Ds",
+      "task_title": "心跳端点 + 会话管理",
+      "session_id": "ses_22d4b037effe38HvtYRCQVWq87",
       "agent": "Sisyphus-Junior",
-      "category": "visual-engineering",
-      "updated_at": "2026-04-18T13:58:54.559Z"
+      "category": "unspecified-high",
+      "updated_at": "2026-04-28T13:03:00Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "客户端列表 API 端点",
+      "session_id": "ses_22d4acc63ffeFOoYNYzp1e5vgI",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-28T13:03:00Z"
+    },
+    "todo:9": {
+      "task_key": "todo:9",
+      "task_label": "9",
+      "task_title": "SSDP 响应器 UDP 广播监听",
+      "session_id": "ses_22d4a720fffeBfJDIuekqa10m6",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-28T13:01:00Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "多服务器代理路由重构",
+      "session_id": "ses_22d4a27ccffekTpF4qSsLBfzSP",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-28T13:02:00Z"
     },
     "todo:11": {
       "task_key": "todo:11",
       "task_label": "11",
-      "task_title": "客户端 — DashboardView.vue 拆分为子组件",
-      "session_id": "ses_25f187b86ffejOfiYYTAxVYwPv",
+      "task_title": "服务器 CRUD API 端点",
+      "session_id": "ses_22d49c2c7ffebrXdWTxeSApXBx",
       "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-18T14:08:52.446Z"
+      "category": "unspecified-high",
+      "updated_at": "2026-04-28T13:07:00Z"
     },
     "todo:12": {
       "task_key": "todo:12",
       "task_label": "12",
-      "task_title": "服务端 — App.vue 拆分为子组件",
-      "session_id": "ses_25f12ef82ffeAZqBTniz24RLNR",
+      "task_title": "LAN 扫描器 SSDP 主动探测",
+      "session_id": "ses_22d48f13dffeL70tcfztzyldQ6",
       "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-18T14:13:01.477Z"
+      "category": "unspecified-high",
+      "updated_at": "2026-04-28T13:05:00Z"
     },
     "todo:13": {
       "task_key": "todo:13",
       "task_label": "13",
-      "task_title": "搭建 Vitest + 核心单元测试",
-      "session_id": "ses_25f0ac84affe8B3ZRooG44Whlk",
+      "task_title": "心跳发送器 10s 定时器",
+      "session_id": "ses_22d483450ffew4UFQFLQCm7TWt",
       "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-18T14:25:56.773Z"
-    },
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "ses_25f00babaffedsblewQFAfUDpQ",
-      "agent": "oracle",
-      "updated_at": "2026-04-18T14:36:28.881Z"
+      "category": "quick",
+      "updated_at": "2026-04-28T13:07:00Z"
     }
   }
 }

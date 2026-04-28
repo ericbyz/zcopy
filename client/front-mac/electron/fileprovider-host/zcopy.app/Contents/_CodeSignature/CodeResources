@@ -10,7 +10,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			zs++MaVXTviLQ/XeWqLS6cUNaPY=
+			w8D1JQsGZaH5hOD9Me/xw9AJfb0=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.zcopy.client.mac.EleFileProvider" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: 2638158434@qq.com (DSJR58FA5L)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
