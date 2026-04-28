@@ -63,9 +63,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
                 completionHandler(nil, [], false, error)
             case .success(let item):
                 self.service.remember(identifier: itemTemplate.itemIdentifier, path: item.path)
-                if !item.isDirectory {
-                    self.service.markDownloaded(path: item.path)
-                }
+                self.service.markDownloaded(path: item.path)
                 self.signalStateRefresh()
                 completionHandler(FileProviderItem(remoteItem: item, service: self.service), [], false, nil)
             }

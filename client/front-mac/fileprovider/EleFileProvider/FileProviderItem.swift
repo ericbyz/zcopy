@@ -77,7 +77,7 @@ final class FileProviderItem: NSObject, NSFileProviderItem {
     }
 
     var isDownloaded: Bool {
-        remoteItem.isDirectory || service.isDownloaded(path: remoteItem.path)
+        remoteItem.path.isEmpty || service.isDownloaded(path: remoteItem.path)
     }
 
     var isDownloading: Bool {
@@ -93,7 +93,7 @@ final class FileProviderItem: NSObject, NSFileProviderItem {
     }
 
     var contentPolicy: NSFileProviderContentPolicy {
-        if remoteItem.isDirectory {
+        if remoteItem.path.isEmpty {
             return .inherited
         }
         return .downloadLazily

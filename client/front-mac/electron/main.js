@@ -262,32 +262,46 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
     return '路径无效'
   }
   try {
+    const tryOpen = async () => {
+      const failure = await shell.openPath(targetPath)
+      if (!failure) {
+        return ''
+      }
+      const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+      return fallback.status === 0 ? '' : failure
+    }
+
+    const tryReveal = () => {
+      if (fs.existsSync(targetPath)) {
+        shell.showItemInFolder(targetPath)
+        return ''
+      }
+      const reveal = spawnSync('open', ['-R', targetPath], { stdio: 'ignore' })
+      return reveal.status === 0 ? '' : `路径不存在：${targetPath}`
+    }
+
     if (fs.existsSync(targetPath)) {
       const stat = fs.statSync(targetPath)
       if (stat.isDirectory()) {
-        const failure = await shell.openPath(targetPath)
+        const failure = await tryOpen()
         if (!failure) {
           return ''
         }
-        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-        return fallback.status === 0 ? '' : failure
+        const revealed = tryReveal()
+        return revealed || failure
       }
-    } else {
-      return `路径不存在：${targetPath}`
     }
-    const failure = await shell.openPath(targetPath)
+
+    const failure = await tryOpen()
     if (!failure) {
       return ''
     }
-    if (fs.existsSync(targetPath)) {
-      shell.showItemInFolder(targetPath)
+
+    const revealed = tryReveal()
+    if (!revealed) {
       return ''
     }
-    const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-    if (fallback.status === 0) {
-      return ''
-    }
-    return failure
+    return failure || revealed
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }
