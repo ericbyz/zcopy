@@ -119,6 +119,11 @@ func (a *AppState) deleteTask(c *gin.Context) {
 	id := c.Param("id")
 	task, _ := a.store.Get(id)
 	a.watcher.StopWatcher(id)
+	if task.OnDemandSync {
+		if err := a.unregisterTaskFileProvider(task); err != nil {
+			a.pushLog("warn", task, "", "注销 File Provider 域失败: "+err.Error())
+		}
+	}
 	if err := a.deleteRemoteSyncTask(task); err != nil {
 		c.JSON(500, gin.H{"message": "删除服务端同步任务失败: " + err.Error()})
 		return

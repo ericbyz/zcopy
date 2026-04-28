@@ -112,6 +112,12 @@ func main() {
 
 	app.watcher = watcher.NewFSNotifyWatchManager(taskStore, app.syncTask)
 
+	go func() {
+		if err := app.pruneFileProviderDomains(); err != nil {
+			slog.Warn("failed to prune File Provider domains", "error", err)
+		}
+	}()
+
 	app.watcher.RestoreAutoWatchers()
 	app.startRemoteEventLoop()
 

@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell } from 'electron'
 import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
@@ -58,11 +58,23 @@ function resolveFileProviderHostExecutable(bundlePath) {
   return path.join(bundlePath, 'Contents', 'MacOS', 'ZCopyFileProviderHost')
 }
 
+function fileSHA256(filePath) {
+  return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
 function ensureFileProviderHostInstalled() {
   const sourceArchive = resolveBundledFileProviderHostArchive()
   const installedBundle = resolveInstalledFileProviderHost()
+  const installedExecutable = resolveFileProviderHostExecutable(installedBundle)
+  const versionMarkerPath = path.join(app.getPath('userData'), 'fileprovider-host-version.txt')
   if (!fs.existsSync(sourceArchive)) {
     throw new Error(`file provider host archive not found: ${sourceArchive}`)
+  }
+  const archiveHash = fileSHA256(sourceArchive)
+  const installedHash = fs.existsSync(versionMarkerPath) ? fs.readFileSync(versionMarkerPath, 'utf8').trim() : ''
+  if (fs.existsSync(installedExecutable) && installedHash === archiveHash) {
+    bridgeState.hostBundlePath = installedBundle
+    return installedBundle
   }
   fs.mkdirSync(path.dirname(installedBundle), { recursive: true })
   fs.rmSync(resolveLegacyInstalledFileProviderHost(), { recursive: true, force: true })
@@ -73,6 +85,7 @@ function ensureFileProviderHostInstalled() {
   if (unzip.status !== 0 || !fs.existsSync(installedBundle)) {
     throw new Error(`failed to install file provider host from archive: ${sourceArchive}`)
   }
+  fs.writeFileSync(versionMarkerPath, archiveHash)
   bridgeState.hostBundlePath = installedBundle
   return installedBundle
 }
@@ -182,7 +195,7 @@ function createWindow() {
     backgroundColor: '#f5f5f7',
     icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true

@@ -502,11 +502,11 @@ function startRefreshTimer() {
   refreshTimer = setInterval(async () => {
     if (!currentUser.value || loading.value) return
     try {
-      await refreshDashboard(true)
+      await refreshDashboard(false)
     } catch {
       // ignore polling failures
     }
-  }, 2500)
+  }, 15000)
 }
 
 function stopRefreshTimer() {

@@ -15,6 +15,14 @@ func (a *AppState) initTaskFileProvider(task models.BackupTask) (fileProviderBri
 	return a.fp.InitTask(task)
 }
 
+func (a *AppState) unregisterTaskFileProvider(task models.BackupTask) error {
+	return a.fp.UnregisterTask(task)
+}
+
+func (a *AppState) pruneFileProviderDomains() error {
+	return a.fp.PruneTasks(a.store.List())
+}
+
 func (a *AppState) getTaskFileProviderStatus(task models.BackupTask) (fileProviderBridgeStatus, error) {
 	return a.fp.GetTaskStatus(task)
 }

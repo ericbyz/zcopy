@@ -50,6 +50,14 @@ type fileProviderRegisterRequest struct {
 	Name string `json:"name"`
 }
 
+type fileProviderUnregisterRequest struct {
+	ID string `json:"id"`
+}
+
+type fileProviderPruneRequest struct {
+	AllowedIDs []string `json:"allowedIds"`
+}
+
 type fileProviderSignalRequest struct {
 	ID   string `json:"id"`
 	Path string `json:"path"`
@@ -127,6 +135,47 @@ func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
 		s.logs.Push("info", task, "", fmt.Sprintf("[FP] 域注册完成：registered=%v, mount_path=%s", status.Registered, status.MountPath))
 	}
 	return status, nil
+}
+
+func (s *Service) UnregisterTask(task models.BackupTask) error {
+	if !s.Available() {
+		return nil
+	}
+	payload := fileProviderUnregisterRequest{ID: platform.SyncRootID(task.ID)}
+	if err := s.callFileProviderBridge(http.MethodPost, "/unregister", payload, nil); err != nil {
+		slog.Warn("[FP] 注销域失败", "task_id", task.ID, "error", err)
+		if s.logs != nil {
+			s.logs.Push("warn", task, "", fmt.Sprintf("[FP] 注销域失败：error=%s", err.Error()))
+		}
+		return err
+	}
+	slog.Info("[FP] 域注销完成", "task_id", task.ID)
+	if s.logs != nil {
+		s.logs.Push("info", task, "", "[FP] 域注销完成")
+	}
+	return nil
+}
+
+func (s *Service) PruneTasks(tasks []models.BackupTask) error {
+	if !s.Available() {
+		return nil
+	}
+	allowed := make([]string, 0, len(tasks))
+	for _, task := range tasks {
+		if task.OnDemandSync {
+			allowed = append(allowed, platform.SyncRootID(task.ID))
+		}
+	}
+	payload := fileProviderPruneRequest{AllowedIDs: allowed}
+	if err := s.callFileProviderBridge(http.MethodPost, "/prune", payload, nil); err != nil {
+		slog.Warn("[FP] 清理残留域失败", "error", err)
+		if s.logs != nil {
+			s.logs.Push("warn", models.BackupTask{Name: "system"}, "", fmt.Sprintf("[FP] 清理残留域失败：error=%s", err.Error()))
+		}
+		return err
+	}
+	slog.Info("[FP] 残留域清理完成", "allowed_count", len(allowed))
+	return nil
 }
 
 func (s *Service) GetTaskStatus(task models.BackupTask) (BridgeStatus, error) {
