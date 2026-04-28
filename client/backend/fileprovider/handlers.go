@@ -76,12 +76,12 @@ func (s *Service) Children(c *gin.Context) {
 	}
 	payload := make([]fileProviderItemPayload, 0, len(items))
 	for _, item := range items {
-		childPath := normalizeWebDAVPath(path.Join(cleanPath, item.Name))
+		childPath := normalizeFileProviderPath(path.Join(cleanPath, item.Name))
 		mode := os.FileMode(0644)
 		if item.IsDirectory {
 			mode = os.ModeDir | 0755
 		}
-		entry, err := s.makeFileProviderItemPayload(task, childPath, remoteWebDAVInfo{
+		entry, err := s.makeFileProviderItemPayload(task, childPath, remoteFileProviderInfo{
 			name:    item.Name,
 			size:    item.Size,
 			modTime: item.UpdatedAt,
@@ -277,7 +277,7 @@ func (s *Service) RenameItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "请求参数格式错误"})
 		return
 	}
-	newPath := normalizeWebDAVPath(req.NewPath)
+	newPath := normalizeFileProviderPath(req.NewPath)
 	if newPath == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "目标路径不合法"})
 		return

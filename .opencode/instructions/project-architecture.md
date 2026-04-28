@@ -19,12 +19,12 @@ client/backend/
 ├── store/            ← TaskStore 持久化
 ├── proxy/            ← 认证代理
 ├── cfapi/            ← Windows Cloud Files API
-└── fileprovider.go   ← macOS WebDAV + File Provider（可独立为包）
+└── fileprovider.go   ← macOS File Provider（可独立为包）
 ```
 
 **函数不超过 50 行。** `syncTask()`（164 行）、`hydrateFromCloud()`（94 行）需要拆分为可独立测试的子函数。
 
-**一个结构体不超过 3 个职责。** `AppState` 当前 6 种职责（认证代理 + 任务管理 + 同步引擎 + 文件监听 + WebDAV + CFAPI），需拆分。目标：每个领域独立结构体，通过接口解耦。
+**一个结构体不超过 3 个职责。** `AppState` 当前 5 种职责（认证代理 + 任务管理 + 同步引擎 + 文件监听 + CFAPI），需拆分。目标：每个领域独立结构体，通过接口解耦。
 
 ## 接口抽象（解除硬依赖）
 

@@ -56,9 +56,8 @@
 2. 创建数据目录
 3. 初始化 TaskStore             → 读取 data/tasks.json
 4. 创建 AppState 单例
-5. startWebDAVServer()          → 仅 macOS：启动随机端口 WebDAV，供 File Provider 使用
-6. restoreAutoWatchers()        → 恢复所有 autoBackup 任务的 fsnotify 监听
-7. 在 :8090 启动 Gin 服务       → 7 组路由（auth/task/sync/ondemand/remote/file-provider/system）
+5. restoreAutoWatchers()        → 恢复所有 autoBackup 任务的 fsnotify 监听
+6. 在 :8090 启动 Gin 服务       → 7 组路由（auth/task/sync/ondemand/remote/file-provider/system）
 ```
 
 ### Electron 主进程 — Windows（`client/front/electron/main.js`）
@@ -128,9 +127,8 @@ Finder  ←→  EleFileProvider.appex（Swift，NSFileProviderReplicatedExtensio
 
 ### Go 层（`client/backend/fileprovider/`）
 
-- `service.go`：WebDAV 服务器（随机端口）+ Bridge HTTP 通信 + 远程文件操作
+- `service.go`：Bridge HTTP 通信 + 远程文件操作
 - `handlers.go`：7 个 REST 端点，供 Swift Extension 调用（item/children/content/put/rename/folder/delete）
-- `webdav.go`：`remoteWebDAVFS` 实现 `webdav.FileSystem`（读缓存 + 写上传）
 - `fileprovider.go`：薄适配层（20 行），委托给 `fileprovider.Service`
 
 ### Swift Extension（`client/front-mac/fileprovider/EleFileProvider/`）
@@ -228,8 +226,6 @@ Renderer（Vue 3）  ←→  preload.js  ←→  main.js（Electron 主进程）
 | `ZCOPY_CLIENT_DATA_DIR` | 数据存储目录 |
 | `ZCOPY_CLIENT_FP_BRIDGE_URL` | macOS File Provider 桥接地址 |
 | `ZCOPY_CLIENT_FP_BRIDGE_TOKEN` | macOS File Provider 桥接鉴权 token |
-| `ZCOPY_CLIENT_WEBDAV_USER` | WebDAV 凭据（macOS） |
-| `ZCOPY_CLIENT_WEBDAV_PASSWORD` | WebDAV 凭据（macOS） |
 
 ---
 
@@ -239,7 +235,6 @@ Renderer（Vue 3）  ←→  preload.js  ←→  main.js（Electron 主进程）
 - File Provider REST 端点无认证，任何本地进程可访问
 - `enumerateChanges()` 为空实现，远程变更不自动刷新 Finder
 - Working set 枚举递归获取整个文件树，大目录性能差
-- WebDAV 服务器无优雅关闭机制
 
 ---
 

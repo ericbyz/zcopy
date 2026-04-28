@@ -2,15 +2,12 @@ package fileprovider
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"mime/multipart"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,10 +36,6 @@ type Service struct {
 	logs          logpkg.LogStore
 	fpBridgeURL   string
 	fpBridgeToken string
-
-	webdavBaseURL  string
-	webdavUsername string
-	webdavPassword string
 }
 
 type BridgeStatus struct {
@@ -53,11 +46,8 @@ type BridgeStatus struct {
 }
 
 type fileProviderRegisterRequest struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	URL      string `json:"url"`
-	User     string `json:"user"`
-	Password string `json:"password"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type fileProviderSignalRequest struct {
@@ -65,7 +55,7 @@ type fileProviderSignalRequest struct {
 	Path string `json:"path"`
 }
 
-type remoteWebDAVItem struct {
+type remoteFileProviderItem struct {
 	Name        string    `json:"name"`
 	Path        string    `json:"path"`
 	Size        int64     `json:"size"`
@@ -73,9 +63,16 @@ type remoteWebDAVItem struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-type remoteWebDAVListResponse struct {
-	Path  string             `json:"path"`
-	Items []remoteWebDAVItem `json:"items"`
+type remoteFileProviderListResponse struct {
+	Path  string                   `json:"path"`
+	Items []remoteFileProviderItem `json:"items"`
+}
+
+type remoteFileProviderInfo struct {
+	name    string
+	size    int64
+	modTime time.Time
+	mode    os.FileMode
 }
 
 type fileProviderItemPayload struct {
@@ -102,36 +99,8 @@ func New(cfg models.AppConfig, httpc *http.Client, taskStore store.TaskRepositor
 	}
 }
 
-func (s *Service) StartWebDAVServer() error {
-	if runtime.GOOS != "darwin" {
-		return nil
-	}
-	username := strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_WEBDAV_USER"))
-	if username == "" {
-		username = "zcopy"
-	}
-	password := strings.TrimSpace(os.Getenv("ZCOPY_CLIENT_WEBDAV_PASSWORD"))
-	if password == "" {
-		password = randomBridgeSecret(24)
-	}
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return err
-	}
-	s.webdavBaseURL = "http://" + listener.Addr().String()
-	s.webdavUsername = username
-	s.webdavPassword = password
-	slog.Info("WebDAV 服务已启动", "url", s.webdavBaseURL)
-
-	server := &http.Server{Handler: http.HandlerFunc(s.serveWebDAV)}
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	return nil
-}
-
 func (s *Service) Available() bool {
-	return runtime.GOOS == "darwin" && s.fpBridgeURL != "" && s.fpBridgeToken != "" && s.webdavBaseURL != ""
+	return runtime.GOOS == "darwin" && s.fpBridgeURL != "" && s.fpBridgeToken != ""
 }
 
 func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
@@ -141,11 +110,8 @@ func (s *Service) InitTask(task models.BackupTask) (BridgeStatus, error) {
 	}
 
 	payload := fileProviderRegisterRequest{
-		ID:       platform.SyncRootID(task.ID),
-		Name:     platform.CloudFolderDisplayName(task.Name),
-		URL:      s.fileProviderTaskURL(task.ID),
-		User:     s.webdavUsername,
-		Password: s.webdavPassword,
+		ID:   platform.SyncRootID(task.ID),
+		Name: platform.CloudFolderDisplayName(task.Name),
 	}
 	var status BridgeStatus
 	if err := s.callFileProviderBridge(http.MethodPost, "/register", payload, &status); err != nil {
@@ -211,10 +177,6 @@ func signalPathForTask(task models.BackupTask, changedPath string) string {
 	return clean
 }
 
-func (s *Service) fileProviderTaskURL(taskID string) string {
-	return strings.TrimRight(s.webdavBaseURL, "/") + "/webdav/" + url.PathEscape(taskID)
-}
-
 func (s *Service) callFileProviderBridge(method string, endpoint string, payload any, out any) error {
 	if s.fpBridgeURL == "" || s.fpBridgeToken == "" {
 		return errors.New("File Provider bridge 未配置")
@@ -270,7 +232,7 @@ func (s *Service) callFileProviderBridge(method string, endpoint string, payload
 	return nil
 }
 
-func (s *Service) listRemoteItems(remotePath string, token string) ([]remoteWebDAVItem, error) {
+func (s *Service) listRemoteItems(remotePath string, token string) ([]remoteFileProviderItem, error) {
 	slog.Debug("listRemoteItems 操作", "remote_path", remotePath)
 	endpoint := "/files"
 	clean := utils.NormalizeRemote(remotePath)
@@ -288,7 +250,7 @@ func (s *Service) listRemoteItems(remotePath string, token string) ([]remoteWebD
 		}
 		return nil, errors.New(msg)
 	}
-	var payload remoteWebDAVListResponse
+	var payload remoteFileProviderListResponse
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return nil, err
 	}
@@ -368,9 +330,9 @@ func (s *Service) uploadFileReader(filename string, remoteDir string, src io.Rea
 }
 
 func (s *Service) remoteInfoForPath(task models.BackupTask, relPath string, token string) (os.FileInfo, error) {
-	cleanRel := normalizeWebDAVPath(relPath)
+	cleanRel := normalizeFileProviderPath(relPath)
 	if cleanRel == "" {
-		return remoteWebDAVInfo{
+		return remoteFileProviderInfo{
 			name:    task.Name,
 			size:    0,
 			modTime: task.UpdatedAt,
@@ -394,7 +356,7 @@ func (s *Service) remoteInfoForPath(task models.BackupTask, relPath string, toke
 		if item.IsDirectory {
 			mode = os.ModeDir | 0755
 		}
-		return remoteWebDAVInfo{
+		return remoteFileProviderInfo{
 			name:    item.Name,
 			size:    item.Size,
 			modTime: item.UpdatedAt,
@@ -415,7 +377,7 @@ func (s *Service) remoteDirEntries(task models.BackupTask, relPath string, token
 		if item.IsDirectory {
 			mode = os.ModeDir | 0755
 		}
-		result = append(result, remoteWebDAVInfo{
+		result = append(result, remoteFileProviderInfo{
 			name:    item.Name,
 			size:    item.Size,
 			modTime: item.UpdatedAt,
@@ -437,7 +399,7 @@ func (s *Service) fileProviderContext(c *gin.Context) (models.BackupTask, string
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "未登录"})
 		return models.BackupTask{}, "", "", false
 	}
-	return task, normalizeWebDAVPath(c.Query("path")), token, true
+	return task, normalizeFileProviderPath(c.Query("path")), token, true
 }
 
 func (s *Service) makeFileProviderItemPayload(task models.BackupTask, cleanPath string, info os.FileInfo, token string) (fileProviderItemPayload, error) {
@@ -465,7 +427,7 @@ func (s *Service) makeFileProviderItemPayload(task models.BackupTask, cleanPath 
 }
 
 func taskLocalPath(task models.BackupTask, relPath string) string {
-	clean := normalizeWebDAVPath(relPath)
+	clean := normalizeFileProviderPath(relPath)
 	if clean == "" {
 		return task.LocalPath
 	}
@@ -508,11 +470,6 @@ func renameLocalMirrorPath(task models.BackupTask, oldRelPath string, newRelPath
 	return os.Rename(oldPath, newPath)
 }
 
-func (s *Service) webdavTempPath(taskID string, relPath string) string {
-	encoded := base64.RawURLEncoding.EncodeToString([]byte(normalizeWebDAVPath(relPath)))
-	return filepath.Join(s.cfg.Storage.DataDir, "webdav-cache", taskID, encoded)
-}
-
 func normalizeFileProviderTaskID(raw string) string {
 	taskID := strings.TrimSpace(raw)
 	taskID = strings.TrimPrefix(taskID, "ZCopy.")
@@ -523,13 +480,13 @@ func normalizeFileProviderTaskID(raw string) string {
 }
 
 func fileProviderIdentifier(cleanPath string) string {
-	if normalizeWebDAVPath(cleanPath) == "" {
+	if normalizeFileProviderPath(cleanPath) == "" {
 		return "root"
 	}
-	return "path:" + normalizeWebDAVPath(cleanPath)
+	return "path:" + normalizeFileProviderPath(cleanPath)
 }
 
-func normalizeWebDAVPath(name string) string {
+func normalizeFileProviderPath(name string) string {
 	clean := path.Clean("/" + filepath.ToSlash(strings.TrimSpace(name)))
 	clean = strings.TrimPrefix(clean, "/")
 	if clean == "." {
@@ -540,7 +497,7 @@ func normalizeWebDAVPath(name string) string {
 
 func joinRemotePath(base string, extra string) string {
 	baseClean := utils.NormalizeRemote(base)
-	extraClean := normalizeWebDAVPath(extra)
+	extraClean := normalizeFileProviderPath(extra)
 	switch {
 	case baseClean == "":
 		return extraClean
@@ -551,10 +508,9 @@ func joinRemotePath(base string, extra string) string {
 	}
 }
 
-func randomBridgeSecret(size int) string {
-	buf := make([]byte, size)
-	if _, err := rand.Read(buf); err != nil {
-		return time.Now().Format("20060102150405.000000000")
-	}
-	return base64.RawURLEncoding.EncodeToString(buf)
-}
+func (info remoteFileProviderInfo) Name() string       { return info.name }
+func (info remoteFileProviderInfo) Size() int64        { return info.size }
+func (info remoteFileProviderInfo) Mode() os.FileMode  { return info.mode }
+func (info remoteFileProviderInfo) ModTime() time.Time { return info.modTime }
+func (info remoteFileProviderInfo) IsDir() bool        { return info.mode.IsDir() }
+func (info remoteFileProviderInfo) Sys() any           { return nil }

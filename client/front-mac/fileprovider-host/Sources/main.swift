@@ -11,9 +11,6 @@ struct BridgeInfo: Codable {
 struct RegisterRequest: Codable {
     let id: String
     let name: String
-    let url: String
-    let user: String
-    let password: String
 }
 
 struct SignalRequest: Codable {

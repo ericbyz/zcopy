@@ -167,7 +167,6 @@ node scripts/quick-start.mjs
 | 服务端 Web UI | 5176 | Vue SPA（开发） |
 | 客户端后端 | 8090 | Electron 本地 API |
 | 客户端 Vite | 5173 | Vue 开发服务器 |
-| WebDAV | 随机 | macOS File Provider |
 | FP Host App | 随机 | macOS FP 域名注册 |
 
 ### 关键约定

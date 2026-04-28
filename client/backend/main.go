@@ -112,10 +112,6 @@ func main() {
 
 	app.watcher = watcher.NewFSNotifyWatchManager(taskStore, app.syncTask)
 
-	if err := app.fp.StartWebDAVServer(); err != nil {
-		log.Fatalf("failed to start file provider webdav server: %v", err)
-	}
-
 	app.watcher.RestoreAutoWatchers()
 	app.startRemoteEventLoop()
 

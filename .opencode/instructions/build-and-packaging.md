@@ -88,5 +88,5 @@ node scripts/quick-start.mjs
 ## Graceful Shutdown
 
 - 服务端收到 SIGTERM 时等待进行中的同步完成
-- 客户端退出时停止所有 watcher、关闭 WebDAV 服务
+- 客户端退出时停止所有 watcher、关闭 File Provider bridge 相关进程
 - 使用 `os.Signal` + `context.WithCancel` 实现
