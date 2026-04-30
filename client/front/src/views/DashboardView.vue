@@ -7,6 +7,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import TaskForm from './components/TaskForm.vue'
 import TaskList from './components/TaskList.vue'
 import RemoteFolderPicker from './components/RemoteFolderPicker.vue'
+import { buildFileServerPathURL } from '../utils/server.js'
 
 // Inject from App.vue
 const createTaskTrigger = inject('createTaskTrigger')
@@ -393,21 +394,20 @@ async function openTaskLocalFolder(task) {
 }
 
 async function openRemoteFolder(task) {
-  const remotePath = task.remotePath || ''
-  const baseURL = import.meta.env.VITE_FILE_SERVER_WEB_URL || 'http://localhost:5176'
-  const url = new URL(baseURL)
-  if (remotePath) {
-    url.searchParams.set('path', remotePath)
-  }
+  const url = buildFileServerPathURL({
+    task,
+    servers: serverList.value,
+    fallbackURL: import.meta.env.VITE_FILE_SERVER_WEB_URL || 'http://localhost:5176'
+  })
   try {
     if (window.desktopApi?.openExternal) {
-      const failure = await window.desktopApi.openExternal(url.toString())
+      const failure = await window.desktopApi.openExternal(url)
       if (failure) {
         setMessage(failure)
       }
       return
     }
-    window.open(url.toString(), '_blank', 'noopener,noreferrer')
+    window.open(url, '_blank', 'noopener,noreferrer')
   } catch (error) {
     setMessage(error instanceof Error ? error.message : String(error))
   }

@@ -21,6 +21,10 @@ const props = defineProps({
   emptyHint: {
     type: String,
     default: '点击左侧「创建备份任务」开始'
+  },
+  serverList: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -41,6 +45,7 @@ const emit = defineEmits(['edit', 'sync', 'toggle-auto', 'delete', 'open-locatio
         :task="task"
         :loading="loading"
         :on-demand-status="onDemandStatuses[task.id]"
+        :server-list="serverList"
         @edit="emit('edit', $event)"
         @sync="emit('sync', $event)"
         @toggle-auto="emit('toggle-auto', $event)"
