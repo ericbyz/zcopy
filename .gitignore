@@ -1,8 +1,41 @@
-node_modules*
-.npm-cache*
+# === Binary artifacts ===
+*.exe
+*.dll
+*.so
+*.dylib
+
+# === Build outputs ===
+dist/
 release/
-server/backend/storage/*
+
+# === Dependencies ===
+node_modules/
+.npm-cache/
+
+# === Data & storage ===
+data/
+storage/
+*.db
+
+# === Secrets & environment ===
+.env
+.env.*
+
+# === IDE & editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS artifacts ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === AI tools ===
 .sisyphus/
 .cache/
 .playwright-mcp/
-server/backend/data/
