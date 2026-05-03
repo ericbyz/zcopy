@@ -1,0 +1,9 @@
+server:
+  port: "8090"
+  mode: "debug"
+
+file_server:
+  base_url: "http://localhost:8890/api/v1"
+
+storage:
+  data_dir: "./data"

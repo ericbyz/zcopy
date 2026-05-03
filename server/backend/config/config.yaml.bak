@@ -1,0 +1,10 @@
+server:
+  port: "8891"
+  mode: "debug"
+database:
+  path: "/tmp/zcopy-test-server/data/zcopy.db"
+auth:
+  secret_key: "test-server-secret-key"
+  token_expire_hours: 72
+storage:
+  root_dir: "/tmp/zcopy-test-server/storage"

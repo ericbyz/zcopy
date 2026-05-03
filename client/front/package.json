@@ -1,0 +1,67 @@
+{
+  "name": "zcopy-client-front",
+  "version": "0.0.1",
+  "private": true,
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+    "prepare:backend-dir": "node -e \"require('fs').mkdirSync('electron/bin',{recursive:true})\"",
+    "build:backend": "npm run prepare:backend-dir && go build -C ../backend -o ../front/electron/bin/zcopy-client-backend.exe .",
+    "build": "vite build",
+    "start": "electron .",
+    "dist": "npm run build:backend && npm run build && electron-builder --win dir",
+    "dist:portable": "npm run build:backend && npm run build && electron-builder --win portable",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.7.9",
+    "element-plus": "^2.13.7",
+    "lucide-vue-next": "^1.0.0",
+    "vue": "^3.4.38",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.6.2",
+    "@vue/test-utils": "^2.4.6",
+    "concurrently": "^9.2.1",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "jsdom": "^29.0.2",
+    "unplugin-auto-import": "^21.0.0",
+    "unplugin-vue-components": "^32.0.0",
+    "vite": "^4.5.14",
+    "vitest": "^4.1.4",
+    "wait-on": "^8.0.5"
+  },
+  "build": {
+    "appId": "com.zcopy.client",
+    "productName": "ZCopy",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/bin/zcopy-client-backend.exe",
+        "to": "backend/zcopy-client-backend.exe"
+      },
+      {
+        "from": "../backend/config/config.yaml",
+        "to": "backend/config/config.yaml"
+      }
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}

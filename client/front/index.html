@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script>
+      (function() {
+        var t = localStorage.getItem('zcopy-theme');
+        var d = t === 'auto' || !t ? window.matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+        if (d) document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark">
+    <title>ZCopy 客户端</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+  </html>

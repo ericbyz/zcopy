@@ -1,0 +1,71 @@
+{
+  "name": "zcopy-client-front-mac",
+  "version": "0.0.1",
+  "private": true,
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "prepare:backend-dir": "node -e \"require('fs').mkdirSync('electron/bin',{recursive:true})\"",
+    "build:backend": "npm run prepare:backend-dir && go build -C ../backend -o ../front-mac/electron/bin/zcopy-client-backend .",
+    "build:renderer": "node ./scripts/build-renderer.mjs",
+    "build:fileprovider": "node ./scripts/build-fileprovider.mjs",
+    "build:fileprovider-host": "node ./scripts/build-fileprovider-host.mjs",
+    "sign:app": "bash ./scripts/sign-mac-app.sh ./release/mac-arm64/ZCopyClient.app \"$CSC_NAME\"",
+    "start": "electron .",
+    "dist": "npm run build:backend && npm run build:renderer && npm run build:fileprovider && npm run build:fileprovider-host && electron-builder --mac dmg",
+    "dist:dir": "npm run build:backend && npm run build:renderer && npm run build:fileprovider && npm run build:fileprovider-host && electron-builder --mac dir"
+  },
+  "dependencies": {
+    "electron-macos-file-provider": "^1.0.12"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.zcopy.client.mac",
+    "productName": "ZCopy",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "electron/bin/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/bin/zcopy-client-backend",
+        "to": "backend/zcopy-client-backend"
+      },
+      {
+        "from": "../backend/config/config.yaml",
+        "to": "backend/config/config.yaml"
+      },
+      {
+        "from": "../front/dist",
+        "to": "renderer"
+      },
+      {
+        "from": "electron/fileprovider-host/ZCopyFileProviderHost.zip",
+        "to": "fileprovider-host/ZCopyFileProviderHost.zip"
+      }
+    ],
+    "mac": {
+      "artifactName": "ZCopyClient-mac-${version}.${ext}",
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "target": [
+        "dmg",
+        "dir"
+      ]
+    },
+    "dmg": {
+      "artifactName": "ZCopyClient-mac-${version}.${ext}"
+    }
+  }
+}

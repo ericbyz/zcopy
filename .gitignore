@@ -1,0 +1,54 @@
+# === Binary artifacts ===
+*.exe
+*.dll
+*.so
+*.dylib
+
+# === Build outputs ===
+dist/
+release/
+
+# === Xcode / Swift build artifacts ===
+*.pcm
+.build/
+.derived/
+*/build/XCBuildData/
+*/fileprovider/build/
+*/fileprovider-host/zcopy.app/
+
+# === Compiled binaries ===
+*/electron/bin/
+*/electron/PlugIns/
+*/.build/
+
+# === Dependencies ===
+node_modules/
+.npm-cache/
+
+# === Data & storage ===
+data/
+storage/
+*.db
+
+# === Secrets & environment ===
+.env
+.env.*
+
+# === IDE & editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS artifacts ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === AI tools ===
+.sisyphus/
+.cache/
+.playwright-mcp/
