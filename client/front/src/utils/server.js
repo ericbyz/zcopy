@@ -15,6 +15,19 @@ export function findServerForTask(task, servers = []) {
 }
 
 export function buildFileServerWebURL(server, fallbackURL = DEFAULT_FILE_SERVER_WEB_URL) {
+  const webUrl = String(server?.webUrl || '').trim()
+  if (webUrl) {
+    try {
+      const parsed = new URL(webUrl.includes('://') ? webUrl : `http://${webUrl}`)
+      parsed.pathname = '/'
+      parsed.search = ''
+      parsed.hash = ''
+      return parsed.toString().replace(/\/$/, '')
+    } catch {
+      return fallbackURL
+    }
+  }
+
   const address = String(server?.address || '').trim()
   if (!address) return fallbackURL
 

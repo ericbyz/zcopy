@@ -157,7 +157,7 @@ func (s *Service) Content(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		data, _ := io.ReadAll(resp.Body)
+		data, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 		msg := utils.ParseJSONMessage(data)
 		if msg == "" {
 			msg = "下载远程文件失败"

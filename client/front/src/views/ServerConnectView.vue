@@ -20,7 +20,7 @@ const api = axios.create({ baseURL: apiBaseURL })
 
 // State
 const loading = ref(false)
-const addForm = ref({ name: '', address: '' })
+const addForm = ref({ name: '', address: '', webUrl: '' })
 const showAddForm = ref(false)
 
 // Login state
@@ -121,7 +121,7 @@ async function addServer() {
   loading.value = true
   try {
     await api.post('/servers', addForm.value)
-    addForm.value = { name: '', address: '' }
+    addForm.value = { name: '', address: '', webUrl: '' }
     showAddForm.value = false
     await fetchServers()
     ElMessage.success('服务器已添加')
@@ -179,6 +179,7 @@ onMounted(async () => {
           <div class="add-form-row">
             <el-input v-model="addForm.name" placeholder="服务器名称" style="width: 140px" />
             <el-input v-model="addForm.address" placeholder="地址 (host:port)" style="flex:1" />
+            <el-input v-model="addForm.webUrl" placeholder="前端地址（可选）" style="width: 180px" />
             <el-button type="primary" :loading="loading" @click="addServer">添加</el-button>
           </div>
         </el-card>

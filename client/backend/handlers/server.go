@@ -17,11 +17,13 @@ import (
 type AddServerRequest struct {
 	Name    string `json:"name" binding:"required"`
 	Address string `json:"address" binding:"required"` // host:port
+	WebURL  string `json:"webUrl"`
 }
 
 type UpdateServerRequest struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
+	WebURL  string `json:"webUrl"`
 }
 
 func generateUUID() (string, error) {
@@ -76,6 +78,7 @@ func AddServer(reg *registry.ServerRegistry) gin.HandlerFunc {
 			ID:              id,
 			Name:            req.Name,
 			Address:         req.Address,
+			WebURL:          req.WebURL,
 			IsDefault:       isDefault,
 			Status:          "unknown",
 			AddedAt:         now,
@@ -114,6 +117,9 @@ func UpdateServer(reg *registry.ServerRegistry) gin.HandlerFunc {
 		}
 		if req.Address != "" {
 			server.Address = req.Address
+		}
+		if req.WebURL != "" {
+			server.WebURL = req.WebURL
 		}
 
 		if err := reg.UpdateServer(server); err != nil {

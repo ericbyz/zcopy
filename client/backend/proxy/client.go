@@ -23,6 +23,7 @@ import (
 type RemoteClient interface {
 	RawRequest(method, path string, body io.Reader, contentType, token string) ([]byte, int, error)
 	UploadFile(localFile, remoteDir, token string) error
+	UploadFileStream(filename, remoteDir string, src io.Reader, token string) error
 	DownloadRemoteFile(remotePath, localPath, token string) error
 	EnsureRemotePath(path, token string) error
 }
@@ -71,7 +72,6 @@ func (c *HTTPRemoteClient) RawRequest(method, path string, body io.Reader, conte
 }
 
 func (c *HTTPRemoteClient) UploadFile(localFile, remoteDir, token string) error {
-	start := time.Now()
 	f, err := os.Open(localFile)
 	if err != nil {
 		return err
@@ -83,31 +83,78 @@ func (c *HTTPRemoteClient) UploadFile(localFile, remoteDir, token string) error 
 		return err
 	}
 
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-	if err := writer.WriteField("path", remoteDir); err != nil {
+	start := time.Now()
+	if err := c.UploadFileStream(filepath.Base(localFile), remoteDir, f, token); err != nil {
 		return err
-	}
-	part, err := writer.CreateFormFile("file", filepath.Base(localFile))
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(part, f); err != nil {
-		return err
-	}
-	if err := writer.Close(); err != nil {
-		return err
-	}
-
-	_, status, err := c.RawRequest(http.MethodPost, "/files/upload", bytes.NewReader(body.Bytes()), writer.FormDataContentType(), token)
-	if err != nil {
-		return err
-	}
-	if status < 200 || status >= 300 {
-		return errors.New("上传文件失败")
 	}
 	duration := time.Since(start)
 	slog.Info("文件上传完成", "filename", filepath.Base(localFile), "size", fi.Size(), "duration", duration)
+	return nil
+}
+
+// UploadFileStream streams file content to the remote server via multipart upload
+// using io.Pipe to avoid buffering the entire file in memory.
+// The caller is responsible for closing src after this method returns.
+func (c *HTTPRemoteClient) UploadFileStream(filename, remoteDir string, src io.Reader, token string) error {
+	pr, pw := io.Pipe()
+	mpw := multipart.NewWriter(pw)
+
+	pipeDone := make(chan error, 1)
+	go func() {
+		defer pw.Close()
+		var writeErr error
+		defer func() {
+			mpw.Close()
+			pipeDone <- writeErr
+		}()
+		if err := mpw.WriteField("path", remoteDir); err != nil {
+			writeErr = err
+			return
+		}
+		part, err := mpw.CreateFormFile("file", filename)
+		if err != nil {
+			writeErr = err
+			return
+		}
+		if _, err := io.Copy(part, src); err != nil {
+			writeErr = err
+			return
+		}
+	}()
+
+	url := strings.TrimRight(c.BaseURL, "/") + "/files/upload"
+	req, err := http.NewRequest(http.MethodPost, url, pr)
+	if err != nil {
+		pr.Close()
+		<-pipeDone
+		return err
+	}
+	req.Header.Set("Content-Type", mpw.FormDataContentType())
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.HTTPc.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if perr := <-pipeDone; perr != nil {
+		return perr
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		msg := utils.ParseJSONMessage(data)
+		if msg == "" {
+			msg = "上传文件失败"
+		}
+		return errors.New(msg)
+	}
 	return nil
 }
 
@@ -127,7 +174,7 @@ func (c *HTTPRemoteClient) DownloadRemoteFile(remotePath, localPath, token strin
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		buf, _ := io.ReadAll(resp.Body)
+		buf, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 		msg := utils.ParseJSONMessage(buf)
 		if msg == "" {
 			msg = "下载远程文件失败"

@@ -169,6 +169,17 @@ func main() {
 			multiTokens.SetToken(defSrv.ID, token)
 		}
 	}
+	// Restore in-memory token from persisted per-server tokens.
+	// This ensures getToken() returns a valid token after a restart
+	// without requiring the user to re-login.
+	if tokens.GetToken() == "" {
+		for _, srv := range serverRegistry.ListServers() {
+			if t, ok := multiTokens.GetToken(srv.ID); ok && t != "" {
+				tokens.SetToken(t)
+				break
+			}
+		}
+	}
 
 	multiProxy := proxy.NewMultiServerProxy(multiTokens)
 	for _, srv := range serverRegistry.ListServers() {

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -348,34 +347,7 @@ func (s *Service) renameRemotePath(oldPath string, newPath string, token string)
 
 func (s *Service) uploadFileReader(filename string, remoteDir string, src io.Reader, token string) error {
 	slog.Debug("uploadFileReader 操作", "filename", filename, "remote_dir", remoteDir)
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-	if err := writer.WriteField("path", utils.NormalizeRemote(remoteDir)); err != nil {
-		return err
-	}
-	part, err := writer.CreateFormFile("file", filepath.Base(filename))
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(part, src); err != nil {
-		return err
-	}
-	if err := writer.Close(); err != nil {
-		return err
-	}
-
-	data, status, err := s.remote.RawRequest(http.MethodPost, "/files/upload", bytes.NewReader(body.Bytes()), writer.FormDataContentType(), token)
-	if err != nil {
-		return err
-	}
-	if status < 200 || status >= 300 {
-		msg := utils.ParseJSONMessage(data)
-		if msg == "" {
-			msg = "上传文件失败"
-		}
-		return errors.New(msg)
-	}
-	return nil
+	return s.remote.UploadFileStream(filename, remoteDir, src, token)
 }
 
 func (s *Service) remoteInfoForPath(task models.BackupTask, relPath string, token string) (os.FileInfo, error) {
