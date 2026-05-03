@@ -1,2 +1,0 @@
-# Frontend Redesign — Decisions
-
