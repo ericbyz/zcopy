@@ -25,6 +25,18 @@ private struct RemoteChildrenEnvelope: Codable {
     let items: [RemoteFileProviderItem]
 }
 
+private struct RecentUploadSignature {
+    let size: Int64
+    let modifiedAt: TimeInterval
+    let recordedAt: TimeInterval
+}
+
+struct FileProviderKnownItemSignature: Codable, Equatable {
+    let size: Int64
+    let isDirectory: Bool
+    let updatedAt: TimeInterval
+}
+
 private struct RemoteErrorEnvelope: Codable {
     let message: String
 }
@@ -51,8 +63,15 @@ final class FileProviderService {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let downloadedStateURL: URL
+    private let knownItemsStateURL: URL
     private let downloadedStateQueue = DispatchQueue(label: "com.zcopy.fileprovider.downloaded-state")
+    private let knownItemsStateQueue = DispatchQueue(label: "com.zcopy.fileprovider.known-items-state")
+    private let identifierMapQueue = DispatchQueue(label: "com.zcopy.fileprovider.identifier-map")
+    private let recentUploadQueue = DispatchQueue(label: "com.zcopy.fileprovider.recent-upload")
     private var downloadedPaths: Set<String>
+    private var knownItems: [String: FileProviderKnownItemSignature]
+    private var identifierToPath: [String: String] = [:]
+    private var recentUploads: [String: RecentUploadSignature] = [:]
 
     init(domain: NSFileProviderDomain) {
         let taskID = domain.identifier.rawValue.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain.identifier.rawValue
@@ -69,35 +88,68 @@ final class FileProviderService {
         try? FileManager.default.createDirectory(at: stateDirectory, withIntermediateDirectories: true)
         let safeDomainID = domain.identifier.rawValue.replacingOccurrences(of: "/", with: "_")
         self.downloadedStateURL = stateDirectory.appendingPathComponent("\(safeDomainID)-downloaded.json")
+        self.knownItemsStateURL = stateDirectory.appendingPathComponent("\(safeDomainID)-known-items.json")
         self.downloadedPaths = Self.loadDownloadedPaths(from: downloadedStateURL)
+        self.knownItems = Self.loadKnownItems(from: knownItemsStateURL)
     }
 
     func metadata(for identifier: NSFileProviderItemIdentifier, completion: @escaping (Result<RemoteFileProviderItem, Error>) -> Void) {
         requestJSON(path: "item", itemPath: relativePath(for: identifier), method: "GET", body: nil) { (result: Result<RemoteItemEnvelope, Error>) in
-            completion(result.map(\.item))
+            completion(result.map { envelope in
+                self.remember(item: envelope.item)
+                return envelope.item
+            })
         }
     }
 
     func children(for identifier: NSFileProviderItemIdentifier, completion: @escaping (Result<[RemoteFileProviderItem], Error>) -> Void) {
         requestJSON(path: "children", itemPath: relativePath(for: identifier), method: "GET", body: nil) { (result: Result<RemoteChildrenEnvelope, Error>) in
-            completion(result.map(\.items))
+            completion(result.map { envelope in
+                envelope.items.forEach(self.remember(item:))
+                return envelope.items
+            })
         }
     }
 
     func createFolder(at itemPath: String, completion: @escaping (Result<RemoteFileProviderItem, Error>) -> Void) {
         requestJSON(path: "folder", itemPath: itemPath, method: "POST", body: Data()) { (result: Result<RemoteItemEnvelope, Error>) in
-            completion(result.map(\.item))
+            completion(result.map { envelope in
+                self.remember(item: envelope.item)
+                return envelope.item
+            })
         }
     }
 
     func upload(contents fileURL: URL, to itemPath: String, completion: @escaping (Result<RemoteFileProviderItem, Error>) -> Void) {
         do {
+            let signature = fileSignature(for: fileURL)
             let data = try Data(contentsOf: fileURL)
             requestJSON(path: "content", itemPath: itemPath, method: "PUT", body: data) { (result: Result<RemoteItemEnvelope, Error>) in
-                completion(result.map(\.item))
+                completion(result.map { envelope in
+                    self.remember(item: envelope.item)
+                    if let signature {
+                        self.recordRecentUpload(signature, path: envelope.item.path)
+                    }
+                    return envelope.item
+                })
             }
         } catch {
             completion(.failure(error))
+        }
+    }
+
+    func isRecentDuplicateUpload(fileURL: URL, path: String) -> Bool {
+        guard let current = fileSignature(for: fileURL) else {
+            return false
+        }
+        let clean = normalizedPath(path)
+        let now = Date().timeIntervalSince1970
+        return recentUploadQueue.sync {
+            pruneRecentUploads(now: now)
+            guard let previous = recentUploads[clean] else {
+                return false
+            }
+            return previous.size == current.size && previous.modifiedAt == current.modifiedAt
         }
     }
 
@@ -172,7 +224,10 @@ final class FileProviderService {
             return
         }
         requestJSON(path: "rename", itemPath: itemPath, method: "PUT", body: body) { (result: Result<RemoteRenameEnvelope, Error>) in
-            completion(result.map(\.item))
+            completion(result.map { envelope in
+                self.remember(item: envelope.item)
+                return envelope.item
+            })
         }
     }
 
@@ -214,12 +269,29 @@ final class FileProviderService {
         }
     }
 
+    func knownItemsSnapshot() -> [String: FileProviderKnownItemSignature] {
+        knownItemsStateQueue.sync {
+            knownItems
+        }
+    }
+
+    func replaceKnownItems(_ items: [RemoteFileProviderItem]) {
+        knownItemsStateQueue.sync {
+            knownItems = Self.signaturesByPath(items)
+            persistKnownItems()
+        }
+    }
+
     func relativePath(for identifier: NSFileProviderItemIdentifier) -> String {
         if identifier == .rootContainer || identifier == .workingSet || identifier.rawValue == "root" {
             return ""
         }
         if identifier.rawValue.hasPrefix("path:") {
             return normalizedPath(String(identifier.rawValue.dropFirst(5)))
+        }
+        let raw = identifier.rawValue
+        if let mapped = identifierMapQueue.sync(execute: { identifierToPath[raw] }) {
+            return mapped
         }
         return normalizedPath(identifier.rawValue)
     }
@@ -242,11 +314,49 @@ final class FileProviderService {
     }
 
     func joined(parent: NSFileProviderItemIdentifier, name: String) -> String {
+        if isTrashContainer(parent) {
+            return normalizedPath(name)
+        }
         let parentPath = relativePath(for: parent)
         if parentPath.isEmpty {
             return normalizedPath(name)
         }
         return normalizedPath(parentPath + "/" + name)
+    }
+
+    func isTrashContainer(_ identifier: NSFileProviderItemIdentifier) -> Bool {
+        identifier.rawValue == "NSFileProviderTrashContainerItemIdentifier"
+    }
+
+    func remember(identifier: NSFileProviderItemIdentifier, path: String) {
+        let clean = normalizedPath(path)
+        guard !clean.isEmpty else { return }
+        identifierMapQueue.sync {
+            identifierToPath[identifier.rawValue] = clean
+        }
+    }
+
+    func remember(item: RemoteFileProviderItem) {
+        let clean = normalizedPath(item.path)
+        guard !clean.isEmpty else { return }
+        identifierMapQueue.sync {
+            identifierToPath[item.identifier] = clean
+            identifierToPath[itemIdentifier(for: clean).rawValue] = clean
+        }
+    }
+
+    func shouldIgnoreSystemItem(named name: String) -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            return false
+        }
+        if trimmed == ".DS_Store" || trimmed == "Icon\r" {
+            return true
+        }
+        if trimmed.hasPrefix("._") {
+            return true
+        }
+        return false
     }
 
     private func requestJSON<T: Decodable>(path: String, itemPath: String, method: String, body: Data?, completion: @escaping (Result<T, Error>) -> Void) {
@@ -312,6 +422,36 @@ final class FileProviderService {
         return stack.map(String.init).joined(separator: "/")
     }
 
+    private func fileSignature(for url: URL) -> RecentUploadSignature? {
+        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]) else {
+            return nil
+        }
+        guard let fileSize = values.fileSize else {
+            return nil
+        }
+        let modifiedAt = values.contentModificationDate?.timeIntervalSince1970 ?? 0
+        return RecentUploadSignature(
+            size: Int64(fileSize),
+            modifiedAt: modifiedAt,
+            recordedAt: Date().timeIntervalSince1970
+        )
+    }
+
+    private func recordRecentUpload(_ signature: RecentUploadSignature, path: String) {
+        let clean = normalizedPath(path)
+        guard !clean.isEmpty else { return }
+        recentUploadQueue.sync {
+            pruneRecentUploads(now: signature.recordedAt)
+            recentUploads[clean] = signature
+        }
+    }
+
+    private func pruneRecentUploads(now: TimeInterval) {
+        recentUploads = recentUploads.filter { _, value in
+            now-value.recordedAt < 8
+        }
+    }
+
     private func persistDownloadedPaths() {
         let payload = Array(downloadedPaths).sorted()
         guard let data = try? JSONEncoder().encode(payload) else {
@@ -320,11 +460,39 @@ final class FileProviderService {
         try? data.write(to: downloadedStateURL, options: [.atomic])
     }
 
+    private func persistKnownItems() {
+        guard let data = try? JSONEncoder().encode(knownItems) else {
+            return
+        }
+        try? data.write(to: knownItemsStateURL, options: [.atomic])
+    }
+
     private static func loadDownloadedPaths(from url: URL) -> Set<String> {
         guard let data = try? Data(contentsOf: url),
               let payload = try? JSONDecoder().decode([String].self, from: data) else {
             return []
         }
         return Set(payload)
+    }
+
+    private static func loadKnownItems(from url: URL) -> [String: FileProviderKnownItemSignature] {
+        guard let data = try? Data(contentsOf: url),
+              let payload = try? JSONDecoder().decode([String: FileProviderKnownItemSignature].self, from: data) else {
+            return [:]
+        }
+        return payload
+    }
+
+    static func signaturesByPath(_ items: [RemoteFileProviderItem]) -> [String: FileProviderKnownItemSignature] {
+        Dictionary(uniqueKeysWithValues: items.map { item in
+            (
+                item.path,
+                FileProviderKnownItemSignature(
+                    size: item.size,
+                    isDirectory: item.isDirectory,
+                    updatedAt: item.updatedAt.timeIntervalSince1970
+                )
+            )
+        })
     }
 }

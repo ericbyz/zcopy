@@ -16,6 +16,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
     public func item(for identifier: NSFileProviderItemIdentifier, request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
         service.metadata(for: identifier) { result in
+            progress.completedUnitCount = progress.totalUnitCount
             switch result {
             case .failure(let error):
                 completionHandler(nil, error)
@@ -32,6 +33,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
     public func fetchContents(for itemIdentifier: NSFileProviderItemIdentifier, version requestedVersion: NSFileProviderItemVersion?, request: NSFileProviderRequest, completionHandler: @escaping (URL?, NSFileProviderItem?, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
         service.download(identifier: itemIdentifier) { result in
+            progress.completedUnitCount = progress.totalUnitCount
             switch result {
             case .failure(let error):
                 completionHandler(nil, nil, error)
@@ -49,15 +51,19 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func createItem(basedOn itemTemplate: NSFileProviderItem, fields: NSFileProviderItemFields, contents url: URL?, options: NSFileProviderCreateItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
+        if service.shouldIgnoreSystemItem(named: itemTemplate.filename) {
+            completionHandler(nil, [], false, nil)
+            return progress
+        }
         let itemPath = service.joined(parent: itemTemplate.parentItemIdentifier, name: itemTemplate.filename)
         let finish: (Result<RemoteFileProviderItem, Error>) -> Void = { result in
+            progress.completedUnitCount = progress.totalUnitCount
             switch result {
             case .failure(let error):
                 completionHandler(nil, [], false, error)
             case .success(let item):
-                if !item.isDirectory {
-                    self.service.markDownloaded(path: item.path)
-                }
+                self.service.remember(identifier: itemTemplate.itemIdentifier, path: item.path)
+                self.service.markDownloaded(path: item.path)
                 self.signalStateRefresh()
                 completionHandler(FileProviderItem(remoteItem: item, service: self.service), [], false, nil)
             }
@@ -76,17 +82,45 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
     public func modifyItem(_ item: NSFileProviderItem, baseVersion version: NSFileProviderItemVersion, changedFields: NSFileProviderItemFields, contents newContents: URL?, options: NSFileProviderModifyItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (NSFileProviderItem?, NSFileProviderItemFields, Bool, Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
+        if service.shouldIgnoreSystemItem(named: item.filename) {
+            completionHandler(nil, [], false, nil)
+            return progress
+        }
         let currentPath = service.relativePath(for: item.itemIdentifier)
         let targetPath = service.joined(parent: item.parentItemIdentifier, name: item.filename)
         let renameFields: NSFileProviderItemFields = [.filename, .parentItemIdentifier]
 
+        if changedFields.contains(.parentItemIdentifier), service.isTrashContainer(item.parentItemIdentifier) {
+            service.delete(itemPath: currentPath) { result in
+                progress.completedUnitCount = progress.totalUnitCount
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, changedFields, false, error)
+                case .success:
+                    self.signalStateRefresh()
+                    completionHandler(nil, [], false, nil)
+                }
+            }
+            return progress
+        }
+
         let handleContentUpdate: (RemoteFileProviderItem) -> Void = { renamedItem in
+            self.service.remember(identifier: item.itemIdentifier, path: renamedItem.path)
             guard changedFields.contains(.contents), let newContents else {
                 self.signalStateRefresh()
+                progress.completedUnitCount = progress.totalUnitCount
+                completionHandler(FileProviderItem(remoteItem: renamedItem, service: self.service), [], false, nil)
+                return
+            }
+            if self.service.isRecentDuplicateUpload(fileURL: newContents, path: renamedItem.path) {
+                self.service.markDownloaded(path: renamedItem.path)
+                self.signalStateRefresh()
+                progress.completedUnitCount = progress.totalUnitCount
                 completionHandler(FileProviderItem(remoteItem: renamedItem, service: self.service), [], false, nil)
                 return
             }
             self.service.upload(contents: newContents, to: renamedItem.path) { result in
+                progress.completedUnitCount = progress.totalUnitCount
                 switch result {
                 case .failure(let error):
                     completionHandler(nil, [.contents], false, error)
@@ -102,6 +136,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             service.rename(itemPath: currentPath, to: targetPath) { result in
                 switch result {
                 case .failure(let error):
+                    progress.completedUnitCount = progress.totalUnitCount
                     completionHandler(nil, changedFields, false, error)
                 case .success(let renamedItem):
                     handleContentUpdate(renamedItem)
@@ -112,6 +147,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
 
         guard changedFields.contains(.contents), let newContents else {
             service.metadata(for: item.itemIdentifier) { result in
+                progress.completedUnitCount = progress.totalUnitCount
                 switch result {
                 case .failure(let error):
                     completionHandler(nil, changedFields, false, error)
@@ -121,7 +157,22 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
             }
             return progress
         }
+        if service.isRecentDuplicateUpload(fileURL: newContents, path: currentPath) {
+            service.metadata(for: item.itemIdentifier) { result in
+                progress.completedUnitCount = progress.totalUnitCount
+                switch result {
+                case .failure(let error):
+                    completionHandler(nil, [.contents], false, error)
+                case .success(let remoteItem):
+                    self.service.markDownloaded(path: remoteItem.path)
+                    self.signalStateRefresh()
+                    completionHandler(FileProviderItem(remoteItem: remoteItem, service: self.service), [], false, nil)
+                }
+            }
+            return progress
+        }
         service.upload(contents: newContents, to: service.relativePath(for: item.itemIdentifier)) { result in
+            progress.completedUnitCount = progress.totalUnitCount
             switch result {
             case .failure(let error):
                 completionHandler(nil, [.contents], false, error)
@@ -140,6 +191,7 @@ public final class Extension: NSObject, NSFileProviderReplicatedExtension {
     public func deleteItem(identifier: NSFileProviderItemIdentifier, baseVersion version: NSFileProviderItemVersion, options: NSFileProviderDeleteItemOptions = [], request: NSFileProviderRequest, completionHandler: @escaping (Error?) -> Void) -> Progress {
         let progress = Progress(totalUnitCount: 100)
         service.delete(itemPath: service.relativePath(for: identifier)) { result in
+            progress.completedUnitCount = progress.totalUnitCount
             switch result {
             case .failure(let error):
                 completionHandler(error)

@@ -11,9 +11,19 @@ struct BridgeInfo: Codable {
 struct RegisterRequest: Codable {
     let id: String
     let name: String
-    let url: String
-    let user: String
-    let password: String
+}
+
+struct UnregisterRequest: Codable {
+    let id: String
+}
+
+struct PruneRequest: Codable {
+    let allowedIds: [String]
+}
+
+struct SignalRequest: Codable {
+    let id: String
+    let path: String?
 }
 
 struct StatusResponse: Codable {
@@ -165,6 +175,39 @@ final class FileProviderHostApp: NSObject, NSApplicationDelegate {
                 return makeHTTPResponse(status: 400, payload: ErrorResponse(message: error.localizedDescription))
             }
 
+        case ("POST", "/unregister"):
+            guard let bodyData = bodyText.data(using: .utf8) else {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "invalid body"))
+            }
+            do {
+                let payload = try JSONDecoder().decode(UnregisterRequest.self, from: bodyData)
+                return unregister(id: payload.id)
+            } catch {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: error.localizedDescription))
+            }
+
+        case ("POST", "/prune"):
+            guard let bodyData = bodyText.data(using: .utf8) else {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "invalid body"))
+            }
+            do {
+                let payload = try JSONDecoder().decode(PruneRequest.self, from: bodyData)
+                return prune(allowedIds: Set(payload.allowedIds))
+            } catch {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: error.localizedDescription))
+            }
+
+        case ("POST", "/signal"):
+            guard let bodyData = bodyText.data(using: .utf8) else {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "invalid body"))
+            }
+            do {
+                let payload = try JSONDecoder().decode(SignalRequest.self, from: bodyData)
+                return signal(payload)
+            } catch {
+                return makeHTTPResponse(status: 400, payload: ErrorResponse(message: error.localizedDescription))
+            }
+
         case ("GET", "/status"):
             let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
             let id = query["id"] ?? ""
@@ -205,6 +248,178 @@ final class FileProviderHostApp: NSObject, NSApplicationDelegate {
 
         _ = semaphore.wait(timeout: .now() + 15)
         return responseData
+    }
+
+    private func unregister(id: String) -> Data {
+        guard #available(macOS 11.0, *) else {
+            return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "macOS 11.0 及以上才支持 File Provider"))
+        }
+        let domain = NSFileProviderDomain(identifier: NSFileProviderDomainIdentifier(id), displayName: id)
+        return remove(domain: domain)
+    }
+
+    private func prune(allowedIds: Set<String>) -> Data {
+        guard #available(macOS 11.0, *) else {
+            return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "macOS 11.0 及以上才支持 File Provider"))
+        }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var responseData = makeHTTPResponse(status: 500, payload: ErrorResponse(message: "unknown error"))
+        NSFileProviderManager.getDomainsWithCompletionHandler { [weak self] domains, error in
+            guard let self else {
+                semaphore.signal()
+                return
+            }
+            if let error {
+                responseData = self.makeHTTPResponse(status: 500, payload: ErrorResponse(message: error.localizedDescription))
+                semaphore.signal()
+                return
+            }
+            let staleDomains = domains.filter { domain in
+                let raw = domain.identifier.rawValue
+                return raw.hasPrefix("ZCopy.") && !allowedIds.contains(raw)
+            }
+            self.remove(domains: staleDomains) { result in
+                switch result {
+                case .success:
+                    responseData = self.makeHTTPResponse(status: 200, payload: ["removed": staleDomains.count])
+                case .failure(let error):
+                    responseData = self.makeHTTPResponse(status: 500, payload: ErrorResponse(message: error.localizedDescription))
+                }
+                semaphore.signal()
+            }
+        }
+
+        _ = semaphore.wait(timeout: .now() + 15)
+        return responseData
+    }
+
+    private func remove(domain: NSFileProviderDomain) -> Data {
+        let semaphore = DispatchSemaphore(value: 0)
+        var responseData = makeHTTPResponse(status: 500, payload: ErrorResponse(message: "unknown error"))
+        remove(domains: [domain]) { [weak self] result in
+            guard let self else {
+                semaphore.signal()
+                return
+            }
+            switch result {
+            case .success:
+                responseData = self.makeHTTPResponse(status: 200, payload: ["status": "ok"])
+            case .failure(let error):
+                responseData = self.makeHTTPResponse(status: 500, payload: ErrorResponse(message: error.localizedDescription))
+            }
+            semaphore.signal()
+        }
+        _ = semaphore.wait(timeout: .now() + 10)
+        return responseData
+    }
+
+    private func remove(domains: [NSFileProviderDomain], completion: @escaping (Result<Void, Error>) -> Void) {
+        guard !domains.isEmpty else {
+            completion(.success(()))
+            return
+        }
+        let group = DispatchGroup()
+        var firstError: Error?
+        for domain in domains {
+            group.enter()
+            NSFileProviderManager.remove(domain) { [weak self] error in
+                if let error {
+                    self?.appendLog("remove \(domain.identifier.rawValue) failed: \(error.localizedDescription)")
+                    firstError = firstError ?? error
+                } else {
+                    self?.appendLog("removed \(domain.identifier.rawValue)")
+                }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            if let firstError {
+                completion(.failure(firstError))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    private func signal(_ payload: SignalRequest) -> Data {
+        guard #available(macOS 11.0, *) else {
+            return makeHTTPResponse(status: 400, payload: ErrorResponse(message: "macOS 11.0 及以上才支持 File Provider"))
+        }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var responseData = makeHTTPResponse(status: 500, payload: ErrorResponse(message: "unknown error"))
+        let domain = NSFileProviderDomain(identifier: NSFileProviderDomainIdentifier(payload.id), displayName: payload.id)
+        guard let manager = NSFileProviderManager(for: domain) else {
+            return makeHTTPResponse(status: 500, payload: ErrorResponse(message: "无法创建 File Provider manager"))
+        }
+
+        let identifiers = signalIdentifiers(for: payload.path)
+        let group = DispatchGroup()
+        var signalError: Error?
+
+        for identifier in identifiers {
+            group.enter()
+            manager.signalEnumerator(for: identifier) { [weak self] error in
+                if let error {
+                    self?.appendLog("signal \(identifier.rawValue) failed: \(error.localizedDescription)")
+                    signalError = signalError ?? error
+                } else {
+                    self?.appendLog("signal \(identifier.rawValue) for \(payload.id)")
+                }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            if let signalError {
+                responseData = self.makeHTTPResponse(status: 500, payload: ErrorResponse(message: signalError.localizedDescription))
+            } else {
+                responseData = self.makeHTTPResponse(status: 200, payload: ["status": "ok"])
+            }
+            semaphore.signal()
+        }
+
+        _ = semaphore.wait(timeout: .now() + 10)
+        return responseData
+    }
+
+    private func signalIdentifiers(for rawPath: String?) -> [NSFileProviderItemIdentifier] {
+        let clean = normalizeFileProviderPath(rawPath ?? "")
+        var identifiers: [NSFileProviderItemIdentifier] = [.rootContainer]
+        let parent = parentPath(for: clean)
+        if !parent.isEmpty {
+            identifiers.append(NSFileProviderItemIdentifier("path:\(parent)"))
+        }
+
+        var seen = Set<String>()
+        return identifiers.filter { identifier in
+            if seen.contains(identifier.rawValue) {
+                return false
+            }
+            seen.insert(identifier.rawValue)
+            return true
+        }
+    }
+
+    private func parentPath(for path: String) -> String {
+        guard !path.isEmpty else { return "" }
+        let parent = (path as NSString).deletingLastPathComponent
+        return parent == "." ? "" : normalizeFileProviderPath(parent)
+    }
+
+    private func normalizeFileProviderPath(_ raw: String) -> String {
+        let parts = raw.split(separator: "/").filter { !$0.isEmpty && $0 != "." }
+        var stack: [Substring] = []
+        for part in parts {
+            if part == ".." {
+                if !stack.isEmpty {
+                    stack.removeLast()
+                }
+                continue
+            }
+            stack.append(part)
+        }
+        return stack.map(String.init).joined(separator: "/")
     }
 
     private func queryStatus(id: String, name: String) -> Data {

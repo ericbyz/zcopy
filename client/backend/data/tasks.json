@@ -6,6 +6,7 @@
     "remotePath": "bit",
     "autoBackup": true,
     "onDemandSync": true,
+    "cloudOnly": false,
     "status": "error",
     "lastError": "read /Users/byz/Documents/test/a/bbb/Flux.app/Contents/Frameworks/Sparkle.framework/Headers: is a directory",
     "lastSyncAt": "2026-04-10T22:22:56.778933+08:00",
@@ -35,6 +36,10 @@
       "finishedAt": "2026-04-10T22:22:56.778933+08:00"
     },
     "createdAt": "2026-04-10T22:22:56.269506+08:00",
-    "updatedAt": "2026-04-10T22:22:56.778933+08:00"
+    "updatedAt": "2026-04-10T22:22:56.778933+08:00",
+    "serverId": "default",
+    "serverIds": [
+      "default"
+    ]
   }
 ]

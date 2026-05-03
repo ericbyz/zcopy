@@ -1,7 +1,97 @@
+/* ZCopy Design Tokens v1 — sync with client/front/src/style.css */
+
 :root {
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #e5eefb;
-  background: #0f172a;
+  /* Light Mode (Apple HIG inspired) */
+  --z-bg-base: #f5f5f7;
+  --z-bg-elevated: #ffffff;
+  --z-bg-sunken: #e8e8ed;
+  --z-bg-card: rgba(255, 255, 255, 0.72);
+  --z-text-primary: #1d1d1f;
+  --z-text-secondary: #6e6e73;
+  --z-text-muted: #86868b;
+  --z-text-placeholder: #aeaeb2;
+  --z-accent: #0071e3;
+  --z-accent-hover: #0077ed;
+  --z-accent-bg: rgba(0, 113, 227, 0.08);
+  --z-success: #34c759;
+  --z-success-bg: rgba(52, 199, 89, 0.12);
+  --z-warning: #ff9f0a;
+  --z-warning-bg: rgba(255, 159, 10, 0.12);
+  --z-danger: #ff3b30;
+  --z-danger-bg: rgba(255, 59, 48, 0.12);
+  --z-border: rgba(0, 0, 0, 0.08);
+  --z-border-strong: rgba(0, 0, 0, 0.15);
+  --z-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --z-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
+  --z-radius: 12px;
+  --z-radius-sm: 8px;
+  --z-radius-lg: 16px;
+  --z-blur: saturate(180%) blur(20px);
+
+  /* Element Plus Overrides */
+  --el-color-primary: var(--z-accent);
+  --el-color-primary-light-3: var(--z-accent-hover);
+  --el-color-success: var(--z-success);
+  --el-color-warning: var(--z-warning);
+  --el-color-danger: var(--z-danger);
+  --el-border-radius-base: var(--z-radius-sm);
+  --el-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --el-bg-color: var(--z-bg-elevated);
+  --el-bg-color-page: var(--z-bg-base);
+  --el-text-color-primary: var(--z-text-primary);
+  --el-text-color-regular: var(--z-text-secondary);
+  --el-text-color-secondary: var(--z-text-muted);
+  --el-border-color: var(--z-border);
+  --el-border-color-light: var(--z-border);
+  --el-fill-color-blank: var(--z-bg-elevated);
+  --el-fill-color-light: var(--z-bg-sunken);
+}
+
+html.dark {
+  /* Dark Mode */
+  --z-bg-base: #0f172a;
+  --z-bg-elevated: #1e293b;
+  --z-bg-sunken: #0c1222;
+  --z-bg-card: rgba(15, 23, 42, 0.78);
+  --z-text-primary: #f1f5f9;
+  --z-text-secondary: #cbd5e1;
+  --z-text-muted: #94a3b8;
+  --z-text-placeholder: #64748b;
+  --z-accent: #3b82f6;
+  --z-accent-hover: #60a5fa;
+  --z-accent-bg: rgba(59, 130, 246, 0.12);
+  --z-success: #22c55e;
+  --z-success-bg: rgba(34, 197, 94, 0.15);
+  --z-warning: #f59e0b;
+  --z-warning-bg: rgba(245, 158, 11, 0.15);
+  --z-danger: #ef4444;
+  --z-danger-bg: rgba(239, 68, 68, 0.15);
+  --z-border: rgba(148, 163, 184, 0.12);
+  --z-border-strong: rgba(148, 163, 184, 0.2);
+  --z-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --z-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.25), 0 4px 10px rgba(0, 0, 0, 0.2);
+  --z-radius: 12px;
+  --z-radius-sm: 8px;
+  --z-radius-lg: 16px;
+  --z-blur: blur(18px);
+
+  /* Element Plus Overrides */
+  --el-color-primary: var(--z-accent);
+  --el-color-primary-light-3: var(--z-accent-hover);
+  --el-color-success: var(--z-success);
+  --el-color-warning: var(--z-warning);
+  --el-color-danger: var(--z-danger);
+  --el-border-radius-base: var(--z-radius-sm);
+  --el-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --el-bg-color: var(--z-bg-elevated);
+  --el-bg-color-page: var(--z-bg-base);
+  --el-text-color-primary: var(--z-text-primary);
+  --el-text-color-regular: var(--z-text-secondary);
+  --el-text-color-secondary: var(--z-text-muted);
+  --el-border-color: var(--z-border);
+  --el-border-color-light: var(--z-border);
+  --el-fill-color-blank: var(--z-bg-elevated);
+  --el-fill-color-light: var(--z-bg-sunken);
 }
 
 * {
@@ -12,10 +102,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.16), transparent 24%),
-    #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  color: var(--z-text-primary);
+  background: var(--z-bg-base);
 }
 
 button,
@@ -25,7 +114,7 @@ input {
 
 .page {
   min-height: 100vh;
-  padding: 32px 16px;
+  padding: 24px 18px;
 }
 
 .shell {
@@ -48,18 +137,17 @@ input {
 
 .hero p {
   margin: 0;
-  color: #a7b7d6;
+  color: var(--z-text-muted);
 }
 
 .user-card,
 .auth-card,
-.workspace,
-.message {
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 18px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(18px);
+.workspace {
+  background: var(--z-bg-card);
+  border: 1px solid var(--z-border);
+  border-radius: var(--z-radius-lg);
+  box-shadow: var(--z-shadow-lg);
+  backdrop-filter: var(--z-blur);
 }
 
 .user-card {
@@ -67,12 +155,6 @@ input {
   padding: 18px;
   display: grid;
   gap: 10px;
-}
-
-.message {
-  padding: 14px 18px;
-  color: #dbeafe;
-  margin-bottom: 16px;
 }
 
 .auth-layout {
@@ -98,20 +180,20 @@ input {
 .danger-btn,
 .link-btn {
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--z-radius-sm);
   cursor: pointer;
   transition: 0.2s ease;
 }
 
 .tabs button {
   padding: 10px 16px;
-  background: rgba(148, 163, 184, 0.12);
-  color: #cbd5e1;
+  background: var(--z-bg-sunken);
+  color: var(--z-text-secondary);
 }
 
 .tabs button.active {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: #fff;
+  background: var(--z-accent);
+  color: var(--z-bg-base);
 }
 
 .form-grid {
@@ -123,28 +205,28 @@ input {
 input {
   width: 100%;
   padding: 12px 14px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 12px;
-  color: #e2e8f0;
+  background: var(--z-bg-sunken);
+  border: 1px solid var(--z-border);
+  border-radius: var(--z-radius-sm);
+  color: var(--z-text-primary);
 }
 
 .primary-btn {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #3b82f6, #4338ca);
-  color: #fff;
+  background: var(--z-accent);
+  color: var(--z-bg-base);
 }
 
 .ghost-btn {
   padding: 10px 14px;
-  background: rgba(148, 163, 184, 0.12);
-  color: #e2e8f0;
+  background: var(--z-bg-sunken);
+  color: var(--z-text-primary);
 }
 
 .danger-btn {
   padding: 10px 14px;
-  background: rgba(220, 38, 38, 0.18);
-  color: #fecaca;
+  background: var(--z-danger-bg);
+  color: var(--z-danger);
 }
 
 .primary-btn:hover,
@@ -156,7 +238,7 @@ input {
 }
 
 .workspace {
-  padding: 22px;
+  padding: 18px;
 }
 
 .toolbar,
@@ -181,8 +263,8 @@ input {
 
 .link-btn {
   padding: 8px 12px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #bfdbfe;
+  background: var(--z-accent-bg);
+  color: var(--z-accent);
 }
 
 .actions,
@@ -205,17 +287,17 @@ input {
 .file-row {
   grid-template-columns: minmax(220px, 2fr) minmax(80px, 100px) minmax(180px, 1fr) minmax(160px, auto);
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--z-radius);
 }
 
 .file-header {
-  background: rgba(148, 163, 184, 0.08);
-  color: #94a3b8;
+  background: var(--z-bg-sunken);
+  color: var(--z-text-muted);
 }
 
 .file-row {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+  background: var(--z-bg-card);
+  border: 1px solid var(--z-border);
 }
 
 .file-name {
@@ -231,9 +313,9 @@ input {
 .empty {
   padding: 28px;
   text-align: center;
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.06);
-  border-radius: 14px;
+  color: var(--z-text-muted);
+  background: var(--z-bg-sunken);
+  border-radius: var(--z-radius);
 }
 
 @media (max-width: 860px) {

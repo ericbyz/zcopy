@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"zcopy-server-backend/config"
+	"zcopy-server-backend/logger"
 	"zcopy-server-backend/models"
 )
 
@@ -32,13 +34,13 @@ type persistData struct {
 	Users  []models.User `json:"users"`
 }
 
-func InitDB() {
+func InitDB() error {
 	dbPath := config.AppConfig.Database.Path
 	dbDir := filepath.Dir(dbPath)
 
 	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dbDir, 0755); err != nil {
-			log.Fatalf("Failed to create database directory: %v", err)
+			return fmt.Errorf("create database directory: %w", err)
 		}
 	}
 
@@ -48,11 +50,12 @@ func InitDB() {
 	}
 
 	if err := store.load(); err != nil {
-		log.Fatalf("Failed to load database: %v", err)
+		return fmt.Errorf("load database: %w", err)
 	}
 
 	DB = store
 	log.Println("Database initialized successfully")
+	return nil
 }
 
 func (s *Store) Close() error {
@@ -99,10 +102,15 @@ func (s *Store) flushLocked() error {
 
 	content, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
+		logger.Error("database flush failed", "error", err.Error())
 		return err
 	}
 
-	return os.WriteFile(s.path, content, 0644)
+	err = os.WriteFile(s.path, content, 0644)
+	if err != nil {
+		logger.Error("database flush failed", "error", err.Error())
+	}
+	return err
 }
 
 func (s *Store) UserExists(username, email string) bool {
@@ -135,7 +143,11 @@ func (s *Store) CreateUser(user *models.User) error {
 	s.nextID++
 	s.users = append(s.users, *user)
 
-	return s.flushLocked()
+	err := s.flushLocked()
+	if err == nil {
+		logger.Info("user created", "user_id", user.ID, "username", user.Username, "email", user.Email)
+	}
+	return err
 }
 
 func (s *Store) FindUserByAccount(account string) (models.User, error) {

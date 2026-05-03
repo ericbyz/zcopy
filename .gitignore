@@ -2,3 +2,7 @@ node_modules*
 .npm-cache*
 release/
 server/backend/storage/*
+.sisyphus/
+.cache/
+.playwright-mcp/
+server/backend/data/

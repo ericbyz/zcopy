@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell } from 'electron'
-import { spawn } from 'child_process'
+import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -38,22 +38,52 @@ function startBackend() {
     ZCOPY_CLIENT_CONFIG: backendConfig,
     ZCOPY_CLIENT_DATA_DIR: path.join(app.getPath('userData'), 'backend-data')
   }
+  const logDir = path.join(app.getPath('userData'), 'logs')
+  fs.mkdirSync(logDir, { recursive: true })
+  const backendLogPath = path.join(logDir, 'backend.log')
+  const backendLogFd = fs.openSync(backendLogPath, 'a')
   backendProcess = spawn(backendExe, [], {
     cwd: path.dirname(backendExe),
     env,
     windowsHide: true,
-    stdio: 'ignore'
+    stdio: ['ignore', backendLogFd, backendLogFd]
   })
 }
 
+async function waitForBackendHealth() {
+  const startedAt = Date.now()
+  const timeoutMs = 10000
+  const pollIntervalMs = 100
+
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch('http://localhost:8090/health')
+      if (response.ok) {
+        return
+      }
+    } catch {
+    }
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+  }
+
+  throw new Error('backend health check timed out after 10 seconds')
+}
+
 function createWindow() {
+  const iconPath = isDev
+    ? path.resolve(__dirname, '../resource/icon.png')
+    : path.join(process.resourcesPath, 'app', 'build', 'icon.png')
   const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
-    minWidth: 1100,
-    minHeight: 700,
+    width: 900,
+    height: 640,
+    minWidth: 760,
+    minHeight: 540,
+    title: '',
+    titleBarStyle: 'hidden',
+    backgroundColor: '#f5f5f7',
+    icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true
@@ -79,8 +109,15 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   startBackend()
+  try {
+    await waitForBackendHealth()
+  } catch (error) {
+    console.error('[zcopy] backend health check failed:', error)
+    app.quit()
+    return
+  }
   createWindow()
   globalShortcut.register('F12', () => {
     const windows = BrowserWindow.getAllWindows()
@@ -91,7 +128,7 @@ app.whenReady().then(() => {
     if (win.webContents.isDevToolsOpened()) {
       win.webContents.closeDevTools()
     } else {
-      win.webContents.openDevTools({ mode: 'detach' })
+      win.webContents.openDevTools({ mode: 'detached' })
     }
   })
 })
@@ -130,28 +167,62 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
     return '路径无效'
   }
   try {
+    const tryOpen = async () => {
+      const failure = await shell.openPath(targetPath)
+      if (!failure) {
+        return ''
+      }
+      const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+      return fallback.status === 0 ? '' : failure
+    }
+
+    const tryReveal = () => {
+      if (fs.existsSync(targetPath)) {
+        shell.showItemInFolder(targetPath)
+        return ''
+      }
+      const reveal = spawnSync('open', ['-R', targetPath], { stdio: 'ignore' })
+      return reveal.status === 0 ? '' : `路径不存在：${targetPath}`
+    }
+
     if (fs.existsSync(targetPath)) {
       const stat = fs.statSync(targetPath)
       if (stat.isDirectory()) {
-        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-        if (fallback.status === 0) {
+        const failure = await tryOpen()
+        if (!failure) {
           return ''
         }
+        const revealed = tryReveal()
+        return revealed || failure
       }
     }
-    const failure = await shell.openPath(targetPath)
+
+    const failure = await tryOpen()
     if (!failure) {
       return ''
     }
-    if (fs.existsSync(targetPath)) {
-      shell.showItemInFolder(targetPath)
+
+    const revealed = tryReveal()
+    if (!revealed) {
       return ''
     }
-    const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-    if (fallback.status === 0) {
-      return ''
+    return failure || revealed
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
+})
+
+ipcMain.handle('shell:open-external', async (_event, targetUrl) => {
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return '链接无效'
+  }
+  try {
+    const parsed = new URL(targetUrl)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return '仅支持打开 http/https 链接'
     }
-    return failure
+    await shell.openExternal(parsed.toString())
+    return ''
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }

@@ -1,0 +1,67 @@
+package main
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+func (a *AppState) syncTaskNow(c *gin.Context) {
+	id := c.Param("id")
+	task, _ := a.store.Get(id)
+	a.pushLog("info", task, "", "手动备份触发: "+id)
+	if task.CloudOnly {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "全新模式任务不支持手动备份"})
+		return
+	}
+	if err := a.syncTask(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "备份失败: " + err.Error()})
+		return
+	}
+	task, _ = a.store.Get(id)
+	c.JSON(http.StatusOK, gin.H{"message": "备份成功", "task": task})
+}
+
+func (a *AppState) startAutoTask(c *gin.Context) {
+	id := c.Param("id")
+	task, ok := a.store.Get(id)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
+		return
+	}
+	if task.CloudOnly {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "全新模式任务不支持自动备份"})
+		return
+	}
+	task.AutoBackup = true
+	task.UpdatedAt = time.Now()
+	if err := a.store.Upsert(task); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "保存任务失败"})
+		return
+	}
+	if err := a.watcher.StartWatcher(id, task); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "启动自动备份失败: " + err.Error()})
+		return
+	}
+	a.pushLog("info", task, "", "自动备份已启动: "+id)
+	c.JSON(http.StatusOK, gin.H{"message": "自动备份已启动"})
+}
+
+func (a *AppState) stopAutoTask(c *gin.Context) {
+	id := c.Param("id")
+	task, ok := a.store.Get(id)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"message": "任务不存在"})
+		return
+	}
+	task.AutoBackup = false
+	task.UpdatedAt = time.Now()
+	if err := a.store.Upsert(task); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "保存任务失败"})
+		return
+	}
+	a.watcher.StopWatcher(id)
+	a.pushLog("info", task, "", "自动备份已停止: "+id)
+	c.JSON(http.StatusOK, gin.H{"message": "自动备份已停止"})
+}

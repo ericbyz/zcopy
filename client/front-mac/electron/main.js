@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { app, BrowserWindow, dialog, ipcMain, globalShortcut, shell } from 'electron'
 import { spawn, spawnSync } from 'child_process'
 import fs from 'fs'
@@ -47,6 +47,10 @@ function resolveBundledFileProviderHostArchive() {
 }
 
 function resolveInstalledFileProviderHost() {
+  return path.join(app.getPath('home'), 'Applications', 'zcopy.app')
+}
+
+function resolveLegacyInstalledFileProviderHost() {
   return path.join(app.getPath('home'), 'Applications', 'ZCopyFileProviderHost.app')
 }
 
@@ -54,13 +58,26 @@ function resolveFileProviderHostExecutable(bundlePath) {
   return path.join(bundlePath, 'Contents', 'MacOS', 'ZCopyFileProviderHost')
 }
 
+function fileSHA256(filePath) {
+  return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
 function ensureFileProviderHostInstalled() {
   const sourceArchive = resolveBundledFileProviderHostArchive()
   const installedBundle = resolveInstalledFileProviderHost()
+  const installedExecutable = resolveFileProviderHostExecutable(installedBundle)
+  const versionMarkerPath = path.join(app.getPath('userData'), 'fileprovider-host-version.txt')
   if (!fs.existsSync(sourceArchive)) {
     throw new Error(`file provider host archive not found: ${sourceArchive}`)
   }
+  const archiveHash = fileSHA256(sourceArchive)
+  const installedHash = fs.existsSync(versionMarkerPath) ? fs.readFileSync(versionMarkerPath, 'utf8').trim() : ''
+  if (fs.existsSync(installedExecutable) && installedHash === archiveHash) {
+    bridgeState.hostBundlePath = installedBundle
+    return installedBundle
+  }
   fs.mkdirSync(path.dirname(installedBundle), { recursive: true })
+  fs.rmSync(resolveLegacyInstalledFileProviderHost(), { recursive: true, force: true })
   fs.rmSync(installedBundle, { recursive: true, force: true })
   const unzip = spawnSync('ditto', ['-x', '-k', sourceArchive, path.dirname(installedBundle)], {
     stdio: 'ignore'
@@ -68,6 +85,7 @@ function ensureFileProviderHostInstalled() {
   if (unzip.status !== 0 || !fs.existsSync(installedBundle)) {
     throw new Error(`failed to install file provider host from archive: ${sourceArchive}`)
   }
+  fs.writeFileSync(versionMarkerPath, archiveHash)
   bridgeState.hostBundlePath = installedBundle
   return installedBundle
 }
@@ -163,13 +181,21 @@ function startBackend() {
 }
 
 function createWindow() {
+  const iconPath = isDev
+    ? path.resolve(__dirname, '../resource/icon.png')
+    : path.join(process.resourcesPath, 'app', 'build', 'icon.png')
   const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
-    minWidth: 1100,
-    minHeight: 700,
+    width: 900,
+    height: 640,
+    minWidth: 760,
+    minHeight: 540,
+    title: '',
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 12, y: 12 },
+    backgroundColor: '#f5f5f7',
+    icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       devTools: true
@@ -249,28 +275,62 @@ ipcMain.handle('shell:open-path', async (_event, targetPath) => {
     return '路径无效'
   }
   try {
+    const tryOpen = async () => {
+      const failure = await shell.openPath(targetPath)
+      if (!failure) {
+        return ''
+      }
+      const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
+      return fallback.status === 0 ? '' : failure
+    }
+
+    const tryReveal = () => {
+      if (fs.existsSync(targetPath)) {
+        shell.showItemInFolder(targetPath)
+        return ''
+      }
+      const reveal = spawnSync('open', ['-R', targetPath], { stdio: 'ignore' })
+      return reveal.status === 0 ? '' : `路径不存在：${targetPath}`
+    }
+
     if (fs.existsSync(targetPath)) {
       const stat = fs.statSync(targetPath)
       if (stat.isDirectory()) {
-        const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-        if (fallback.status === 0) {
+        const failure = await tryOpen()
+        if (!failure) {
           return ''
         }
+        const revealed = tryReveal()
+        return revealed || failure
       }
     }
-    const failure = await shell.openPath(targetPath)
+
+    const failure = await tryOpen()
     if (!failure) {
       return ''
     }
-    if (fs.existsSync(targetPath)) {
-      shell.showItemInFolder(targetPath)
+
+    const revealed = tryReveal()
+    if (!revealed) {
       return ''
     }
-    const fallback = spawnSync('open', [targetPath], { stdio: 'ignore' })
-    if (fallback.status === 0) {
-      return ''
+    return failure || revealed
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
+})
+
+ipcMain.handle('shell:open-external', async (_event, targetUrl) => {
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return '链接无效'
+  }
+  try {
+    const parsed = new URL(targetUrl)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return '仅支持打开 http/https 链接'
     }
-    return failure
+    await shell.openExternal(parsed.toString())
+    return ''
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }

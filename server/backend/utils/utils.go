@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,12 +12,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HashPassword(password string) string {
+func HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatalf("Failed to hash password: %v", err)
+		return "", err
 	}
-	return string(hash)
+	return string(hash), nil
 }
 
 func ComparePasswords(hashedPassword, password string) bool {
@@ -26,17 +25,17 @@ func ComparePasswords(hashedPassword, password string) bool {
 	return err == nil
 }
 
-func GenerateRandomString(length int) string {
+func GenerateRandomString(length int) (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
-		log.Fatalf("Failed to generate random string: %v", err)
+		return "", err
 	}
 
 	for i := range b {
 		b[i] = charset[int(b[i])%len(charset)]
 	}
-	return string(b)
+	return string(b), nil
 }
 
 func CalculateFileHash(data []byte) string {

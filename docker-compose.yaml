@@ -1,0 +1,128 @@
+version: "3.8"
+
+x-server-backend-common: &server-backend-common
+  build:
+    context: ./server/backend
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  environment:
+    &server-backend-env
+    TZ: "Asia/Shanghai"
+
+services:
+  # =============================================
+  # 文件服务器 A（主实例）
+  # =============================================
+  server-a:
+    <<: *server-backend-common
+    container_name: zcopy-server-a
+    ports:
+      - "8890:8890"
+    volumes:
+      - server-a-data:/app/data
+      - server-a-storage:/app/storage
+    environment:
+      <<: *server-backend-env
+      ZCOPY_CORS_ORIGINS: "http://localhost:18176,http://localhost:8890,http://localhost:8891,http://localhost:28090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8890/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # =============================================
+  # 文件服务器 B（测试实例）
+  # =============================================
+  server-b:
+    build:
+      context: ./server/backend
+      dockerfile: Dockerfile
+    container_name: zcopy-server-b
+    restart: unless-stopped
+    ports:
+      - "8891:8891"
+    volumes:
+      - server-b-data:/app/data
+      - server-b-storage:/app/storage
+    environment:
+      TZ: "Asia/Shanghai"
+      ZCOPY_SERVER_CONFIG: "/app/config/server-b.yaml"
+      ZCOPY_CORS_ORIGINS: "http://localhost:28176,http://localhost:8890,http://localhost:8891,http://localhost:28090"
+    configs:
+      - source: server-b-config
+        target: /app/config/server-b.yaml
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8891/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # =============================================
+  # 服务端前端 A（对应主服务器）
+  # =============================================
+  server-front-a:
+    build:
+      context: ./server/front
+      dockerfile: Dockerfile
+    container_name: zcopy-server-front-a
+    restart: unless-stopped
+    ports:
+      - "18176:80"
+    volumes:
+      - ./server/front/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      TZ: "Asia/Shanghai"
+    depends_on:
+      server-a:
+        condition: service_healthy
+
+  # =============================================
+  # 服务端前端 B（对应测试服务器）
+  # =============================================
+  server-front-b:
+    build:
+      context: ./server/front
+      dockerfile: Dockerfile
+    container_name: zcopy-server-front-b
+    restart: unless-stopped
+    ports:
+      - "28176:80"
+    volumes:
+      - ./server/front/nginx-b.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      TZ: "Asia/Shanghai"
+    depends_on:
+      server-b:
+        condition: service_healthy
+
+# =============================================
+# 配置文件
+# =============================================
+configs:
+  server-b-config:
+    content: |
+      server:
+        port: "8891"
+        mode: "debug"
+      database:
+        path: "./data/zcopy.db"
+      auth:
+        secret_key: "test-server-secret-key"
+        token_expire_hours: 72
+      storage:
+        root_dir: "./storage"
+      log:
+        level: "info"
+        dir: "./data/logs"
+        max_age_days: 30
+        max_size_mb: 500
+        max_file_size_mb: 100
+
+# =============================================
+# 持久化卷
+# =============================================
+volumes:
+  server-a-data:
+  server-a-storage:
+  server-b-data:
+  server-b-storage:

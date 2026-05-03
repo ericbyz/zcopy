@@ -15,7 +15,7 @@ final class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
         if containerItemIdentifier == .workingSet {
-            enumerateWorkingSet(observer: observer)
+            observer.finishEnumerating(upTo: nil)
             return
         }
         service.children(for: containerItemIdentifier) { result in
@@ -30,52 +30,34 @@ final class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     }
 
     func enumerateChanges(for observer: NSFileProviderChangeObserver, from syncAnchor: NSFileProviderSyncAnchor) {
-        observer.finishEnumeratingChanges(upTo: currentAnchor(), moreComing: false)
-    }
-
-    func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
-        completionHandler(currentAnchor())
-    }
-
-    private func enumerateWorkingSet(observer: NSFileProviderEnumerationObserver) {
-        collectItemsRecursively(startingAt: .rootContainer, accumulator: []) { result in
+        service.children(for: .rootContainer) { result in
             switch result {
             case .failure(let error):
                 observer.finishEnumeratingWithError(error)
             case .success(let items):
-                observer.didEnumerate(items.map { FileProviderItem(remoteItem: $0, service: self.service) })
-                observer.finishEnumerating(upTo: nil)
+                let previous = self.service.knownItemsSnapshot()
+                let current = FileProviderService.signaturesByPath(items)
+                let changedItems = items.filter { item in
+                    previous[item.path] != current[item.path]
+                }
+                let deletedIdentifiers = previous.keys
+                    .filter { current[$0] == nil }
+                    .map { self.service.itemIdentifier(for: $0) }
+
+                if !changedItems.isEmpty {
+                    observer.didUpdate(changedItems.map { FileProviderItem(remoteItem: $0, service: self.service) })
+                }
+                if !deletedIdentifiers.isEmpty {
+                    observer.didDeleteItems(withIdentifiers: Array(deletedIdentifiers))
+                }
+                self.service.replaceKnownItems(items)
+                observer.finishEnumeratingChanges(upTo: self.currentAnchor(), moreComing: false)
             }
         }
     }
 
-    private func collectItemsRecursively(startingAt identifier: NSFileProviderItemIdentifier, accumulator: [RemoteFileProviderItem], completion: @escaping (Result<[RemoteFileProviderItem], Error>) -> Void) {
-        service.children(for: identifier) { result in
-            switch result {
-            case .failure(let error):
-                completion(.failure(error))
-            case .success(let items):
-                let directories = items.filter(\.isDirectory)
-                self.collectDirectories(directories, index: 0, accumulator: accumulator + items, completion: completion)
-            }
-        }
-    }
-
-    private func collectDirectories(_ directories: [RemoteFileProviderItem], index: Int, accumulator: [RemoteFileProviderItem], completion: @escaping (Result<[RemoteFileProviderItem], Error>) -> Void) {
-        if index >= directories.count {
-            completion(.success(accumulator))
-            return
-        }
-        let nextDirectory = directories[index]
-        let directoryIdentifier = service.itemIdentifier(for: nextDirectory.path)
-        collectItemsRecursively(startingAt: directoryIdentifier, accumulator: accumulator) { result in
-            switch result {
-            case .failure(let error):
-                completion(.failure(error))
-            case .success(let updatedAccumulator):
-                self.collectDirectories(directories, index: index + 1, accumulator: updatedAccumulator, completion: completion)
-            }
-        }
+    func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
+        completionHandler(currentAnchor())
     }
 
     private func currentAnchor() -> NSFileProviderSyncAnchor {
